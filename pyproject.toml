@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "assets-tracking-service"
+version = "0.1.0"
+description = "Service to track the location of BAS assets, including ships, aircraft, and vehicles."
+authors = ["Felix Fennell <felnne@bas.ac.uk>"]
+readme = "README.md"
+packages = [{include = "assets_tracking_service", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
