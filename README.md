@@ -1,4 +1,30 @@
 
+## Releases
+
+- [latest release 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/releases/permalink/latest)
+- [all releases 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/releases)
+
+### Release workflow
+
+Create a [deployment issue](https://gitlab.com/gitlab-org/gitlab/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release) 
+and follow the instructions.
+
+GitLab CI/CD will automatically create a GitLab Release based on the tag, including: 
+
+- milestone link
+- change log extract
+- package artefact
+- link to README at the relevant tag
+
+## Deployment
+
+...
+
+### Deployment workflow
+
+Create a [deployment issue](https://gitlab.com/gitlab-org/gitlab/-/issues/new?issue[title]=x.x.x%20deploy&issuable_template=deploy) 
+and follow the instructions.
+
 ## Licence
 
 Copyright (c) 2019-2024 UK Research and Innovation (UKRI), British Antarctic Survey.
