@@ -1,5 +1,4 @@
-
-## Licence
+## MIT Licence
 
 Copyright (c) 2019-2024 UK Research and Innovation (UKRI), British Antarctic Survey.
 
