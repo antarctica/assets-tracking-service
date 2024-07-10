@@ -1,3 +1,18 @@
+# BAS Assets Tracking Service
+
+Service to track the location of BAS assets, including ships, aircraft, and vehicles.
+
+## Overview
+
+**Note:** This project is focused on needs within the British Antarctic Survey. It has been open-sourced in case parts 
+are of interest to others. Some resources, indicated with a '🛡' or '🔒' symbol, can only be accessed by BAS staff or 
+project members respectively. Contact the [Project Maintainer](#project-maintainer) to request access.
+
+### Purpose
+
+A service to collect, standardise, and then make available, the positions of large assets operated by the British 
+Antarctic Survey.
+
 
 ## Releases
 
@@ -24,6 +39,11 @@ GitLab CI/CD will automatically create a GitLab Release based on the tag, includ
 
 Create a [deployment issue](https://gitlab.com/gitlab-org/gitlab/-/issues/new?issue[title]=x.x.x%20deploy&issuable_template=deploy) 
 and follow the instructions.
+
+## Project maintainer
+
+British Antarctic Survey ([BAS](https://www.bas.ac.uk)) Mapping and Geographic Information Centre 
+([MAGIC](https://www.bas.ac.uk/teams/magic)) - [magic@bas.ac.uk](mailto:magic@bas.ac.uk).
 
 ## Licence
 
