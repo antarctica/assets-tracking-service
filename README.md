@@ -21,7 +21,7 @@ Antarctic Survey.
 
 ### Release workflow
 
-Create a [deployment issue](https://gitlab.com/gitlab-org/gitlab/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release) 
+Create a [release issue](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release) 
 and follow the instructions.
 
 GitLab CI/CD will automatically create a GitLab Release based on the tag, including: 
@@ -37,7 +37,7 @@ GitLab CI/CD will automatically create a GitLab Release based on the tag, includ
 
 ### Deployment workflow
 
-Create a [deployment issue](https://gitlab.com/gitlab-org/gitlab/-/issues/new?issue[title]=x.x.x%20deploy&issuable_template=deploy) 
+Create a [deployment issue](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/new?issue[title]=x.x.x%20deploy&issuable_template=deploy) 
 and follow the instructions.
 
 ## Project maintainer
