@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Service to track the location of BAS assets, including ships, aircraft, and vehicles."
 authors = ["Felix Fennell <felnne@bas.ac.uk>"]
 readme = "README.md"
+license = "MIT"
 packages = [{include = "assets_tracking_service", from = "src"}]
 
 [tool.poetry.dependencies]
