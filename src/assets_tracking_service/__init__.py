@@ -1,0 +1,4 @@
+from assets_tracking_service.logging import init as init_logging
+
+
+init_logging()

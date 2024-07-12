@@ -4,15 +4,28 @@ Service to track the location of BAS assets, including ships, aircraft, and vehi
 
 ## Overview
 
-**Note:** This project is focused on needs within the British Antarctic Survey. It has been open-sourced in case parts 
-are of interest to others. Some resources, indicated with a '🛡' or '🔒' symbol, can only be accessed by BAS staff or 
+**Note:** This project is focused on needs within the British Antarctic Survey. It has been open-sourced in case parts
+are of interest to others. Some resources, indicated with a '🛡' or '🔒' symbol, can only be accessed by BAS staff or
 project members respectively. Contact the [Project Maintainer](#project-maintainer) to request access.
 
 ### Purpose
 
-A service to collect, standardise, and then make available, the positions of large assets operated by the British 
+A service to collect, standardise, and then make available, the positions of large assets operated by the British
 Antarctic Survey.
 
+
+
+
+
+
+
+
+
+
+
+## Development
+
+See [docs/dev](docs/dev.md).
 
 ## Releases
 
@@ -21,10 +34,10 @@ Antarctic Survey.
 
 ### Release workflow
 
-Create a [release issue](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release) 
+Create a [release issue](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release)
 and follow the instructions.
 
-GitLab CI/CD will automatically create a GitLab Release based on the tag, including: 
+GitLab CI/CD will automatically create a GitLab Release based on the tag, including:
 
 - milestone link
 - change log extract
@@ -42,7 +55,7 @@ and follow the instructions.
 
 ## Project maintainer
 
-British Antarctic Survey ([BAS](https://www.bas.ac.uk)) Mapping and Geographic Information Centre 
+British Antarctic Survey ([BAS](https://www.bas.ac.uk)) Mapping and Geographic Information Centre
 ([MAGIC](https://www.bas.ac.uk/teams/magic)) - [magic@bas.ac.uk](mailto:magic@bas.ac.uk).
 
 ## Licence
