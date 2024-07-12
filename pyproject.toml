@@ -6,12 +6,15 @@ authors = ["Felix Fennell <felnne@bas.ac.uk>"]
 readme = "README.md"
 license = "MIT"
 packages = [{ include = "assets_tracking_service", from = "src" }]
+include = ["resources"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
 assets-tracking-service-aircraft-provider = { version = "^0.1.0", source = "ats-air" }
 dsnparse = "^0.2.1"
 environs = "^11.0.0"
+psycopg = "^3.2.1"
+ulid-py = "^1.1.0"
 
 [[tool.poetry.source]]
 name = "ats-air"
@@ -84,7 +87,6 @@ ignore = ['D100', 'D104', 'D107', 'D203', 'D212', 'D402', 'E501', 'TD002']
 # config.py |   N802 | ignore use of upper case method names
 
 [tool.pytest_env]
-ASSETS_TRACKING_SERVICE_DB_DSN = "postgresql://postgres@localhost:5432/assets-tracking-test"
 ASSETS_TRACKING_SERVICE_DB_DATABASE = "assets-tracking-test"
 ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME = "x"
 ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD = "x"
