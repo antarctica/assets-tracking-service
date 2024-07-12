@@ -1,0 +1,4 @@
+DROP FUNCTION uuid_to_ulid CASCADE;
+DROP FUNCTION ulid_to_uuid CASCADE;
+DROP FUNCTION parse_ulid CASCADE;
+DROP FUNCTION generate_ulid CASCADE;
