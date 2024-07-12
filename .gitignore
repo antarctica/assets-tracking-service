@@ -1,2 +1,8 @@
+/.idea/
+
+/.venv/
 /.python-version
-/.idea
+__pycache__
+
+htmlcov/
+.coverage
