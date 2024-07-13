@@ -8,13 +8,18 @@ license = "MIT"
 packages = [{ include = "assets_tracking_service", from = "src" }]
 include = ["resources"]
 
+[tool.poetry.scripts]
+ats-ctl = 'assets_tracking_service.cli:app_cli'
+
 [tool.poetry.dependencies]
 python = "^3.12"
 assets-tracking-service-aircraft-provider = { version = "^0.1.0", source = "ats-air" }
 dsnparse = "^0.2.1"
 environs = "^11.0.0"
 psycopg = "^3.2.1"
+typer = "^0.12.3"
 ulid-py = "^1.1.0"
+rich = "^13.7.1"
 
 [[tool.poetry.source]]
 name = "ats-air"
@@ -97,11 +102,9 @@ ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD = "x"
 ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY = "x"
 
 [tool.pytest.ini_options]
-addopts = "--strict-markers --random-order --cov --cov-report=html -x --ff"
+addopts = "--strict-markers --random-order -x --ff"
 # --strict-markers | fail if unknown markers are used
 # --random-order   | run tests in random order
-# --cov            | enable coverage checks
-# --cov-report     | generate coverage report in html format
 # -x               | stop after first failure [Overriden in CI]
 # --ff             | run failed tests first
 markers = [
