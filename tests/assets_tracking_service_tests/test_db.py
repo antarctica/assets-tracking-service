@@ -13,47 +13,41 @@ from assets_tracking_service.db import DatabaseClient, DatabaseError, DatabaseMi
 class TestDBClient:
     """Test database client."""
 
-    def test_get_conn_info(self, fx_db_client_tmp: DatabaseClient):
+    def test_get_conn_info(self, fx_db_client_tmp_db: DatabaseClient):
         """Gets connection info."""
-        result = fx_db_client_tmp.conn.info.user
+        result = fx_db_client_tmp_db.conn.info.user
         assert result == "postgres"
 
     @pytest.mark.cov
-    def test_commit(self, fx_db_client_tmp: DatabaseClient):
-        """
-        Commits transaction.
-        TODO: Expand beyond stub.
-        """
-        fx_db_client_tmp.commit()
+    def test_commit(self, fx_db_client_tmp_db: DatabaseClient):
+        """Commits transaction."""
+        fx_db_client_tmp_db.commit()
 
     @pytest.mark.cov
-    def test_rollback(self, fx_db_client_tmp: DatabaseClient):
-        """
-        Rolls back transaction.
-        TODO: Expand beyond stub.
-        """
-        fx_db_client_tmp.rollback()
+    def test_rollback(self, fx_db_client_tmp_db: DatabaseClient):
+        """Rolls back transaction."""
+        fx_db_client_tmp_db.rollback()
 
-    def test_execute_statement(self, fx_db_client_tmp: DatabaseClient):
+    def test_execute_statement(self, fx_db_client_tmp_db: DatabaseClient):
         """Statement can be executed."""
-        fx_db_client_tmp.execute(SQL("SELECT 1;"))
+        fx_db_client_tmp_db.execute(SQL("SELECT 1;"))
 
-    def test_execute_statement_error(self, fx_db_client_tmp: DatabaseClient):
+    def test_execute_statement_error(self, fx_db_client_tmp_db: DatabaseClient):
         """Invalid statement triggers error."""
         with pytest.raises(DatabaseError):
-            fx_db_client_tmp.execute(SQL("SELECT * FROM {};").format(Identifier("unknown")))
+            fx_db_client_tmp_db.execute(SQL("SELECT * FROM {};").format(Identifier("unknown")))
 
-    def test_execute_file(self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp: DatabaseClient):
+    def test_execute_file(self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp_db: DatabaseClient):
         """Statements loaded from a file can be executed."""
         with TemporaryDirectory() as temp_dir:
             file_path = Path(temp_dir) / "test.sql"
             file_path.write_text("SELECT 1;")
 
-            fx_db_client_tmp.execute_file(file_path)
+            fx_db_client_tmp_db.execute_file(file_path)
 
             assert f"Executing SQL from: {file_path.resolve()}" in caplog.text
 
-    def test_execute_files_in_path(self, fx_db_client_tmp: DatabaseClient):
+    def test_execute_files_in_path(self, fx_db_client_tmp_db: DatabaseClient):
         """
         Statements loaded from files in a directory can be executed.
 
@@ -69,24 +63,24 @@ class TestDBClient:
             file_2_path = Path(temp_dir) / "1 go second.sql"
             file_2_path.write_text("""DROP TABLE public.test;""")
 
-            fx_db_client_tmp.execute_files_in_path(Path(temp_dir))
+            fx_db_client_tmp_db.execute_files_in_path(Path(temp_dir))
 
-    def test_get_query_result_tuple(self, fx_db_client_tmp: DatabaseClient):
+    def test_get_query_result_tuple(self, fx_db_client_tmp_db: DatabaseClient):
         """Gets query results as tuple."""
-        result = fx_db_client_tmp.get_query_result(SQL("SELECT 1;"))
+        result = fx_db_client_tmp_db.get_query_result(SQL("SELECT 1;"))
         assert result == [(1,)]
 
-    def test_get_query_result_dict(self, fx_db_client_tmp: DatabaseClient):
+    def test_get_query_result_dict(self, fx_db_client_tmp_db: DatabaseClient):
         """Gets query results as dict using placeholders."""
         answer = 1
-        result = fx_db_client_tmp.get_query_result(query=SQL("SELECT %s as result;"), params=(answer,), as_dict=True)
+        result = fx_db_client_tmp_db.get_query_result(query=SQL("SELECT %s as result;"), params=(answer,), as_dict=True)
         assert result == [{"result": answer}]
 
-    def test_get_query_result_json(self, fx_db_client_tmp: DatabaseClient):
+    def test_get_query_result_json(self, fx_db_client_tmp_db: DatabaseClient):
         """Gets query results with JSON based where clause."""
         expected_label = {"name": "test"}
 
-        fx_db_client_tmp.execute(
+        fx_db_client_tmp_db.execute(
             SQL("""
                 CREATE TABLE IF NOT EXISTS public.test
                 (
@@ -95,9 +89,9 @@ class TestDBClient:
                 );
                 """)
         )
-        fx_db_client_tmp.insert_dict("public", "test", {"labels": Jsonb([expected_label])})
+        fx_db_client_tmp_db.insert_dict("public", "test", {"labels": Jsonb([expected_label])})
 
-        results = fx_db_client_tmp.get_query_result(
+        results = fx_db_client_tmp_db.get_query_result(
             query=SQL("""
                 WITH labels AS (
                     SELECT jsonb_array_elements(labels) AS label
@@ -112,17 +106,17 @@ class TestDBClient:
         )
         assert results == [expected_label]
 
-        fx_db_client_tmp.execute(SQL("DROP TABLE {}.{};").format(Identifier("public"), Identifier("test")))
+        fx_db_client_tmp_db.execute(SQL("DROP TABLE {}.{};").format(Identifier("public"), Identifier("test")))
 
-    def test_get_query_result_error(self, fx_db_client_tmp: DatabaseClient):
+    def test_get_query_result_error(self, fx_db_client_tmp_db: DatabaseClient):
         """Getting invalid query triggers error."""
         with pytest.raises(DatabaseError):
-            fx_db_client_tmp.get_query_result(SQL("SELECT * FROM {};").format(Identifier("unknown")))
+            fx_db_client_tmp_db.get_query_result(SQL("SELECT * FROM {};").format(Identifier("unknown")))
 
     # noinspection SqlResolve
-    def test_insert_dict(self, fx_db_client_tmp: DatabaseClient):
+    def test_insert_dict(self, fx_db_client_tmp_db: DatabaseClient):
         """Inserts a dictionary."""
-        fx_db_client_tmp.execute(
+        fx_db_client_tmp_db.execute(
             SQL("""
         CREATE TABLE IF NOT EXISTS public.test
         (
@@ -132,17 +126,17 @@ class TestDBClient:
         """)
         )
 
-        fx_db_client_tmp.insert_dict("public", "test", {"name": "test"})
+        fx_db_client_tmp_db.insert_dict("public", "test", {"name": "test"})
 
-        result = fx_db_client_tmp.get_query_result(
+        result = fx_db_client_tmp_db.get_query_result(
             SQL("SELECT * FROM {}.{};").format(Identifier("public"), Identifier("test"))
         )
         assert result == [(1, "test")]
 
-        fx_db_client_tmp.execute(SQL("DROP TABLE {}.{};").format(Identifier("public"), Identifier("test")))
+        fx_db_client_tmp_db.execute(SQL("DROP TABLE {}.{};").format(Identifier("public"), Identifier("test")))
 
-    def test_insert_dict_jsonb(self, fx_db_client_tmp: DatabaseClient):
-        fx_db_client_tmp.execute(
+    def test_insert_dict_jsonb(self, fx_db_client_tmp_db: DatabaseClient):
+        fx_db_client_tmp_db.execute(
             SQL("""
         CREATE TABLE IF NOT EXISTS public.test
         (
@@ -154,21 +148,21 @@ class TestDBClient:
 
         data = {"foo": "bar"}
 
-        fx_db_client_tmp.insert_dict("public", "test", {"data": Jsonb(data)})
+        fx_db_client_tmp_db.insert_dict("public", "test", {"data": Jsonb(data)})
 
-        result = fx_db_client_tmp.get_query_result(
+        result = fx_db_client_tmp_db.get_query_result(
             SQL("SELECT * FROM {}.{};").format(Identifier("public"), Identifier("test"))
         )
         assert result == [(1, data)]
 
-    def test_insert_dict_error(self, fx_db_client_tmp: DatabaseClient):
+    def test_insert_dict_error(self, fx_db_client_tmp_db: DatabaseClient):
         """Invalid insert triggers error."""
         with pytest.raises(DatabaseError):
-            fx_db_client_tmp.insert_dict("public", "unknown", {"name": "test"})
+            fx_db_client_tmp_db.insert_dict("public", "unknown", {"name": "test"})
 
-    def test_update_dict(self, fx_db_client_tmp: DatabaseClient):
+    def test_update_dict(self, fx_db_client_tmp_db: DatabaseClient):
         """Updates data from a dictionary."""
-        fx_db_client_tmp.execute(
+        fx_db_client_tmp_db.execute(
             SQL("""
                 CREATE TABLE IF NOT EXISTS public.test
                 (
@@ -181,45 +175,45 @@ class TestDBClient:
                 """)
         )
 
-        fx_db_client_tmp.update_dict(
+        fx_db_client_tmp_db.update_dict(
             schema="public", table_view="test", data={"name": "updated"}, where=SQL("id = {}").format(1)
         )
 
-        result = fx_db_client_tmp.get_query_result(
+        result = fx_db_client_tmp_db.get_query_result(
             SQL("SELECT * FROM {}.{};").format(Identifier("public"), Identifier("test"))
         )
         assert (1, "updated") in result
         assert (2, "no-change") in result
 
-        fx_db_client_tmp.execute(SQL("DROP TABLE {}.{};").format(Identifier("public"), Identifier("test")))
+        fx_db_client_tmp_db.execute(SQL("DROP TABLE {}.{};").format(Identifier("public"), Identifier("test")))
 
-    def test_migrate_upgrade(self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp: DatabaseClient):
+    def test_migrate_upgrade(self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp_db: DatabaseClient):
         """Database can be migrated up."""
-        fx_db_client_tmp.migrate_upgrade()
+        fx_db_client_tmp_db.migrate_upgrade()
 
         assert "Upgrading database to head revision..." in caplog.text
 
         # verify an expected object exists
-        result = fx_db_client_tmp.get_query_result(SQL("SELECT PostGIS_Version();"))
+        result = fx_db_client_tmp_db.get_query_result(SQL("SELECT PostGIS_Version();"))
         assert "USE_GEOS" in result[0][0]
 
     @pytest.mark.cov
-    def test_migrate_upgrade_error(self, mocker: MockerFixture, fx_db_client_tmp: DatabaseClient):
+    def test_migrate_upgrade_error(self, mocker: MockerFixture, fx_db_client_tmp_db: DatabaseClient):
         """Problem when migrating database up triggers error."""
-        mocker.patch.object(fx_db_client_tmp, "execute_files_in_path", side_effect=DatabaseError)
+        mocker.patch.object(fx_db_client_tmp_db, "execute_files_in_path", side_effect=DatabaseError)
 
         with pytest.raises(DatabaseMigrationError):
-            fx_db_client_tmp.migrate_upgrade()
+            fx_db_client_tmp_db.migrate_upgrade()
 
-    def test_migrate_downgrade(self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp_migrated: DatabaseClient):
+    def test_migrate_downgrade(self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp_db_mig: DatabaseClient):
         """Database can be migrated down."""
-        fx_db_client_tmp_migrated.migrate_downgrade()
+        fx_db_client_tmp_db_mig.migrate_downgrade()
 
         assert "Downgrading database to base revision..." in caplog.text
 
         # verify an expected object does not exist
         with pytest.raises(DatabaseError):
-            fx_db_client_tmp_migrated.get_query_result(SQL("SELECT PostGIS_Version();"))
+            fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT PostGIS_Version();"))
 
 
 class TestMakeConn:

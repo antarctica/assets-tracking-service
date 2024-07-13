@@ -1,3 +1,4 @@
+#file: noinspection YAMLSchemaValidation
 ---
 
 include:
@@ -36,6 +37,7 @@ variables:
   SSH_PRIVATE_KEY: id_ed25519.pem
   DEPLOY_HOST: bslws01.nerc-bas.ac.uk
   DEPLOY_USER: geoweb
+  DEPLOY_APP_DB_DSN: "XXX"
   DEPLOY_APP_NAME: assets-tracking-service
   DEPLOY_APP_PIP_PACKAGE: $DEPLOY_APP_NAME
   DEPLOY_APP_PIP_EXTRA_INDEX: https://$PACKAGE_ACCESS_IDENTIFIER:$PACKAGE_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/$CI_PROJECT_ID/packages/pypi/simple
@@ -64,69 +66,69 @@ cache:
 image: python:3.12-slim
 
 .before_script_common: &before_script_common
-    - apt-get update
+  - apt-get update
 
 .before_script_python: &before_script_python
-    - *before_script_common
+  - *before_script_common
 
-    # setup python
-    - python --version
-    - python -m pip install --upgrade pip
+  # setup python
+  - python --version
+  - python -m pip install --upgrade pip
 
-    # setup poetry
-    - python -m pip install pipx
-    - python -m pipx install poetry==1.8.2
-    - python -m pipx ensurepath
-    - export PATH=/root/.local/bin:$PATH
-    - poetry --version
-    - poetry config virtualenvs.in-project true
-    - poetry config repositories.gitlab "$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/pypi"
-    - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN" --local
-    - poetry config http-basic.ats-air gitlab-ci-token "$CI_JOB_TOKEN" --local
-    - poetry check
+  # setup poetry
+  - python -m pip install pipx
+  - python -m pipx install poetry==1.8.2
+  - python -m pipx ensurepath
+  - export PATH=/root/.local/bin:$PATH
+  - poetry --version
+  - poetry config virtualenvs.in-project true
+  - poetry config repositories.gitlab "$CI_SERVER_URL/api/v4/projects/$CI_PROJECT_ID/packages/pypi"
+  - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN" --local
+  - poetry config http-basic.ats-air gitlab-ci-token "$CI_JOB_TOKEN" --local
+  - poetry check
 
 .before_script_python_app_deps: &before_script_python_app_deps
-    - *before_script_python
+  - *before_script_python
 
-    # setup gdal
-    - apt-get install -y build-essential gdal-bin libgdal-dev
-    - ogrinfo --version
+  # setup gdal
+  - apt-get install -y build-essential gdal-bin libgdal-dev
+  - ogrinfo --version
 
-    # setup app deps
-    - poetry install --no-interaction --no-ansi
+  # setup app deps
+  - poetry install --no-interaction --no-ansi
 
 .before_script_postgres_testing: &before_script_postgres_testing
-    - *before_script_common
+  - *before_script_common
 
-    # setup postgres (testing)
-    - apt-get install -y postgresql-client
-    - export PGPASSWORD=$POSTGRES_PASSWORD    # best practice way to provide password to psql
-    - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 'OK' AS status;"
-    - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_tiger_geocoder;"
-    - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_topology;"
-    - poetry run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.db_dsn_safe)'
+  # setup postgres (testing)
+  - apt-get install -y postgresql-client
+  - export PGPASSWORD=$POSTGRES_PASSWORD    # best practice way to provide password to psql
+  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 'OK' AS status;"
+  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_tiger_geocoder;"
+  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_topology;"
+  - poetry run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.db_dsn_safe)'
 
 .before_script_deploy: &before_script_deploy
-    - *before_script_common
+  - *before_script_common
 
-    # setup 1Password CLI
-    - apt-get install -y curl unzip
-    - curl -sSfo op.zip https://cache.agilebits.com/dist/1P/op2/pkg/v2.28.0/op_linux_amd64_v2.28.0.zip
-    - unzip -od /usr/local/bin/ op.zip
+  # setup 1Password CLI
+  - apt-get install -y curl unzip
+  - curl -sSfo op.zip https://cache.agilebits.com/dist/1P/op2/pkg/v2.28.0/op_linux_amd64_v2.28.0.zip
+  - unzip -od /usr/local/bin/ op.zip
 
-    # setup SSH
-    - apt-get install -y openssh-client
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - op read --out-file ~/.ssh/$SSH_PRIVATE_KEY 'op://Infrastructure/gl-cd-assets-tracking-service/private key?ssh-format=openssh'
-    - eval $(ssh-agent -s)
-    - chmod 400 ~/.ssh/$SSH_PRIVATE_KEY
-    - ssh-add ~/.ssh/$SSH_PRIVATE_KEY
-    - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
+  # setup SSH
+  - apt-get install -y openssh-client
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - op read --out-file ~/.ssh/$SSH_PRIVATE_KEY 'op://Infrastructure/gl-cd-assets-tracking-service/private key?ssh-format=openssh'
+  - eval $(ssh-agent -s)
+  - chmod 400 ~/.ssh/$SSH_PRIVATE_KEY
+  - ssh-add ~/.ssh/$SSH_PRIVATE_KEY
+  - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts
 
 .before_script_release: &before_script_release
-    - apk add --no-cache curl jq
+  - apk add --no-cache curl jq
 
 # Jobs
 
@@ -140,7 +142,9 @@ pytest:
     - *before_script_python_app_deps
     - *before_script_postgres_testing
   script:
-    - poetry run pytest -o junit_family=xunit2 --junitxml=test-results.xml --continue-on-collection-errors
+    - poetry run pytest tests/assets_tracking_service_tests/test_config.py::TestConfig::test_db_dsn
+    - poetry run pytest tests/assets_tracking_service_tests/test_config.py::TestConfig
+    - poetry run pytest -o junit_family=xunit2 --junitxml=test-results.xml --cov --cov-report=html --continue-on-collection-errors
     # --continue-on-collection-errors counteracts `-x` flag set in pyproject.toml
   coverage: '/Total coverage: \d+\.\d+/'
   artifacts:

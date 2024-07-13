@@ -59,74 +59,58 @@ class TestConfig:
         # restore environment variables if set outside of test
         for env in envs:
             if env in envs_bck:
-                os.environ[env] = envs_bck[env]
+                os.environ[env] = str(envs_bck[env])
 
     def test_db_dsn(self):
-        """Gets DB DSN."""
-        # backup environment variables if set or set them
-        db_dsn_bck = os.environ.get("ASSETS_TRACKING_SERVICE_DB_DSN", None)
-        db_name_bck = os.environ.get("ASSETS_TRACKING_SERVICE_DB_DATABASE", None)
+        """
+        Gets DB DSN from environment.
 
-        # override pytest-env
-        del os.environ["ASSETS_TRACKING_SERVICE_DB_DATABASE"]
+        This has previously proved unreliable in CI so has a dedicated test we can run.
+        """
+        config = Config()
 
+        assert "postgresql://" in config.DB_DSN
+
+        config.validate()
+
+    def test_db_dsn_explicit(self):
+        """Gets DB DSN when set explicitly as part of test."""
         dsn = "postgresql://test:password@localhost:5432/assets-tracking-dev"
-        os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"] = dsn
+        envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": dsn, "ASSETS_TRACKING_SERVICE_DB_DATABASE": None}
+        envs_bck = self._set_envs(envs)
 
         config = Config()
         assert config.DB_DSN == dsn
 
-        del os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"]
-
-        # restore environment variables if set outside of test
-        if db_dsn_bck is not None:
-            os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"] = db_dsn_bck
-        if db_name_bck is not None:
-            os.environ["ASSETS_TRACKING_SERVICE_DB_DATABASE"] = db_name_bck
+        self._unset_envs(envs, envs_bck)
 
     def test_db_dsn_app_db(self):
         """Gets DB DSN with overridden database name."""
-        # backup environment variables if set or set them
-        db_dsn_bck = os.environ.get("ASSETS_TRACKING_SERVICE_DB_DSN", None)
-        db_name_bck = os.environ.get("ASSETS_TRACKING_SERVICE_DB_DATABASE", None)
-
         dsn = "postgresql://test:password@localhost:5432/assets-tracking-foo"
         name = "assets-tracking-bar"
-        os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"] = dsn
-        os.environ["ASSETS_TRACKING_SERVICE_DB_DATABASE"] = name
+
+        envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": dsn, "ASSETS_TRACKING_SERVICE_DB_DATABASE": name}
+        envs_bck = self._set_envs(envs)
 
         config = Config()
         assert config.DB_DSN == dsn.replace("assets-tracking-foo", name)
 
-        del os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"]
-        del os.environ["ASSETS_TRACKING_SERVICE_DB_DATABASE"]
-
-        # restore environment variables if set outside of test
-        if db_dsn_bck is not None:
-            os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"] = db_dsn_bck
-        if db_name_bck is not None:
-            os.environ["ASSETS_TRACKING_SERVICE_DB_DATABASE"] = db_name_bck
+        self._unset_envs(envs, envs_bck)
 
     def test_db_safe(self):
         """Gets DB DSN with password redacted."""
-        # backup environment variables if set or set them
-        db_dsn_bck = os.environ.get("APP_DB_DSN", None)
-
         password = "password"
         dsn = f"postgresql://test:{password}@localhost:5432/assets-tracking-test"
         safe_dsn = dsn.replace(password, "[**REDACTED**]")
 
-        os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"] = dsn
+        envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": dsn}
+        envs_bck = self._set_envs(envs)
 
         config = Config()
         assert config.DB_DSN == dsn
         assert config.db_dsn_safe == safe_dsn
 
-        del os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"]
-
-        # restore environment variables if set outside of test
-        if db_dsn_bck is not None:
-            os.environ["ASSETS_TRACKING_SERVICE_DB_DSN"] = db_dsn_bck
+        self._unset_envs(envs, envs_bck)
 
     def test_version(self):
         """Version is read from package metadata."""
@@ -234,13 +218,8 @@ class TestConfig:
 
     @pytest.mark.cov
     def test_validate_providers_disabled(self):
-        """
-        Needed to satisfy coverage that config is valid when all providers can be disabled.
-
-        ASSETS_TRACKING_SERVICE_DB_DSN needs to be set for CI.
-        """
+        """Needed to satisfy coverage that config is valid when all providers can be disabled."""
         envs = {
-            "ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://postgres@localhost:5432/assets-tracking-test",
             "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
             "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
         }
