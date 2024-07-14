@@ -169,11 +169,8 @@ ruff:
   before_script:
     - *before_script_python_app_deps
   script:
-    - poetry run ruff check src/ tests/ --output-format gitlab > lint-results.json
+    - poetry run ruff check src/ tests/
     - poetry run ruff format --check src/ tests/
-  artifacts:
-    reports:
-      codequality: lint-results.json
   rules:
     -
       changes:

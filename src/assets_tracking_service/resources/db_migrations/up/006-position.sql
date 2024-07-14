@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.position
     velocity_ms     FLOAT,
     heading         FLOAT,
     labels          JSONB NOT NULL
-        CONSTRAINT caper_labels_valid CHECK (are_labels_v1_valid(labels)),
+        CONSTRAINT positions_labels_valid CHECK (are_labels_v1_valid(labels)),
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
