@@ -14,18 +14,19 @@ ats-ctl = 'assets_tracking_service.cli:app_cli'
 [tool.poetry.dependencies]
 python = "^3.12"
 assets-tracking-service-aircraft-provider = { version = "^0.1.0", source = "ats-air" }
+cattrs = "^23.2.3"
 dsnparse = "^0.2.1"
 environs = "^11.0.0"
 psycopg = "^3.2.1"
+rich = "^13.7.1"
+shapely = "^2.0.5"
 typer = "^0.12.3"
 ulid-py = "^1.1.0"
-rich = "^13.7.1"
 
 [[tool.poetry.source]]
 name = "ats-air"
 url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1216/packages/pypi/simple"
 priority = "supplemental"
-
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.5.1"
