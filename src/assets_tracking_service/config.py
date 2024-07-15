@@ -28,6 +28,8 @@ class EditableDsn(dsnparse.ParseResult):
 
 
 class ConfigurationError(Exception):
+    """Raised for configuration validation errors."""
+
     pass
 
 

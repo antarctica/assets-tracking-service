@@ -55,7 +55,7 @@ class Asset(AssetNew):
 
     @property
     def pref_label_value(self) -> str:
-        """Caper 'name' (skos:prefLabel)."""
+        """Asset 'name' (skos:prefLabel)."""
         return self.labels.filter_by_scheme("skos:prefLabel").value
 
 

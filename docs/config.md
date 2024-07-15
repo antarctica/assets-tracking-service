@@ -59,3 +59,7 @@ The `dumps_safe()` method returns a typed dict of configurable and unconfigurabl
 sensitive, a 'safe' version will be returned with sensitive values substituted.
 
 See the [CLI Reference](./cli-reference.md#config-commands) documentation for how to display the current configuration.
+
+## Adding configuration options
+
+See the [Developing](./dev.md#adding-configuration-options) documentation for how to add a new configuration option.
