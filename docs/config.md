@@ -45,16 +45,20 @@ E.g. a boolean option will be read as `'true'`, `'True'`, etc. and parsed as `Tr
 | `provider_geotab_group_nvs_l06_code_mapping` | Dictionary      | See relevant provider configuration                                 | -                                                         |
 | `version`                                    | String          | Application package version                                         | '0.3.0'                                                   |
 
-## Sentry environment
+## Sentry
 
-The [Sentry](./implementation.md#monitoring) SDK supports setting an
-[environment](https://docs.sentry.io/platforms/python/configuration/environments/) description (e.g. 'production') set
-by the `ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT` environment variable.
+Exceptionally, [Sentry](./implementation.md#monitoring) is configured separately to the main Config class. This means:
 
-Exceptionally:
+- Sentry options MUST be set via an environment variable directly (they will not be read from an `.env` file)
+- as Sentry options are not part of the app Config class they will not be validated
 
-- this option MUST be set via an environment variable directly (it will not be read from an `.env` file)
-- this option is not part of the app Config class and is not validated
+Sentry configuration options:
+
+- `ASSETS_TRACKING_SERVICE_ENABLE_FEATURE_SENTRY`:
+  - enables Sentry if `true`, or disables if `false`, default is `true`
+- `ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT`:
+  - sets Sentry [environment](https://docs.sentry.io/platforms/python/configuration/environments/) description
+  - set to 'development' by default and SHOULD be changed in other [Environments](./infrastructure.md#environments)
 
 ## Config validation
 
