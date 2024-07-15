@@ -51,7 +51,7 @@ class TestModelProvider:
             ]
         )
 
-        assert fx_provider_example._provider_labels == expected_labels
+        assert fx_provider_example.provider_labels == expected_labels
 
     @pytest.mark.cov
     def test_index_assets(self, fx_provider_example: ExampleProvider):

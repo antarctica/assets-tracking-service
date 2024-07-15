@@ -1,0 +1,128 @@
+interactions:
+- request:
+    body: '{"id":-1,"method":"Authenticate","params":{"database":"x","userName":"x","password":"x"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '134'
+      Content-type:
+      - application/json; charset=UTF-8
+      User-Agent:
+      - Python/3.12 mygeotab-python/0.9.1
+    method: POST
+    uri: https://my.geotab.com/apiv1
+  response:
+    body:
+      string: '{"result":{"credentials":{"database":"x","sessionId":"aYtxN_xRBXgp-UzQ_RR1ag","userName":"x"},"path":"ThisServer"},"jsonrpc":"2.0","id":-1}'
+    headers:
+      Alt-Svc:
+      - clear
+      Cache-Control:
+      - must-revalidate, no-cache, max-age=0
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Sat, 06 Jul 2024 14:01:44 GMT
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - Kestrel
+      Set-Cookie:
+      - GCLB=CLrNuNj10sK1qAEQAw; path=/; HttpOnly; expires=Sat, 06-Jul-2024 14:11:44
+        GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      Via:
+      - 1.1 google
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      service-worker-allowed:
+      - /serviceworker/
+      x-correlation-id:
+      - 0HN4T3PG947AM:000000C0
+      x-rate-limit-limit:
+      - 1m
+      x-rate-limit-remaining:
+      - '9'
+      x-rate-limit-reset:
+      - '2024-07-06T14:02:44.8766228Z'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"id":-1,"method":"Get","params":{"search":{"fromDate":"2024-07-06T13:49:47.000Z","toDate":"2024-07-06T13:49:47.000Z","deviceSearch":{"id":"b7"}},"resultsLimit":null,"typeName":"LogRecord","credentials":{"userName":"basmagic@bas.ac.uk","sessionId":"aYtxN_xRBXgp-UzQ_RR1ag","database":"bas_uk"}}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '295'
+      Content-type:
+      - application/json; charset=UTF-8
+      User-Agent:
+      - Python/3.12 mygeotab-python/0.9.1
+    method: POST
+    uri: https://my.geotab.com/apiv1
+  response:
+    body:
+      string: '{"result":[{"latitude":56.0257034,"longitude":-3.44706559,"speed":0,"dateTime":"2024-07-06T13:49:47.000Z","device":{"id":"b7"},"id":"b114521"}],"jsonrpc":"2.0","id":-1}'
+    headers:
+      Alt-Svc:
+      - clear
+      Cache-Control:
+      - must-revalidate, no-cache, max-age=0
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Sat, 06 Jul 2024 14:01:45 GMT
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - Kestrel
+      Set-Cookie:
+      - GCLB=CKPjgaT674G1uQEQAw; path=/; HttpOnly; expires=Sat, 06-Jul-2024 14:11:45
+        GMT
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains; preload
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept-Encoding
+      Via:
+      - 1.1 google
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      service-worker-allowed:
+      - /serviceworker/
+      x-correlation-id:
+      - 0HN4T96TR25TT:000002DD
+      x-rate-limit-limit:
+      - 1m
+      x-rate-limit-remaining:
+      - '999'
+      x-rate-limit-reset:
+      - '2024-07-06T14:02:45.4187917Z'
+    status:
+      code: 200
+      message: OK
+version: 1

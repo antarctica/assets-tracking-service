@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime, timezone
 from typing import TypedDict, Literal
+from unittest.mock import PropertyMock
 
 import pytest
+from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
 from pytest_mock import MockerFixture
 from pytest_postgresql import factories
@@ -16,6 +18,9 @@ from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.models.asset import AssetNew, Asset, AssetsClient
 from assets_tracking_service.models.label import Labels, Label, LabelRelation
 from assets_tracking_service.models.position import PositionNew, Position, PositionsClient
+from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingConfig, AircraftTrackingProvider
+from assets_tracking_service.providers.geotab import GeotabConfig, GeotabProvider
+from assets_tracking_service.providers.providers_manager import ProvidersManager
 from tests.providers.example_provider import ExampleProviderConfig, ExampleProvider
 
 # unused-imports are needed for the `factory_name` import to work
@@ -341,3 +346,80 @@ def fx_provider_example(
     fx_provider_example_config: ExampleProviderConfig, fx_logger: logging.Logger
 ) -> ExampleProvider:
     return ExampleProvider(config=fx_provider_example_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_provider_aircraft_tracking_config() -> AircraftTrackingConfig:
+    return {
+        "username": "x",
+        "password": "x",
+        "api_key": "x",
+    }
+
+
+@pytest.fixture()
+def fx_provider_aircraft_tracking(
+    fx_provider_aircraft_tracking_config: AircraftTrackingConfig, fx_logger: logging.Logger
+) -> AircraftTrackingProvider:
+    return AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_provider_geotab_config() -> GeotabConfig:
+    return {
+        "username": "x",
+        "password": "x",
+        "database": "x",
+        "nvs_l06_group_mappings": {
+            "b2795": "15",
+            "b2794": "31",
+            "b2796": "15",  # ideally needs to be a separate term
+        },
+    }
+
+
+@pytest.fixture()
+def fx_provider_geotab(fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger) -> GeotabProvider:
+    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_provider_geotab_mocked(
+    mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
+) -> GeotabProvider:
+    mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mocker.MagicMock(auto_spec=True))
+    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_provider_geotab_mocked_error_mygeotab(
+    mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
+):
+    mock_geotab_client = mocker.MagicMock(auto_spec=True)
+    mock_geotab_client.get.side_effect = MyGeotabException(
+        full_error={"errors": [{"name": "Fake Error", "message": "Fake Error."}]}
+    )
+    mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
+
+    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_provider_geotab_mocked_error_timeout(
+    mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
+):
+    mock_geotab_client = mocker.MagicMock(auto_spec=True)
+    mock_geotab_client.get.side_effect = TimeoutException(server="Fake Server")
+    mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
+
+    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_providers_manager_no_providers(
+    mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
+) -> ProvidersManager:
+    mock_config = mocker.Mock()
+    type(mock_config).enabled_providers = PropertyMock(return_value=[])
+
+    return ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
