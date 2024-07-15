@@ -142,8 +142,6 @@ pytest:
     - *before_script_python_app_deps
     - *before_script_postgres_testing
   script:
-    - poetry run pytest tests/assets_tracking_service_tests/test_config.py::TestConfig::test_db_dsn
-    - poetry run pytest tests/assets_tracking_service_tests/test_config.py::TestConfig
     - poetry run pytest -o junit_family=xunit2 --junitxml=test-results.xml --cov --cov-report=html --continue-on-collection-errors
     # --continue-on-collection-errors counteracts `-x` flag set in pyproject.toml
   coverage: '/Total coverage: \d+\.\d+/'

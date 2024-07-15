@@ -49,10 +49,10 @@ See the [CLI Usage](#command-line-interface) section for available commands.
 
 ## Contributing
 
-All changes must:
+All changes MUST:
 
 - be associated with an issue (either directly or by reference)
-- be included in the [Change Log](./CHANGELOG.md)
+- be included in the [Change Log](../CHANGELOG.md)
 
 Conventions:
 
@@ -79,7 +79,8 @@ $ poetry run safety scan
 ## Linting
 
 [Ruff](https://docs.astral.sh/ruff/) is used to lint and format Python files. Specific checks and config options are
-set in `pyproject.toml`. Linting checks are run automatically in [Continuous Integration](#continuous-integration).
+set in [`pyproject.toml`](../pyproject.toml). Linting checks are run automatically in
+[Continuous Integration](#continuous-integration).
 
 To check linting locally:
 
@@ -188,4 +189,7 @@ In the [Configuration](./config.md) documentation:
 
 - add to either configurable or unconfigurable options table in alphabetical order
 
-Update config [tests](../tests/assets_tracking_service_tests/test_config.py) as needed.
+In the [test_config.py](../tests/assets_tracking_service_tests/test_config.py) module:
+
+- update or create tests as needed
+
