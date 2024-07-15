@@ -18,6 +18,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 * CLI command to run providers manager fetch methods
   [#31](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/31)
 
+### Fixed
+
+* `updated_at` DB column did not automatically update
+  [#22](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/22)
+
 ## [0.2.2] - 2024-04-30
 
 ### Fixed 
