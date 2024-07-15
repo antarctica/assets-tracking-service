@@ -140,9 +140,18 @@ def fx_test_foo() -> str:
 
 ### Pytest-cov test coverage
 
-Test coverage is checked with [`pytest-cov`](https://pypi.org/project/pytest-cov/). We aim for 100% coverage.
-Exemptions for coverage should be used sparingly and with good justification. Where tests are added to ensure coverage,
-use the `cov` [mark](https://docs.pytest.org/en/7.1.x/how-to/mark.html), e.g:
+[`pytest-cov`](https://pypi.org/project/pytest-cov/) checks test coverage. We aim for 100% coverage but exemptions are fine with good justification:
+
+- `# pragma: no cover` - for general exemptions
+- `# pragma: no branch` - where a conditional branch can never be called
+
+To run tests with coverage locally:
+
+```
+$ poetry run pytest --cov --cov-report=html
+```
+
+Where tests are added to ensure coverage, use the `cov` [mark](https://docs.pytest.org/en/7.1.x/how-to/mark.html), e.g:
 
 ```python
 import pytest
