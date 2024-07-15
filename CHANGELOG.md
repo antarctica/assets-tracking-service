@@ -13,6 +13,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * resetting project based on experiments from [Pytest-postgres](https://gitlab.data.bas.ac.uk/felnne/pytest-pg-exp)
 
+### Added
+
+* CLI command to run providers manager fetch methods
+  [#31](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/31)
+
 ## [0.2.2] - 2024-04-30
 
 ### Fixed 

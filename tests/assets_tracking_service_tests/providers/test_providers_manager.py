@@ -120,14 +120,12 @@ class TestProvidersManager:
     def test_fetch_latest_positions(
         self,
         caplog: pytest.LogCaptureFixture,
-        fx_providers_manager_no_providers: ProvidersManager,
-        fx_provider_example: ExampleProvider,
+        fx_providers_manager_eg_provider: ProvidersManager,
     ):
-        fx_providers_manager_no_providers._providers = [fx_provider_example]
-        fx_providers_manager_no_providers.fetch_active_assets()
+        fx_providers_manager_eg_provider.fetch_active_assets()  # to have assets to fetch positions for
 
-        fx_providers_manager_no_providers.fetch_latest_positions()
+        fx_providers_manager_eg_provider.fetch_latest_positions()
 
-        result = fx_providers_manager_no_providers._db.get_query_result(SQL("""SELECT * FROM public.position;"""))
+        result = fx_providers_manager_eg_provider._db.get_query_result(SQL("""SELECT * FROM public.position;"""))
         assert len(result) == 3
         assert "Persisting 3 new positions from 'example' provider." in caplog.text
