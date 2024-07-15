@@ -193,3 +193,22 @@ In the [test_config.py](../tests/assets_tracking_service_tests/test_config.py) m
 
 - update or create tests as needed
 
+
+## Adding CLI commands
+
+If a new command group is needed:
+
+- create a new module in the [`cli`](../src/assets_tracking_service/cli) package
+- create a corresponding test module
+- import and add the new command CLI in the [Root CLI](../src/assets_tracking_service/cli/__init__.py)
+
+In the relevant command group module, create a new method:
+
+- make sure the command decorator name and help are set correctly
+- follow the conventions established in other commands for error handling and presenting data to the user
+- add corresponding tests
+
+In the [CLI Reference](./cli-reference.md) documentation:
+
+- if needed, create a new command group section
+- list and summarise the new command in the relevant group section

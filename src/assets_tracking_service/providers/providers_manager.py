@@ -161,9 +161,10 @@ class ProvidersManager:
             dist_label_scheme = provider.distinguishing_position_label_scheme
             self._logger.debug("Distinguishing position label scheme for provider: '%s'", dist_label_scheme)
 
-            self._logger.debug("Fetching provider assets to associate with positions")
+            self._logger.debug("Fetching provider assets to associate with positions...")
             provider_asset_label = provider.provider_labels.filter_by_scheme("ats:provider_id")
             provider_assets = self._assets.list_filtered_by_label(label=provider_asset_label)
+            self._logger.debug("Fetched %d provider assets.", len(provider_assets))
 
             fetched_positions_by_dist_id = {
                 position.labels.filter_by_scheme(dist_label_scheme).value: position

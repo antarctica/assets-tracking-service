@@ -423,3 +423,11 @@ def fx_providers_manager_no_providers(
     type(mock_config).enabled_providers = PropertyMock(return_value=[])
 
     return ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_providers_manager_eg_provider(
+    fx_providers_manager_no_providers: ProvidersManager, fx_provider_example: ExampleProvider
+) -> ProvidersManager:
+    fx_providers_manager_no_providers._providers = [fx_provider_example]
+    return fx_providers_manager_no_providers
