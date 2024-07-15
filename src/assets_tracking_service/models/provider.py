@@ -14,7 +14,7 @@ class Provider(ABC):
     distinguishing_position_label_scheme: str = f"{prefix}:"
 
     @property
-    def _provider_labels(self) -> Labels:
+    def provider_labels(self) -> Labels:
         return Labels(
             [
                 Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value=self.name),

@@ -44,7 +44,7 @@ class ExampleProvider(Provider):
                 [
                     Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value=value),
                     Label(rel=LabelRelation.SELF, scheme=self.distinguishing_asset_label_scheme, value=value),
-                    *self._provider_labels,
+                    *self.provider_labels,
                 ]
             )
 
@@ -63,7 +63,7 @@ class ExampleProvider(Provider):
                 labels=Labels(
                     [
                         Label(rel=LabelRelation.SELF, scheme=self.distinguishing_position_label_scheme, value=value),
-                        *self._provider_labels,
+                        *self.provider_labels,
                     ]
                 ),
             )

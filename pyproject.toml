@@ -17,6 +17,8 @@ assets-tracking-service-aircraft-provider = { version = "^0.1.0", source = "ats-
 cattrs = "^23.2.3"
 dsnparse = "^0.2.1"
 environs = "^11.0.0"
+mygeotab = "^0.9.1"
+pint = "^0.24.3"
 psycopg = "^3.2.1"
 rich = "^13.7.1"
 shapely = "^2.0.5"
