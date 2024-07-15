@@ -242,3 +242,39 @@ class TestDbFuncLabelsValidity:
                     )
                 },
             )
+
+
+class TestDbFuncSetUpdatedAt:
+    """test `updated_at` column updated on change."""
+
+    # noinspection SqlResolve
+    def test_updated_at(self, fx_db_client_tmp_db_mig: DatabaseClient):
+        fx_db_client_tmp_db_mig.execute(
+            SQL("""
+            CREATE TABLE public.test (
+                id INTEGER  GENERATED ALWAYS AS IDENTITY CONSTRAINT test_pk PRIMARY KEY,
+                name TEXT,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+
+            CREATE OR REPLACE TRIGGER test_updated_at_trigger
+            BEFORE INSERT OR UPDATE
+            ON public.test
+            FOR EACH ROW
+            EXECUTE FUNCTION set_updated_at();
+
+            INSERT INTO public.test (name) VALUES ('foo');
+            """)
+        )
+        fx_db_client_tmp_db_mig.commit()
+
+        initial_result = fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT updated_at FROM public.test;"))
+        initial_value = initial_result[0][0]
+
+        fx_db_client_tmp_db_mig.execute(SQL("""UPDATE public.test SET name = 'bar' WHERE id = 1;"""))
+        fx_db_client_tmp_db_mig.commit()
+
+        updated_result = fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT updated_at FROM public.test;"))
+        updated_value = updated_result[0][0]
+
+        assert updated_value != initial_value
