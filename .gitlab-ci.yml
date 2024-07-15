@@ -239,7 +239,8 @@ deploy:
       module-whatis "Control CLI for the Assets Tracking Service.\n"
 
       set basedir "$DEPLOY_VENV"
-      setenv APP_DB_DSN $DEPLOY_APP_DB_DSN
+      setenv ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT production
+      setenv ASSETS_TRACKING_SERVICE_DB_DSN $DEPLOY_APP_DB_DSN
 
       prepend-path PATH \${basedir}/bin
       EOF

@@ -45,6 +45,17 @@ E.g. a boolean option will be read as `'true'`, `'True'`, etc. and parsed as `Tr
 | `provider_geotab_group_nvs_l06_code_mapping` | Dictionary      | See relevant provider configuration                                 | -                                                         |
 | `version`                                    | String          | Application package version                                         | '0.3.0'                                                   |
 
+## Sentry environment
+
+The [Sentry](./implementation.md#monitoring) SDK supports setting an
+[environment](https://docs.sentry.io/platforms/python/configuration/environments/) description (e.g. 'production') set
+by the `ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT` environment variable.
+
+Exceptionally:
+
+- this option MUST be set via an environment variable directly (it will not be read from an `.env` file)
+- this option is not part of the app Config class and is not validated
+
 ## Config validation
 
 The `validate()` method performs basic validation of configurable options. This is limited to whether required options
