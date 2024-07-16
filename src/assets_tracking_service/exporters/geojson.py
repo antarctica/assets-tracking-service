@@ -1,18 +1,12 @@
 import json
 import logging
-from abc import ABC, abstractmethod
 
 from geojson import FeatureCollection, loads as geojson_loads, dump as geojson_dump
 from psycopg.sql import SQL
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
-
-
-class Exporter(ABC):
-    @abstractmethod
-    def export(self) -> None:
-        pass
+from assets_tracking_service.exporters.base_exporter import Exporter
 
 
 class GeoJsonExporter(Exporter):
