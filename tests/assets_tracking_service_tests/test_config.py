@@ -1,5 +1,7 @@
 import os
 from importlib.metadata import version
+from pathlib import Path
+from typing import Any
 
 import dsnparse
 import pytest
@@ -117,6 +119,59 @@ class TestConfig:
         config = Config()
         assert config.version == version("assets-tracking-service")
 
+    def test_dumps_safe(self, fx_package_version: str, fx_config: Config):
+        """Config can be exported to a dict with sensitive values redacted."""
+        redacted_value = "[**REDACTED**]"
+        expected = {
+            "version": fx_package_version,
+            "db_dsn": fx_config.db_dsn_safe,
+            "enable_provider_aircraft_tracking": True,
+            "enable_provider_geotab": True,
+            "enabled_providers": ["geotab", "aircraft_tracking"],
+            "provider_aircraft_tracking_api_key": redacted_value,
+            "provider_aircraft_tracking_password": redacted_value,
+            "provider_aircraft_tracking_username": "x",
+            "provider_geotab_database": "x",
+            "provider_geotab_group_nvs_l06_code_mapping": fx_config.provider_geotab_group_nvs_l06_code_mapping,
+            "provider_geotab_password": redacted_value,
+            "provider_geotab_username": "x",
+            "enable_exporter_geojson": True,
+            "enabled_exporters": ["geojson"],
+            "exporter_geojson_output_path": Path("export.geojson"),
+        }
+
+        output = fx_config.dumps_safe()
+        assert output == expected
+        assert redacted_value in output["db_dsn"]
+
+    def test_validate(self, fx_config: Config):
+        """Valid configuration is ok."""
+        fx_config.validate()
+
+    def test_validate_missing_dsn(self):
+        """Validation fails where DB DSN is missing."""
+        envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": None}
+        envs_bck = self._set_envs(envs)
+
+        config = Config(read_env=False)
+
+        with pytest.raises(ConfigurationError):
+            config.validate()
+
+        self._unset_envs(envs, envs_bck)
+
+    def test_validate_invalid_dsn(self):
+        """Validation fails where DB DSN is invalid."""
+        envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://"}
+        envs_bck = self._set_envs(envs)
+
+        config = Config(read_env=False)
+
+        with pytest.raises(ConfigurationError):
+            config.validate()
+
+        self._unset_envs(envs, envs_bck)
+
     @pytest.mark.parametrize(
         "provider_name,input_value,expected_value",
         [
@@ -181,21 +236,64 @@ class TestConfig:
         self._unset_envs(envs, envs_bck)
 
     @pytest.mark.parametrize(
-        "property_name,sensitive",
+        "exporter_name,input_value,expected_value",
         [
-            ("PROVIDER_GEOTAB_USERNAME", False),
-            ("PROVIDER_GEOTAB_PASSWORD", True),
-            ("PROVIDER_GEOTAB_DATABASE", False),
-            ("PROVIDER_AIRCRAFT_TRACKING_USERNAME", False),
-            ("PROVIDER_AIRCRAFT_TRACKING_PASSWORD", True),
-            ("PROVIDER_AIRCRAFT_TRACKING_API_KEY", True),
+            ("GEOJSON", "true", True),
+            ("GEOJSON", "false", False),
+            ("GEOJSON", None, True),
         ],
     )
-    def test_provider_property(self, property_name: str, sensitive: bool):
-        """Provider properties can be accessed."""
-        expected = "x"
+    def test_enable_exporter(self, exporter_name: str, input_value: str, expected_value: bool):
+        """Exporters are correctly enabled by default and with explicit values."""
+        envs = {f"ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_{exporter_name}": input_value}
+        envs_bck = self._set_envs(envs)
 
-        envs = {f"ASSETS_TRACKING_SERVICE_{property_name}": expected}
+        config = Config()
+        assert getattr(config, f"ENABLE_EXPORTER_{exporter_name}") == expected_value
+
+        self._unset_envs(envs, envs_bck)
+
+    @pytest.mark.parametrize(
+        "envs,expected",
+        [
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
+                },
+                ["geojson"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+                },
+                [],
+            ),
+        ],
+    )
+    def test_enabled_exporters(self, envs: dict[str, str], expected: list[str]):
+        """Enabled exporters derived property is correctly constructed."""
+        envs_bck = self._set_envs(envs)
+
+        config = Config()
+        assert config.enabled_exporters == expected
+
+        self._unset_envs(envs, envs_bck)
+
+    @pytest.mark.parametrize(
+        "property_name,expected,sensitive",
+        [
+            ("PROVIDER_GEOTAB_USERNAME", "x", False),
+            ("PROVIDER_GEOTAB_PASSWORD", "x", True),
+            ("PROVIDER_GEOTAB_DATABASE", "x", False),
+            ("PROVIDER_AIRCRAFT_TRACKING_USERNAME", "x", False),
+            ("PROVIDER_AIRCRAFT_TRACKING_PASSWORD", "x", True),
+            ("PROVIDER_AIRCRAFT_TRACKING_API_KEY", "x", True),
+            ("EXPORTER_GEOJSON_OUTPUT_PATH", Path("export.geojson"), False),
+        ],
+    )
+    def test_configurable_property(self, property_name: str, expected: Any, sensitive: bool):
+        """Configurable properties can be accessed."""
+        envs = {f"ASSETS_TRACKING_SERVICE_{property_name}": str(expected)}
         envs_bck = self._set_envs(envs)
 
         config = Config()
@@ -212,10 +310,6 @@ class TestConfig:
         config = Config()
         assert isinstance(config.provider_geotab_group_nvs_l06_code_mapping, dict)
 
-    def test_validate(self, fx_config: Config):
-        """Valid configuration is ok."""
-        fx_config.validate()
-
     @pytest.mark.cov
     def test_validate_providers_disabled(self):
         """Needed to satisfy coverage that config is valid when all providers can be disabled."""
@@ -230,27 +324,14 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_validate_missing_dsn(self):
-        """Validation fails where DB DSN is missing."""
-        envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": None}
+    @pytest.mark.cov
+    def test_validate_exporters_disabled(self):
+        """Needed to satisfy coverage that config is valid when all exporters can be disabled."""
+        envs = {"ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false"}
         envs_bck = self._set_envs(envs)
 
-        config = Config(read_env=False)
-
-        with pytest.raises(ConfigurationError):
-            config.validate()
-
-        self._unset_envs(envs, envs_bck)
-
-    def test_validate_invalid_dsn(self):
-        """Validation fails where DB DSN is invalid."""
-        envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://"}
-        envs_bck = self._set_envs(envs)
-
-        config = Config(read_env=False)
-
-        with pytest.raises(ConfigurationError):
-            config.validate()
+        config = Config()
+        config.validate()
 
         self._unset_envs(envs, envs_bck)
 
@@ -311,10 +392,20 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": None,
                 }
             ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH": None,
+                }
+            ),
         ],
     )
-    def test_validate_missing_provider_property(self, envs: dict):
-        """Validation fails where a required provider property is missing."""
+    def test_validate_missing_required_option(self, envs: dict):
+        """
+        Validation fails where a required provider or exporter config option is missing.
+
+        Note: The `ASSETS_TRACKING_SERVICE_DB_DSN` option is trickier to check and covered by a specific test.
+        """
         static_env = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://postgres@localhost:5432/assets-tracking-test"}
         envs = {**static_env, **envs}
         envs_bck = self._set_envs(envs)
@@ -325,25 +416,3 @@ class TestConfig:
             config.validate()
 
         self._unset_envs(envs, envs_bck)
-
-    def test_dumps_safe(self, fx_config: Config):
-        """Config can be exported to a dict with sensitive values redacted."""
-        redacted_value = "[**REDACTED**]"
-        expected = {
-            "db_dsn": fx_config.db_dsn_safe,
-            "enable_provider_aircraft_tracking": True,
-            "enable_provider_geotab": True,
-            "enabled_providers": ["geotab", "aircraft_tracking"],
-            "provider_aircraft_tracking_api_key": redacted_value,
-            "provider_aircraft_tracking_password": redacted_value,
-            "provider_aircraft_tracking_username": "x",
-            "provider_geotab_database": "x",
-            "provider_geotab_group_nvs_l06_code_mapping": fx_config.provider_geotab_group_nvs_l06_code_mapping,
-            "provider_geotab_password": redacted_value,
-            "provider_geotab_username": "x",
-            "version": "0.1.0",
-        }
-
-        output = fx_config.dumps_safe()
-        assert output == expected
-        assert redacted_value in output["db_dsn"]

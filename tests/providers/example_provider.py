@@ -44,6 +44,13 @@ class ExampleProvider(Provider):
                 [
                     Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value=value),
                     Label(rel=LabelRelation.SELF, scheme=self.distinguishing_asset_label_scheme, value=value),
+                    Label(
+                        rel=LabelRelation.SELF,
+                        scheme="nvs:L06",
+                        scheme_uri="http://vocab.nerc.ac.uk/collection/L06/current",
+                        value="0",
+                        value_uri="http://vocab.nerc.ac.uk/collection/L06/current/0",
+                    ),
                     *self.provider_labels,
                 ]
             )

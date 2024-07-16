@@ -5,6 +5,7 @@ from rich import print
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient, make_conn
+from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.providers.providers_manager import ProvidersManager
 
 _ok = "[green]Ok.[/green]"
@@ -30,4 +31,19 @@ def fetch() -> None:
 
     providers.fetch_active_assets()
     providers.fetch_latest_positions()
+    print(f"{_ok} Command exited normally. Check log for any errors.")
+
+
+@data_cli.command(name="export", help="Export summary data for assets and their last known positions.")
+def export() -> None:
+    """
+    Dump assets with latest positions through each exporter.
+
+    Currently limited to GeoJSON.
+    """
+    config = Config()
+    db = DatabaseClient(conn=make_conn(config.DB_DSN))
+
+    exporter = GeoJsonExporter(config=config, db=db, logger=logger)
+    exporter.export()
     print(f"{_ok} Command exited normally. Check log for any errors.")

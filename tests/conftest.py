@@ -1,5 +1,8 @@
 import logging
 from datetime import datetime, timezone
+from importlib.metadata import version
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TypedDict, Literal
 from unittest.mock import PropertyMock
 
@@ -15,6 +18,7 @@ from ulid import ULID, parse as ulid_parse
 from assets_tracking_service.cli import app_cli
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
+from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.models.asset import AssetNew, Asset, AssetsClient
 from assets_tracking_service.models.label import Labels, Label, LabelRelation
 from assets_tracking_service.models.position import PositionNew, Position, PositionsClient
@@ -35,6 +39,12 @@ postgresql = factories.postgresql(postgresql_factory_name)
 
 
 @pytest.fixture()
+def fx_package_version() -> str:
+    """Package version."""
+    return version("assets_tracking_service")
+
+
+@pytest.fixture
 def fx_logger() -> logging.Logger:
     """App logger."""
     logger = logging.getLogger("app")
@@ -63,6 +73,25 @@ def fx_db_client_tmp_db_mig(fx_db_client_tmp_db: DatabaseClient) -> DatabaseClie
 
 
 @pytest.fixture()
+def fx_db_client_tmp_db_pop(
+    mocker: MockerFixture,
+    fx_db_client_tmp_db_mig: DatabaseClient,
+    fx_logger: logging.Logger,
+    fx_provider_example: ExampleProvider,
+) -> DatabaseClient:
+    """Database client with a populated, disposable, database."""
+    mock_config = mocker.Mock()
+    type(mock_config).enabled_providers = PropertyMock(return_value=[])
+
+    providers = ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
+    providers._providers = [fx_provider_example]
+    providers.fetch_active_assets()
+    providers.fetch_latest_positions()
+
+    return fx_db_client_tmp_db_mig
+
+
+@pytest.fixture
 def fx_cli() -> CliRunner:
     """CLI testing fixture."""
     return CliRunner()
@@ -431,3 +460,15 @@ def fx_providers_manager_eg_provider(
 ) -> ProvidersManager:
     fx_providers_manager_no_providers._providers = [fx_provider_example]
     return fx_providers_manager_no_providers
+
+
+@pytest.fixture
+def fx_exporter_geojson(
+    mocker: MockerFixture, fx_config: Config, fx_db_client_tmp_db_pop, fx_logger: logging.Logger
+) -> GeoJsonExporter:
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path) / "output.geojson"
+        mock_config = mocker.Mock()
+        type(mock_config).EXPORTER_GEOJSON_OUTPUT_PATH = PropertyMock(return_value=output_path)
+
+    return GeoJsonExporter(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
