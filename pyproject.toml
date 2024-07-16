@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "assets-tracking-service"
-version = "0.1.0"
+version = "0.3.0"
 description = "Service to track the location of BAS assets, including ships, aircraft, and vehicles."
 authors = ["Felix Fennell <felnne@bas.ac.uk>"]
 readme = "README.md"

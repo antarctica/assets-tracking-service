@@ -12,7 +12,7 @@
 
 ## `data` commands
 
-- `ats-ctl data fetch` - fetch active assets and last known positions
+- `ats-ctl data fetch` - fetch active assets and their last known positions
 
 ## `db` commands
 

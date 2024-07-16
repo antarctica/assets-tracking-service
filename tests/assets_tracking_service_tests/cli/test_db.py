@@ -5,7 +5,7 @@ from assets_tracking_service.cli import app_cli as cli
 from assets_tracking_service.db import DatabaseError, DatabaseMigrationError
 
 
-class TestDbConfig:
+class TestCliDb:
     """DB CLI commands."""
 
     def test_cli_db_check(self, fx_cli: CliRunner) -> None:
