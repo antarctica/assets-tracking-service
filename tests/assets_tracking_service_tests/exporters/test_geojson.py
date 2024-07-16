@@ -19,6 +19,30 @@ class TestExporterGeoJson:
         assert result.is_valid
         assert len(result["features"]) > 0
 
+    def test_data_keys_order(self, fx_exporter_geojson: GeoJsonExporter):
+        """Feature property keys are in expected order (sanity check)."""
+        expected_order = [
+            "asset_id",
+            "position_id",
+            "name",
+            "type_code",
+            "type_label",
+            "time_utc",
+            "last_fetched_utc",
+            "lat_dd",
+            "lon_dd",
+            "lat_dms",
+            "lon_dms",
+            "elv_m",
+            "elv_ft",
+            "speed_ms",
+            "speed_kmh",
+            "speed_kn",
+            "heading_d",
+        ]
+        result = fx_exporter_geojson.data
+        feature_props = result["features"][0]["properties"]
+
         assert list(feature_props.keys()) == expected_order
 
     @pytest.mark.cov
