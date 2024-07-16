@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from importlib.metadata import version
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TypedDict, Literal
@@ -38,6 +39,12 @@ postgresql = factories.postgresql(postgresql_factory_name)
 
 
 @pytest.fixture()
+def fx_package_version() -> str:
+    """Package version."""
+    return version("assets_tracking_service")
+
+
+@pytest.fixture
 def fx_logger() -> logging.Logger:
     """App logger."""
     logger = logging.getLogger("app")
