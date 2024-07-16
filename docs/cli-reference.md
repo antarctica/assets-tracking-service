@@ -7,8 +7,8 @@
 
 ## `config` commands
 
-- `ods-ctl config check`: [validates](./config.md#config-validation) configurable configuration options
-- `ods-ctl config show`: displays the current application configuration with sensitive values redacted
+- `ats-ctl config check`: [validates](./config.md#config-validation) configurable configuration options
+- `ats-ctl config show`: displays the current application configuration with sensitive values redacted
 
 ## `data` commands
 
@@ -16,9 +16,9 @@
 
 ## `db` commands
 
-- `ods-ctl db check`: verifies application database can be accessed
-- `ods-ctl db migrate`: runs all [Database Migrations](./implementation.md#database-migrations) to configure database
-- `ods-ctl db rollback`: reverts all [Database Migrations](./implementation.md#database-migrations) to reset database
+- `ats-ctl db check`: verifies application database can be accessed
+- `ats-ctl db migrate`: runs all [Database Migrations](./implementation.md#database-migrations) to configure database
+- `ats-ctl db rollback`: reverts all [Database Migrations](./implementation.md#database-migrations) to reset database
 
 ## Adding CLI commands
 
