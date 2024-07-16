@@ -9,7 +9,7 @@ from assets_tracking_service.providers.providers_manager import ProvidersManager
 class TestCliData:
     """Data CLI commands."""
 
-    def test_cli_db_check(
+    def test_cli_data_fetch(
         self, mocker: MockerFixture, fx_cli: CliRunner, fx_providers_manager_eg_provider: ProvidersManager
     ) -> None:
         """Fetches assets and positions."""

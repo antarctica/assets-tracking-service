@@ -45,7 +45,7 @@ $ cp .env.example .env
 $ poetry run python ats-ctl ...
 ```
 
-See the [CLI Usage](#command-line-interface) section for available commands.
+See the [CLI Reference](./cli-reference.md) documentation for available commands.
 
 ## Contributing
 

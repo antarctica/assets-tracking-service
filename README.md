@@ -25,7 +25,7 @@ Antarctic Survey.
 
 ## Development
 
-See [docs/dev](docs/dev.md).
+See [Development](./docs/dev.md) documentation.
 
 ## Releases
 
