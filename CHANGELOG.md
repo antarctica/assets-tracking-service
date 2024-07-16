@@ -25,6 +25,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 * `updated_at` DB column did not automatically update
   [#22](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/22)
 
+### Changed
+
+* derived units in latest asset positions export database view
+  [#36](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/36)
+
 ## [0.2.2] - 2024-04-30
 
 ### Fixed 
