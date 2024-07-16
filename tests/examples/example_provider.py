@@ -7,7 +7,7 @@ from shapely import Point
 from assets_tracking_service.models.asset import AssetNew, Asset
 from assets_tracking_service.models.label import Labels, Label, LabelRelation
 from assets_tracking_service.models.position import PositionNew
-from assets_tracking_service.models.provider import Provider
+from assets_tracking_service.providers.base_provider import Provider
 
 
 class ExampleProviderConfig(TypedDict):

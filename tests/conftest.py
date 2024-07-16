@@ -25,7 +25,7 @@ from assets_tracking_service.models.position import PositionNew, Position, Posit
 from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingConfig, AircraftTrackingProvider
 from assets_tracking_service.providers.geotab import GeotabConfig, GeotabProvider
 from assets_tracking_service.providers.providers_manager import ProvidersManager
-from tests.providers.example_provider import ExampleProviderConfig, ExampleProvider
+from tests.examples.example_provider import ExampleProviderConfig, ExampleProvider
 
 # unused-imports are needed for the `factory_name` import to work
 from tests.pytest_postgresql import (  # noqa: F401
