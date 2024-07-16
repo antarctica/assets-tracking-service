@@ -1,4 +1,5 @@
 from importlib.metadata import version
+from pathlib import Path
 from typing import TypedDict
 
 from environs import Env, EnvError
@@ -91,12 +92,20 @@ class Config:
             except EnvError as e:
                 raise ConfigurationError("PROVIDER_GEOTAB_DATABASE must be set.") from e
 
+        if self.ENABLE_EXPORTER_GEOJSON:
+            try:
+                _ = self.EXPORTER_GEOJSON_OUTPUT_PATH
+            except EnvError as e:
+                raise ConfigurationError("EXPORTER_GEOJSON_OUTPUT_PATH must be set.") from e
+
     class ConfigDumpSafe(TypedDict):
         version: str
         db_dsn: str
         enable_provider_geotab: bool
         enable_provider_aircraft_tracking: bool
         enabled_providers: list[str]
+        enable_exporter_geojson: bool
+        enabled_exporters: list[str]
         provider_geotab_username: str
         provider_geotab_password: str
         provider_geotab_database: str
@@ -104,6 +113,7 @@ class Config:
         provider_aircraft_tracking_username: str
         provider_aircraft_tracking_password: str
         provider_aircraft_tracking_api_key: str
+        exporter_geojson_output_path: Path
 
     def dumps_safe(self) -> ConfigDumpSafe:
         """Dump config for output to the user with sensitive data redacted."""
@@ -113,6 +123,8 @@ class Config:
             "enable_provider_geotab": self.ENABLE_PROVIDER_GEOTAB,
             "enable_provider_aircraft_tracking": self.ENABLE_PROVIDER_AIRCRAFT_TRACKING,
             "enabled_providers": self.enabled_providers,
+            "enable_exporter_geojson": self.ENABLE_EXPORTER_GEOJSON,
+            "enabled_exporters": self.enabled_exporters,
             "provider_geotab_username": self.PROVIDER_GEOTAB_USERNAME,
             "provider_geotab_password": self.provider_geotab_password_safe,
             "provider_geotab_database": self.PROVIDER_GEOTAB_DATABASE,
@@ -120,6 +132,7 @@ class Config:
             "provider_aircraft_tracking_username": self.PROVIDER_AIRCRAFT_TRACKING_USERNAME,
             "provider_aircraft_tracking_password": self.provider_aircraft_tracking_password_safe,
             "provider_aircraft_tracking_api_key": self.provider_aircraft_tracking_api_key_safe,
+            "exporter_geojson_output_path": self.EXPORTER_GEOJSON_OUTPUT_PATH,
         }
 
     @property
@@ -180,6 +193,22 @@ class Config:
             providers.append("aircraft_tracking")
 
         return providers
+
+    @property
+    def ENABLE_EXPORTER_GEOJSON(self) -> bool:
+        """Controls whether GeoJSON exporter is used."""
+        with self.env.prefixed(self._app_prefix):
+            return self.env.bool("ENABLE_EXPORTER_GEOJSON", True)
+
+    @property
+    def enabled_exporters(self) -> list[str]:
+        """List of enabled exporters."""
+        exporters = []
+
+        if self.ENABLE_EXPORTER_GEOJSON:
+            exporters.append("geojson")
+
+        return exporters
 
     @property
     def PROVIDER_GEOTAB_USERNAME(self) -> str:
@@ -252,3 +281,10 @@ class Config:
     def provider_aircraft_tracking_api_key_safe(self) -> str:
         """PROVIDER_AIRCRAFT_TRACKING_API_KEY with value redacted."""
         return self._safe_value
+
+    @property
+    def EXPORTER_GEOJSON_OUTPUT_PATH(self) -> Path:
+        """API key for Aircraft Tracking provider."""
+        with self.env.prefixed(self._app_prefix):
+            with self.env.prefixed("EXPORTER_GEOJSON_"):
+                return self.env.path("OUTPUT_PATH")

@@ -107,6 +107,8 @@ ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME = "x"
 ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD = "x"
 ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY = "x"
 
+ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH = "export.geojson"
+
 [tool.pytest.ini_options]
 addopts = "--strict-markers --random-order -x --ff"
 # --strict-markers | fail if unknown markers are used
