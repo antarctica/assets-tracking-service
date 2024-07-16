@@ -18,6 +18,7 @@ from ulid import ULID, parse as ulid_parse
 from assets_tracking_service.cli import app_cli
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
+from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.models.asset import AssetNew, Asset, AssetsClient
 from assets_tracking_service.models.label import Labels, Label, LabelRelation
@@ -25,6 +26,7 @@ from assets_tracking_service.models.position import PositionNew, Position, Posit
 from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingConfig, AircraftTrackingProvider
 from assets_tracking_service.providers.geotab import GeotabConfig, GeotabProvider
 from assets_tracking_service.providers.providers_manager import ProvidersManager
+from tests.examples.example_exporter import ExampleExporter
 from tests.examples.example_provider import ExampleProviderConfig, ExampleProvider
 
 # unused-imports are needed for the `factory_name` import to work
@@ -472,3 +474,26 @@ def fx_exporter_geojson(
         type(mock_config).EXPORTER_GEOJSON_OUTPUT_PATH = PropertyMock(return_value=output_path)
 
     return GeoJsonExporter(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+
+
+@pytest.fixture
+def fx_exporter_example(fx_config: Config, fx_db_client_tmp_db_pop, fx_logger: logging.Logger) -> ExampleExporter:
+    return ExampleExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+
+
+@pytest.fixture
+def fx_exporters_manager_no_exporters(
+    mocker: MockerFixture, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
+) -> ExportersManager:
+    mock_config = mocker.Mock()
+    type(mock_config).enabled_exporters = PropertyMock(return_value=[])
+
+    return ExportersManager(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+
+
+@pytest.fixture
+def fx_exporters_manager_eg_exporter(
+    fx_exporters_manager_no_exporters: ExportersManager, fx_exporter_example: ExampleExporter
+) -> ExportersManager:
+    fx_exporters_manager_no_exporters._providers = [fx_exporter_example]
+    return fx_exporters_manager_no_exporters

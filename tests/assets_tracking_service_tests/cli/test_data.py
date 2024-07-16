@@ -2,7 +2,7 @@ from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
 from assets_tracking_service.cli import app_cli as cli
-from assets_tracking_service.exporters.geojson import GeoJsonExporter
+from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.providers.providers_manager import ProvidersManager
 
 
@@ -21,10 +21,10 @@ class TestCliData:
         assert "Command exited normally" in result.output
 
     def test_cli_data_export(
-        self, mocker: MockerFixture, fx_cli: CliRunner, fx_exporter_geojson: GeoJsonExporter
+        self, mocker: MockerFixture, fx_cli: CliRunner, fx_exporters_manager_eg_exporter: ExportersManager
     ) -> None:
         """Exports data."""
-        mocker.patch("assets_tracking_service.cli.data.GeoJsonExporter", return_value=fx_exporter_geojson)
+        mocker.patch("assets_tracking_service.cli.data.ExportersManager", return_value=fx_exporters_manager_eg_exporter)
 
         result = fx_cli.invoke(app=cli, args=["data", "export"])
 
