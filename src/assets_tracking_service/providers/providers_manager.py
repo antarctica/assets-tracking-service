@@ -9,7 +9,7 @@ from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.models.asset import AssetsClient, AssetNew
 from assets_tracking_service.models.label import Label, LabelRelation
 from assets_tracking_service.models.position import PositionNew, PositionsClient
-from assets_tracking_service.models.provider import Provider
+from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.providers.geotab import GeotabProvider
 from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
 

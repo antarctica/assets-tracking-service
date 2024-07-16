@@ -12,7 +12,7 @@ from assets_tracking_service_aircraft_provider.providers.aircraft_tracking impor
 from assets_tracking_service.models.asset import AssetNew, Asset
 from assets_tracking_service.models.label import Labels, Label, LabelRelation
 from assets_tracking_service.models.position import PositionNew
-from assets_tracking_service.models.provider import Provider
+from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.units import UnitsConverter
 
 

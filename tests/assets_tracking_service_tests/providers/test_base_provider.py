@@ -7,16 +7,16 @@ from ulid import parse as ulid_parse
 
 from assets_tracking_service.models.asset import Asset
 from assets_tracking_service.models.label import Labels, Label, LabelRelation
-from tests.providers.example_provider import ExampleProviderConfig, ExampleProvider
+from tests.examples.example_provider import ExampleProviderConfig, ExampleProvider
 
 creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=timezone.utc)
 
 
-class TestModelProvider:
+class TestBaseProvider:
     """
     Test abstract Provider class.
 
-    Because Provider is an abstract class, we use a local concrete subclass (ExampleProvider) to test it.
+    Because BaseProvider is an abstract class, we use a local concrete subclass (ExampleProvider) to test it.
     """
 
     def test_name(self, fx_provider_example: ExampleProvider):
