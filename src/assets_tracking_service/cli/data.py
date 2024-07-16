@@ -5,7 +5,7 @@ from rich import print
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient, make_conn
-from assets_tracking_service.exporters.geojson import GeoJsonExporter
+from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.providers.providers_manager import ProvidersManager
 
 _ok = "[green]Ok.[/green]"
@@ -43,7 +43,7 @@ def export() -> None:
     """
     config = Config()
     db = DatabaseClient(conn=make_conn(config.DB_DSN))
+    exporters = ExportersManager(config=config, db=db, logger=logger)
 
-    exporter = GeoJsonExporter(config=config, db=db, logger=logger)
-    exporter.export()
+    exporters.export()
     print(f"{_ok} Command exited normally. Check log for any errors.")
