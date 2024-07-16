@@ -9,7 +9,7 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
-## CHANGED [BREAKING!]
+### CHANGED [BREAKING!]
 
 * resetting project based on experiments from [Pytest-postgres](https://gitlab.data.bas.ac.uk/felnne/pytest-pg-exp)
 
@@ -34,7 +34,7 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [0.2.2] - 2024-04-30
 
-### Fixed 
+### Fixed
 
 * Temporarily disabling timezone checks for positions
   [#160](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/160)
@@ -42,7 +42,6 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#162](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/162)
 * Updating CI Python image to match version used in deployment environment
   [#165](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/165)
-
 
 ## [0.2.1] - 2023-02-15
 
@@ -91,7 +90,7 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * System architecture documentation to reflect the current state of the project and project vision to be more realistic
   [#111](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/111)
-* Ensuring latest position logic in store selects the most recent position, rather than the last inserted row 
+* Ensuring latest position logic in store selects the most recent position, rather than the last inserted row
   [#121](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/121)
 
 ### Changed
@@ -106,7 +105,7 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#127](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/127)
 * Refactoring test for CLI command used to run prototype application
   [#129](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/129)
-* Replaced placeholder provider with example provider, using faker to generate random assets and positions 
+* Replaced placeholder provider with example provider, using faker to generate random assets and positions
   [#130](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/130)
 * Updating documentation generally
   [#142](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/142)
