@@ -10,20 +10,24 @@ I.e. An option `FOO` should be set as `ASSETS_TRACKING_SERVICE_FOO`.
 
 ## Configurable options
 
-| Option                                | Type    | Required | Sensitive | Summary                                    | Default | Example                                                   |
-|---------------------------------------|---------|----------|-----------|--------------------------------------------|---------|-----------------------------------------------------------|
-| `DB_DSN`                              | String  | Yes      | Yes       | Postgres connection string                 | *N/A*   | `postgresql://username:password@$db.example.com/database` |
-| `DB_DATABASE`                         | String  | No       | No        | Optional override for database in `DB_DSN` | *None*  | `database_test`                                           |
-| `ENABLE_PROVIDER_AIRCRAFT_TRACKING`   | Boolean | No       | No        | Enables Aircraft Tracking provider if true | 'True'  | 'True'                                                    |
-| `ENABLE_PROVIDER_GEOTAB`              | Boolean | No       | No        | Enables Geotab provider if true            | 'True'  | 'True'                                                    |
-| `PROVIDER_AIRCRAFT_TRACKING_USERNAME` | String  | Yes [1]  | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_AIRCRAFT_TRACKING_PASSWORD` | String  | Yes [1]  | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_AIRCRAFT_TRACKING_API_KEY`  | String  | Yes [1]  | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_GEOTAB_USERNAME`            | String  | Yes [1]  | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_GEOTAB_PASSWORD`            | String  | Yes [1]  | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_GEOTAB_DATABASE`            | String  | Yes [1]  | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
-
-[1] If associated provider is enabled.
+| Option                                | Type     | Required  | Sensitive | Summary                                    | Default | Example                                                   |
+|---------------------------------------|----------|-----------|-----------|--------------------------------------------|---------|-----------------------------------------------------------|
+| `DB_DSN`                              | String   | Yes       | Yes       | Postgres connection string                 | *N/A*   | `postgresql://username:password@$db.example.com/database` |
+| `DB_DATABASE`                         | String   | No        | No        | Optional override for database in `DB_DSN` | *None*  | `database_test`                                           |
+| `ENABLE_EXPORTER_ARCGIS`              | Boolean  | No        | No        | Enables ArcGIS exporter if true            | 'true'  | 'true'                                                    |
+| `ENABLE_EXPORTER_GEOJSON`             | String   | No        | No        | Enables GeoJSON exporter if true           | 'true'  | 'true'                                                    |
+| `ENABLE_PROVIDER_AIRCRAFT_TRACKING`   | Boolean  | No        | No        | Enables Aircraft Tracking provider if true | 'true'  | 'true'                                                    |
+| `ENABLE_PROVIDER_GEOTAB`              | Boolean  | No        | No        | Enables Geotab provider if true            | 'true'  | 'true'                                                    |
+| `EXPORTER_ARCGIS_USERNAME`            | String   | Yes [1]   | No        | See relevant exporter configuration        | *None*  | 'x'                                                       |
+| `EXPORTER_ARCGIS_PASSWORD`            | String   | Yes [1]   | Yes       | See relevant exporter configuration        | *None*  | 'x'                                                       |
+| `EXPORTER_ARCGIS_ITEM_ID`             | String   | Yes [1]   | No        | See relevant exporter configuration        | *None*  | 'x'                                                       |
+| `EXPORTER_GEOJSON_OUTPUT_PATH`        | Path     | Yes [1]   | No        | See relevant exporter configuration        | *None*  | `/data/exports/output.geojson`                            |
+| `PROVIDER_AIRCRAFT_TRACKING_USERNAME` | String   | Yes [1]   | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
+| `PROVIDER_AIRCRAFT_TRACKING_PASSWORD` | String   | Yes [1]   | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
+| `PROVIDER_AIRCRAFT_TRACKING_API_KEY`  | String   | Yes [1]   | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
+| `PROVIDER_GEOTAB_USERNAME`            | String   | Yes [1]   | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
+| `PROVIDER_GEOTAB_PASSWORD`            | String   | Yes [1]   | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
+| `PROVIDER_GEOTAB_DATABASE`            | String   | Yes [1]   | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
 
 ### Configurable option types
 

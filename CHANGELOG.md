@@ -21,6 +21,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#10](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/10)
 * GeoJSON exporter
   [#39](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/39)
+* Initial ArcGIS exporter
+  [#11](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/11)
 
 ### Fixed
 

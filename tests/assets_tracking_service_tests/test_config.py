@@ -135,8 +135,12 @@ class TestConfig:
             "provider_geotab_group_nvs_l06_code_mapping": fx_config.provider_geotab_group_nvs_l06_code_mapping,
             "provider_geotab_password": redacted_value,
             "provider_geotab_username": "x",
+            "enable_exporter_arcgis": True,
             "enable_exporter_geojson": True,
-            "enabled_exporters": ["geojson"],
+            "enabled_exporters": ["arcgis", "geojson"],
+            "exporter_arcgis_username": "x",
+            "exporter_arcgis_password": redacted_value,
+            "exporter_arcgis_item_id": "x",
             "exporter_geojson_output_path": Path("export.geojson"),
         }
 
@@ -238,6 +242,9 @@ class TestConfig:
     @pytest.mark.parametrize(
         "exporter_name,input_value,expected_value",
         [
+            ("ARCGIS", "true", True),
+            ("ARCGIS", "false", False),
+            ("ARCGIS", None, True),
             ("GEOJSON", "true", True),
             ("GEOJSON", "false", False),
             ("GEOJSON", None, True),
@@ -258,12 +265,28 @@ class TestConfig:
         [
             (
                 {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
+                },
+                ["arcgis", "geojson"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+                },
+                ["arcgis"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
                 },
                 ["geojson"],
             ),
             (
                 {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
                 },
                 [],
@@ -288,6 +311,9 @@ class TestConfig:
             ("PROVIDER_AIRCRAFT_TRACKING_USERNAME", "x", False),
             ("PROVIDER_AIRCRAFT_TRACKING_PASSWORD", "x", True),
             ("PROVIDER_AIRCRAFT_TRACKING_API_KEY", "x", True),
+            ("EXPORTER_ARCGIS_USERNAME", "x", False),
+            ("EXPORTER_ARCGIS_PASSWORD", "x", True),
+            ("EXPORTER_ARCGIS_ITEM_ID", "x", False),
             ("EXPORTER_GEOJSON_OUTPUT_PATH", Path("export.geojson"), False),
         ],
     )
@@ -327,7 +353,10 @@ class TestConfig:
     @pytest.mark.cov
     def test_validate_exporters_disabled(self):
         """Needed to satisfy coverage that config is valid when all exporters can be disabled."""
-        envs = {"ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false"}
+        envs = {
+            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
+            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+        }
         envs_bck = self._set_envs(envs)
 
         config = Config()
@@ -372,6 +401,10 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": None,
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": "x",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
                 }
             ),
             (
@@ -381,6 +414,10 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": None,
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": "x",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
                 }
             ),
             (
@@ -390,6 +427,10 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": None,
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": None,
                 }
             ),
             (
@@ -412,6 +453,20 @@ class TestConfig:
 
         config = Config(read_env=False)
 
+        with pytest.raises(ConfigurationError):
+            config.validate()
+
+        self._unset_envs(envs, envs_bck)
+
+    def test_validate_exporter_disabled_dependency(self):
+        """Validation fails where an exporter that another exporter depends on is disabled."""
+        envs = {
+            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+        }
+        envs_bck = self._set_envs(envs)
+
+        config = Config()
         with pytest.raises(ConfigurationError):
             config.validate()
 
