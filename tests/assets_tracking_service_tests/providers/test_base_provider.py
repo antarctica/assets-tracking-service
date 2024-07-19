@@ -1,15 +1,16 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Self
 
 import pytest
 from freezegun.api import FrozenDateTimeFactory
 from ulid import parse as ulid_parse
 
 from assets_tracking_service.models.asset import Asset
-from assets_tracking_service.models.label import Labels, Label, LabelRelation
-from tests.examples.example_provider import ExampleProviderConfig, ExampleProvider
+from assets_tracking_service.models.label import Label, LabelRelation, Labels
+from tests.examples.example_provider import ExampleProvider, ExampleProviderConfig
 
-creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=timezone.utc)
+creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 
 
 class TestBaseProvider:
@@ -19,28 +20,29 @@ class TestBaseProvider:
     Because BaseProvider is an abstract class, we use a local concrete subclass (ExampleProvider) to test it.
     """
 
-    def test_name(self, fx_provider_example: ExampleProvider):
+    def test_name(self: Self, fx_provider_example: ExampleProvider):
         """Name class property."""
         assert fx_provider_example.name == "example"
 
-    def test_prefix(self, fx_provider_example: ExampleProvider):
+    def test_prefix(self: Self, fx_provider_example: ExampleProvider):
         """Prefix class property."""
         assert fx_provider_example.prefix == "example"
 
-    def test_distinguishing_asset_label_scheme(self, fx_provider_example: ExampleProvider):
+    def test_distinguishing_asset_label_scheme(self: Self, fx_provider_example: ExampleProvider):
         """Distinguishing asset label scheme class property."""
         assert fx_provider_example.distinguishing_asset_label_scheme == "example:asset_id"
 
-    def test_distinguishing_position_label_scheme(self, fx_provider_example: ExampleProvider):
+    def test_distinguishing_position_label_scheme(self: Self, fx_provider_example: ExampleProvider):
         """Distinguishing position label scheme class property."""
         assert fx_provider_example.distinguishing_position_label_scheme == "example:position_id"
 
     @pytest.mark.parametrize("config", [{"password": "x"}, {"username": "x"}])
-    def test_init_error(self, fx_logger: logging.Logger, config: ExampleProviderConfig):
+    def test_init_error(self: Self, fx_logger: logging.Logger, config: ExampleProviderConfig):
+        """Raises error if required config key is missing."""
         with pytest.raises(RuntimeError, match="Missing required config key"):
             ExampleProvider(config=config, logger=fx_logger)
 
-    def test_provider_labels(self, freezer: FrozenDateTimeFactory, fx_provider_example: ExampleProvider):
+    def test_provider_labels(self: Self, freezer: FrozenDateTimeFactory, fx_provider_example: ExampleProvider):
         """Makes provider labels."""
         freezer.move_to(creation_time)
 
@@ -53,8 +55,8 @@ class TestBaseProvider:
 
         assert fx_provider_example.provider_labels == expected_labels
 
-    @pytest.mark.cov
-    def test_index_assets(self, fx_provider_example: ExampleProvider):
+    @pytest.mark.cov()
+    def test_index_assets(self: Self, fx_provider_example: ExampleProvider):
         """Indexes assets by distinguishing asset label scheme."""
         asset_new = next(fx_provider_example.fetch_active_assets())
         asset = Asset(id=ulid_parse("01J2S3YST6RM9Y2JDYR4RXTJE0"), labels=asset_new.labels)
@@ -62,12 +64,12 @@ class TestBaseProvider:
         indexed_assets = fx_provider_example._index_assets(assets=[asset])
         assert indexed_assets == {"example-asset-0": asset}
 
-    def test_fetch_active_assets(self, fx_provider_example: ExampleProvider):
+    def test_fetch_active_assets(self: Self, fx_provider_example: ExampleProvider):
         """Fetch active assets abstract method."""
         assets = list(fx_provider_example.fetch_active_assets())
         assert len(assets) == 3
 
-    def test_fetch_latest_positions(self, fx_provider_example: ExampleProvider, fx_asset: Asset):
+    def test_fetch_latest_positions(self: Self, fx_provider_example: ExampleProvider, fx_asset: Asset):
         """Fetch latest positions abstract method."""
         positions = list(fx_provider_example.fetch_latest_positions(assets=[fx_asset]))
         assert len(positions) == 3

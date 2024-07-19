@@ -1,21 +1,24 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Self
 
 from psycopg.sql import SQL
 from psycopg.types.json import Jsonb
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
-from assets_tracking_service.models.asset import AssetsClient, AssetNew
+from assets_tracking_service.models.asset import AssetNew, AssetsClient
 from assets_tracking_service.models.label import Label, LabelRelation
 from assets_tracking_service.models.position import PositionNew, PositionsClient
+from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
 from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.providers.geotab import GeotabProvider
-from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
 
 
 class ProvidersManager:
-    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger):
+    """Create instances for enabled providers."""
+
+    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
@@ -24,7 +27,8 @@ class ProvidersManager:
         self._positions = PositionsClient(db_client=self._db)
         self._providers: list[Provider] = self._make_providers(self._config.enabled_providers)
 
-    def _make_providers(self, provider_names: list[str]) -> list[Provider]:
+    def _make_providers(self: Self, provider_names: list[str]) -> list[Provider]:
+        """Create instances for enabled providers."""
         self._logger.info("Creating providers...")
         providers = []
 
@@ -43,8 +47,8 @@ class ProvidersManager:
                     )
                 )
                 self._logger.info("Created Geotab provider.")
-            except RuntimeError as e:
-                self._logger.error("Failed to create Geotab provider: %s", e)
+            except RuntimeError:
+                self._logger.exception("Failed to create Geotab provider.")
                 self._logger.info("Geotab provider will be skipped.")
 
         if "aircraft_tracking" in provider_names:
@@ -61,16 +65,25 @@ class ProvidersManager:
                     )
                 )
                 self._logger.info("Created Aircraft Tracking provider.")
-            except RuntimeError as e:
-                self._logger.error("Failed to create Aircraft Tracking provider: %s", e)
+            except RuntimeError:
+                self._logger.exception("Failed to create Aircraft Tracking provider.")
                 self._logger.info("Aircraft Tracking provider will be skipped.")
 
         self._logger.info("Providers created.")
         return providers
 
     def _filter_entities(
-        self, db_values: list[dict[str, str]], indexed_fetched_entities: dict[str, AssetNew | PositionNew]
+        self: Self, db_values: list[dict[str, str]], indexed_fetched_entities: dict[str, AssetNew | PositionNew]
     ) -> list[AssetNew | PositionNew]:
+        """
+        Find new assets from collection returned by a provider.
+
+        Takes:
+        - assets fetched from a provider indexed by their distinguishing label value (e.g. serial number)
+        - assets fetched from the database associated with the provider
+
+        Finds the intersection of both lists based on the distinguishing property to give new (unsaved) assets.
+        """
         existing_values = [row["dist_label_value"] for row in db_values]
         self._logger.debug("Existing dist IDs: [%s].", ", ".join(existing_values))
 
@@ -80,7 +93,17 @@ class ProvidersManager:
 
         return _new_entities
 
-    def fetch_active_assets(self) -> None:
+    def fetch_active_assets(self: Self) -> None:
+        """
+        Fetch and persist active assets from providers.
+
+        Steps:
+        - index fetched assets by their distinguishing label value (e.g. serial number)
+        - fetch assets from the database associated with the provider
+        - compare data to find new assets
+        - persist new assets in the database
+        - for all fetched assets, update the 'ats:last_fetched' label
+        """
         self._logger.info("Fetching active assets from providers...")
 
         for provider in self._providers:
@@ -144,7 +167,7 @@ class ProvidersManager:
                     );
                 """),
                 params=(
-                    Jsonb(int(datetime.now(tz=timezone.utc).timestamp())),
+                    Jsonb(int(datetime.now(tz=UTC).timestamp())),
                     Jsonb({"scheme": provider.distinguishing_asset_label_scheme}),
                     [list(fetched_assets_by_dist_id.keys())],
                 ),
@@ -152,7 +175,16 @@ class ProvidersManager:
 
         self._logger.info("Fetched active assets from providers.")
 
-    def fetch_latest_positions(self) -> None:
+    def fetch_latest_positions(self: Self) -> None:
+        """
+        Fetch and persist latest positions from providers.
+
+        Steps:
+        - index fetched positions by their distinguishing label value (e.g. log number)
+        - fetch asset positions from the database associated with the provider
+        - compare data to find new positions
+        - persist new positions in the database
+        """
         self._logger.info("Fetching latest positions from providers...")
 
         for provider in self._providers:

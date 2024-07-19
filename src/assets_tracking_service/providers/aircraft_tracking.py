@@ -1,35 +1,39 @@
 import logging
-from datetime import datetime, timezone
-from typing import TypedDict, Generator
-
-from requests import HTTPError
-from shapely import Point
+from collections.abc import Generator
+from datetime import UTC, datetime
+from typing import Self, TypedDict
 
 from assets_tracking_service_aircraft_provider.providers.aircraft_tracking import (
     AircraftTrackerProvider as AircraftTrackerClient,
 )
+from requests import HTTPError
+from shapely import Point
 
-from assets_tracking_service.models.asset import AssetNew, Asset
-from assets_tracking_service.models.label import Labels, Label, LabelRelation
+from assets_tracking_service.models.asset import Asset, AssetNew
+from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
 from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.units import UnitsConverter
 
 
 class AircraftTrackingConfig(TypedDict):
+    """Configuration for `AircraftTrackingProvider`."""
+
     username: str
     password: str
     api_key: str
 
 
 class AircraftTrackingProvider(Provider):
+    """Provider for Aircraft Tracking service."""
+
     name = "aircraft_tracking"
     prefix = name
     version = "2024-07-05"
     distinguishing_asset_label_scheme = f"{prefix}:aircraft_id"
     distinguishing_position_label_scheme = f"{prefix}:position_id"
 
-    def __init__(self, config: AircraftTrackingConfig, logger: logging.Logger):
+    def __init__(self: Self, config: AircraftTrackingConfig, logger: logging.Logger) -> None:
         self._units = UnitsConverter()
         self._logger = logger
 
@@ -44,20 +48,29 @@ class AircraftTrackingProvider(Provider):
         )
         self._logger.debug("Aircraft Tracking SDK client created.")
 
-    def _check_config(self, config: AircraftTrackingConfig) -> None:
+    def _check_config(self: Self, config: AircraftTrackingConfig) -> None:
+        """Check credentials are provided."""
         for key in ["username", "password", "api_key"]:
             if key not in config:
                 msg = f"Missing required config key: '{key}'"
                 self._logger.error(msg)
                 raise RuntimeError(msg)
 
-    def _fetch_aircraft(self) -> list[dict[str, str]]:
+    def _fetch_aircraft(self: Self) -> list[dict[str, str]]:
+        """
+        Fetch aircraft from provider.
+
+        An aircraft  represents an asset.
+
+        Properties are obscured for legal reasons and need converting back into something useful.
+        """
         self._logger.info("Fetching aircraft...")
 
         try:
             aircraft = self.client.get_active_aircraft()
         except HTTPError as e:
-            raise RuntimeError("Failed to fetch aircraft.") from e
+            msg = "Failed to fetch aircraft."
+            raise RuntimeError(msg) from e
 
         _aircraft = []
         for airplane in aircraft:
@@ -80,13 +93,19 @@ class AircraftTrackingProvider(Provider):
 
         return _aircraft
 
-    def _fetch_latest_positions(self) -> list[dict[str, str | int | float]]:
+    def _fetch_latest_positions(self: Self) -> list[dict[str, str | int | float]]:
+        """
+        Fetch aircraft positions from provider.
+
+        Properties are obscured for legal reasons and need converting back into something useful.
+        """
         self._logger.info("Fetching aircraft positions...")
 
         try:
             positions = self.client.get_last_aircraft_positions()
         except HTTPError as e:
-            raise RuntimeError("Failed to fetch aircraft positions.") from e
+            msg = "Failed to fetch aircraft positions."
+            raise RuntimeError(msg) from e
 
         _positions = []
         for position in positions:
@@ -114,21 +133,28 @@ class AircraftTrackingProvider(Provider):
 
         return _positions
 
-    def fetch_active_assets(self) -> Generator[AssetNew, None, None]:
+    def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
+        """
+        Acquire aircraft as assets.
+
+        - all assets returned by this provider are considered active
+        - Assets can be easily distinguished via an ID
+        - as only aircraft are returned, the platform type can be hard coded.
+        """
         self._logger.info("Fetching aircraft as assets...")
 
         try:
             aircraft = self._fetch_aircraft()
         except RuntimeError as e:
             msg = "Failed to fetch aircraft from provider."
-            self._logger.error(msg)
+            self._logger.exception(msg)
             raise RuntimeError(msg) from e
 
-        for aircraft in aircraft:
+        for aeroplane in aircraft:
             id_label = Label(
-                rel=LabelRelation.SELF, scheme=self.distinguishing_asset_label_scheme, value=aircraft["aircraft_id"]
+                rel=LabelRelation.SELF, scheme=self.distinguishing_asset_label_scheme, value=aeroplane["aircraft_id"]
             )
-            pref_label = Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value=aircraft["name"])
+            pref_label = Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value=aeroplane["name"])
             platform_label = Label(
                 rel=LabelRelation.SELF,
                 scheme="nvs:L06",
@@ -139,7 +165,7 @@ class AircraftTrackingProvider(Provider):
 
             device_labels = [
                 Label(rel=LabelRelation.SELF, scheme=f"{self.prefix}:{key}", value=value)
-                for key, value in aircraft.items()
+                for key, value in aeroplane.items()
             ]
 
             labels = Labels([id_label, pref_label, platform_label, *device_labels, *self.provider_labels])
@@ -147,7 +173,12 @@ class AircraftTrackingProvider(Provider):
 
             yield AssetNew(labels=labels)
 
-    def fetch_latest_positions(self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+    def fetch_latest_positions(self: Self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+        """
+        Acquire aircraft positions as asset positions.
+
+        - Positions can be easily distinguished via an ID.
+        """
         self._logger.info("Fetching position of Aircraft...")
 
         indexed_assets = self._index_assets(assets)
@@ -156,7 +187,7 @@ class AircraftTrackingProvider(Provider):
             positions = self._fetch_latest_positions()
         except RuntimeError as e:
             msg = "Failed to fetch aircraft positions from provider."
-            self._logger.error(msg)
+            self._logger.exception(msg)
             raise RuntimeError(msg) from e
 
         for position in positions:
@@ -184,7 +215,7 @@ class AircraftTrackingProvider(Provider):
 
             time = datetime.fromtimestamp(
                 self._units.timestamp_milliseconds_to_timestamp(position["utc_milliseconds"]),
-                tz=timezone.utc,
+                tz=UTC,
             )
             elevation = self._units.feet_to_meters(position["altitude_feet"])
 

@@ -19,7 +19,7 @@ _version_option = typer.Option(None, "-v", "--version", is_eager=True, help="Sho
 
 
 @app_cli.callback(invoke_without_command=True)
-def cli(version: Union[bool | None] = _version_option) -> None:
+def cli(version: Union[bool | None] = _version_option) -> None:  # noqa: UP007
     """Display application version."""
     if version:
         print(config.version)

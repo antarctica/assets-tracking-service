@@ -1,3 +1,5 @@
+from typing import Self
+
 import pytest
 from psycopg.sql import SQL
 
@@ -9,7 +11,7 @@ class TestDbExtensions:
 
     # noinspection SqlResolve
     @pytest.mark.parametrize("extension", ["postgis"])
-    def test_extensions(self, fx_db_client_tmp_db_mig: DatabaseClient, extension: str):
+    def test_extensions(self: Self, fx_db_client_tmp_db_mig: DatabaseClient, extension: str):
         """Test required database extension are available."""
         result = fx_db_client_tmp_db_mig.get_query_result(
             SQL("""SELECT extname FROM pg_extension WHERE extname = %s;"""), (extension,)
