@@ -122,12 +122,12 @@ class TestConfig:
     def test_dumps_safe(self, fx_package_version: str, fx_config: Config):
         """Config can be exported to a dict with sensitive values redacted."""
         redacted_value = "[**REDACTED**]"
-        expected = {
+        expected: fx_config.ConfigDumpSafe = {
             "version": fx_package_version,
             "db_dsn": fx_config.db_dsn_safe,
             "enable_provider_aircraft_tracking": True,
             "enable_provider_geotab": True,
-            "enabled_providers": ["geotab", "aircraft_tracking"],
+            "enabled_providers": ["aircraft_tracking", "geotab"],
             "provider_aircraft_tracking_api_key": redacted_value,
             "provider_aircraft_tracking_password": redacted_value,
             "provider_aircraft_tracking_username": "x",
@@ -179,12 +179,12 @@ class TestConfig:
     @pytest.mark.parametrize(
         "provider_name,input_value,expected_value",
         [
-            ("GEOTAB", "true", True),
-            ("GEOTAB", "false", False),
-            ("GEOTAB", None, True),
             ("AIRCRAFT_TRACKING", "true", True),
             ("AIRCRAFT_TRACKING", "false", False),
             ("AIRCRAFT_TRACKING", None, True),
+            ("GEOTAB", "true", True),
+            ("GEOTAB", "false", False),
+            ("GEOTAB", None, True),
         ],
     )
     def test_enable_provider(self, provider_name: str, input_value: str, expected_value: bool):
@@ -202,29 +202,29 @@ class TestConfig:
         [
             (
                 {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
-                },
-                ["geotab", "aircraft_tracking"],
-            ),
-            (
-                {
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
                 },
-                ["geotab"],
+                ["aircraft_tracking", "geotab"],
             ),
             (
                 {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
                 },
                 ["aircraft_tracking"],
             ),
             (
                 {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                },
+                ["geotab"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
                 },
                 [],
             ),
@@ -305,12 +305,12 @@ class TestConfig:
     @pytest.mark.parametrize(
         "property_name,expected,sensitive",
         [
-            ("PROVIDER_GEOTAB_USERNAME", "x", False),
-            ("PROVIDER_GEOTAB_PASSWORD", "x", True),
-            ("PROVIDER_GEOTAB_DATABASE", "x", False),
             ("PROVIDER_AIRCRAFT_TRACKING_USERNAME", "x", False),
             ("PROVIDER_AIRCRAFT_TRACKING_PASSWORD", "x", True),
             ("PROVIDER_AIRCRAFT_TRACKING_API_KEY", "x", True),
+            ("PROVIDER_GEOTAB_USERNAME", "x", False),
+            ("PROVIDER_GEOTAB_PASSWORD", "x", True),
+            ("PROVIDER_GEOTAB_DATABASE", "x", False),
             ("EXPORTER_ARCGIS_USERNAME", "x", False),
             ("EXPORTER_ARCGIS_PASSWORD", "x", True),
             ("EXPORTER_ARCGIS_ITEM_ID", "x", False),
@@ -340,8 +340,8 @@ class TestConfig:
     def test_validate_providers_disabled(self):
         """Needed to satisfy coverage that config is valid when all providers can be disabled."""
         envs = {
-            "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
             "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
+            "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
         }
         envs_bck = self._set_envs(envs)
 
@@ -369,34 +369,6 @@ class TestConfig:
         [
             (
                 {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME": None,
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD": "x",
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE": "x",
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME": "x",
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD": None,
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE": "x",
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME": "x",
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD": "x",
-                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE": None,
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": None,
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": "x",
@@ -405,7 +377,6 @@ class TestConfig:
             ),
             (
                 {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": None,
@@ -414,11 +385,34 @@ class TestConfig:
             ),
             (
                 {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": None,
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME": None,
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD": "x",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE": "x",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME": "x",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD": None,
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE": "x",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME": "x",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD": "x",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE": None,
                 }
             ),
             (
