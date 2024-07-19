@@ -401,10 +401,6 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": None,
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": "x",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": None,
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
                 }
             ),
             (
@@ -414,10 +410,6 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": None,
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": "x",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": None,
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
                 }
             ),
             (
@@ -427,6 +419,26 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY": None,
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
+                }
+            ),
+            (
+                {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
