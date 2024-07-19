@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Self
 
 import pytest
 from freezegun.api import FrozenDateTimeFactory
@@ -8,21 +9,24 @@ from requests import HTTPError
 from shapely import Point
 from ulid import new as new_ulid
 
-from assets_tracking_service.models.asset import AssetNew, Asset
-from assets_tracking_service.models.label import Labels, Label, LabelRelation
+from assets_tracking_service.models.asset import Asset, AssetNew
+from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
 from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingConfig, AircraftTrackingProvider
 
-creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=timezone.utc)
+creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 
 
 class TestAircraftTrackingProvider:
+    """Aircraft Tracking provider tests."""
+
     def test_init(
-        self,
+        self: Self,
         caplog: pytest.LogCaptureFixture,
         fx_logger: logging.Logger,
         fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
     ):
+        """Initialises."""
         AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
 
         assert "Creating Aircraft Tracking SDK client..." in caplog.text
@@ -36,16 +40,18 @@ class TestAircraftTrackingProvider:
             {"username": "x", "password": "x"},
         ],
     )
-    def test_init_error(self, config: AircraftTrackingConfig):
+    def test_init_error(self: Self, config: AircraftTrackingConfig):
+        """Errors if missing required config option."""
         with pytest.raises(RuntimeError, match="Missing required config key"):
             AircraftTrackingProvider(config=config, logger=logging.getLogger())
 
     def test_fetch_aircraft(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
         fx_logger: logging.Logger,
     ):
+        """Fetches aircraft."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_active_aircraft.return_value = [
             {
@@ -72,11 +78,12 @@ class TestAircraftTrackingProvider:
         }
 
     def test_fetch_aircraft_error(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
         fx_logger: logging.Logger,
     ):
+        """Raises error if fetching aircraft fails."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_active_aircraft.side_effect = HTTPError
         mocker.patch(
@@ -90,12 +97,13 @@ class TestAircraftTrackingProvider:
             provider._fetch_aircraft()
 
     def test_fetch_aircraft_error_keys(
-        self,
+        self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
         fx_logger: logging.Logger,
     ):
+        """Raises error if fetched aircraft missing required properties."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_active_aircraft.return_value = [
             {},  # invalid
@@ -118,11 +126,12 @@ class TestAircraftTrackingProvider:
         assert "Skipping aircraft: 'unknown' due to missing required fields." in caplog.text
 
     def test_fetch_latest_aircraft_positions(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
         fx_logger: logging.Logger,
     ):
+        """Fetches latest aircraft positions."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_last_aircraft_positions.return_value = [
             {
@@ -157,11 +166,12 @@ class TestAircraftTrackingProvider:
         }
 
     def test_fetch_latest_aircraft_positions_error(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
         fx_logger: logging.Logger,
     ):
+        """Raises error if fetching aircraft positions fails."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_last_aircraft_positions.side_effect = HTTPError
         mocker.patch(
@@ -175,12 +185,13 @@ class TestAircraftTrackingProvider:
             provider._fetch_latest_positions()
 
     def test_fetch_latest_aircraft_positions_error_keys(
-        self,
+        self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
         fx_logger: logging.Logger,
     ):
+        """Raises error if fetched aircraft positions missing required properties."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_last_aircraft_positions.return_value = [
             {},  # invalid
@@ -210,11 +221,12 @@ class TestAircraftTrackingProvider:
         )
 
     def test_fetch_active_assets(
-        self,
+        self: Self,
         freezer: FrozenDateTimeFactory,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking: AircraftTrackingProvider,
     ):
+        """Fetches active assets."""
         freezer.move_to(creation_time)
 
         expected_asset = AssetNew(
@@ -251,24 +263,26 @@ class TestAircraftTrackingProvider:
         ]
         mocker.patch.object(fx_provider_aircraft_tracking, "_fetch_aircraft", return_value=aircraft)
 
-        assert list(fx_provider_aircraft_tracking.fetch_active_assets())[0] == expected_asset
+        assert list(fx_provider_aircraft_tracking.fetch_active_assets())[0] == expected_asset  # noqa: RUF015
 
     def test_fetch_active_assets_error(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking: AircraftTrackingProvider,
     ):
+        """Raises error if fetching active assets fails."""
         mocker.patch.object(fx_provider_aircraft_tracking, "_fetch_aircraft", side_effect=RuntimeError)
 
         with pytest.raises(RuntimeError, match="Failed to fetch aircraft from provider."):
             next(fx_provider_aircraft_tracking.fetch_active_assets())
 
     def test_fetch_latest_positions(
-        self,
+        self: Self,
         freezer: FrozenDateTimeFactory,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking: AircraftTrackingProvider,
     ):
+        """Fetches latest positions."""
         freezer.move_to(creation_time)
 
         asset = Asset(
@@ -296,7 +310,7 @@ class TestAircraftTrackingProvider:
         )
         expected_position = PositionNew(
             asset_id=asset.id,
-            time=datetime(2024, 6, 29, 11, 35, 25, tzinfo=timezone.utc),
+            time=datetime(2024, 6, 29, 11, 35, 25, tzinfo=UTC),
             geom=Point(1.0, 2.0, 9143.999999999998),
             velocity=6.173333333333334,
             heading=67.2,
@@ -336,21 +350,23 @@ class TestAircraftTrackingProvider:
         assert position == expected_position
 
     def test_fetch_latest_positions_error(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking: AircraftTrackingProvider,
     ):
+        """Raises error if fetching latest positions fails."""
         mocker.patch.object(fx_provider_aircraft_tracking, "_fetch_latest_positions", side_effect=RuntimeError)
 
         with pytest.raises(RuntimeError, match="Failed to fetch aircraft positions from provider."):
             next(fx_provider_aircraft_tracking.fetch_latest_positions(assets=[]))
 
     def test_fetch_latest_positions_error_no_asset(
-        self,
+        self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
         fx_provider_aircraft_tracking: AircraftTrackingProvider,
     ):
+        """Skips positions for assets not available."""
         positions = [
             {
                 "position_id": "88803930",

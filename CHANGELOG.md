@@ -28,6 +28,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * `updated_at` DB column did not automatically update
   [#22](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/22)
+* `ruff` linting settings and subsequent fixes to code
+  [#32](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/32)
 
 ### Changed
 

@@ -1,19 +1,23 @@
 import logging
+from collections.abc import Generator
 from datetime import datetime
-from typing import Generator, TypedDict
+from typing import Self, TypedDict
 
 # noinspection PyPep8Naming
-from mygeotab import API as Geotab, MyGeotabException, TimeoutException
+from mygeotab import API as Geotab  # noqa: N811
+from mygeotab import MyGeotabException, TimeoutException
 from shapely import Point
 
-from assets_tracking_service.models.asset import AssetNew, Asset
-from assets_tracking_service.models.label import Labels, Label, LabelRelation
+from assets_tracking_service.models.asset import Asset, AssetNew
+from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
 from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.units import UnitsConverter
 
 
 class GeotabConfig(TypedDict):
+    """Configuration for `GeotabProvider`."""
+
     username: str
     password: str
     database: str
@@ -21,13 +25,15 @@ class GeotabConfig(TypedDict):
 
 
 class GeotabProvider(Provider):
+    """Provider for Geotab service."""
+
     name = "geotab"
     prefix = name
     version = "2024-07-02"
     distinguishing_asset_label_scheme = f"{prefix}:device_id"
     distinguishing_position_label_scheme = f"{prefix}:log_record_id"
 
-    def __init__(self, config: GeotabConfig, logger: logging.Logger):
+    def __init__(self: Self, config: GeotabConfig, logger: logging.Logger) -> None:
         self._units = UnitsConverter()
         self._logger = logger
 
@@ -46,22 +52,30 @@ class GeotabProvider(Provider):
             self._client.authenticate()
             self._logger.debug("Geotab SDK client authenticated.")
         except (MyGeotabException, TimeoutException) as e:
-            raise RuntimeError("Failed to initialise Geotab Provider.") from e
+            msg = "Failed to initialise Geotab Provider."
+            raise RuntimeError(msg) from e
 
-    def _check_config(self, config: GeotabConfig) -> None:
+    def _check_config(self: Self, config: GeotabConfig) -> None:
+        """Check credentials are provided."""
         for key in ["username", "password", "database", "nvs_l06_group_mappings"]:
             if key not in config:
                 msg = f"Missing required config key: '{key}'"
                 self._logger.error(msg)
                 raise RuntimeError(msg)
 
-    def _fetch_devices(self) -> list[dict[str, str]]:
+    def _fetch_devices(self: Self) -> list[dict[str, str]]:
+        """
+        Fetch devices from provider.
+
+        A device represents an asset.
+        """
         self._logger.info("Fetching Geotab devices...")
 
         try:
             devices = self._client.get("Device")
         except (MyGeotabException, TimeoutException) as e:
-            raise RuntimeError("Failed to fetch devices.") from e
+            msg = "Failed to fetch devices."
+            raise RuntimeError(msg) from e
 
         _devices = []
         for device in devices:
@@ -84,13 +98,25 @@ class GeotabProvider(Provider):
 
         return _devices
 
-    def _fetch_device_statuses(self) -> list[dict[str, str | float | datetime]]:
+    def _fetch_device_statuses(self: Self) -> list[dict[str, str | float | datetime]]:
+        """
+        Fetch the status for all devices from provider.
+
+        A device status represents an asset position.
+
+        Device status returns a large amount of information, most of which is not needed. Crucially it includes
+        orientation which isn't part of other entities such as log records.
+
+        Device status entities do not include a distinguishing property however and so need correlating with another
+        entity type, such as a log record.
+        """
         self._logger.info("Fetching Geotab devices statuses...")
 
         try:
             device_statues = self._client.get("DeviceStatusInfo")
         except (MyGeotabException, TimeoutException) as e:
-            raise RuntimeError("Failed to fetch device statues.") from e
+            msg = "Failed to fetch device statues."
+            raise RuntimeError(msg) from e
 
         _device_statues = []
         for device_status in device_statues:
@@ -114,7 +140,16 @@ class GeotabProvider(Provider):
 
         return _device_statues
 
-    def _fetch_log_record(self, time: datetime, device_id: str) -> dict:
+    def _fetch_log_record(self: Self, time: datetime, device_id: str) -> dict:
+        """
+        Fetch a log record for a device at a specific time.
+
+        Log records include position and speed information. It also crucially includes a distinguishing property.
+        A log record can be correlated with a device status using time and device ID properties.
+
+        As this method is intended to return a proxy for a device status ID, if multiple log records are found, an
+        exception is raised.
+        """
         self._logger.debug("Fetching Geotab log record...")
 
         try:
@@ -127,26 +162,38 @@ class GeotabProvider(Provider):
                 },
             )
         except (MyGeotabException, TimeoutException) as e:
-            raise RuntimeError("Failed to fetch LogRecord.") from e
+            msg = "Failed to fetch LogRecord."
+            raise RuntimeError(msg) from e
 
         if len(results) == 0:
-            raise IndexError(f"No log record found for device ID '{device_id}' at time '{time}'.")
+            msg = f"No log record found for device ID '{device_id}' at time '{time}'."
+            raise IndexError(msg)
         if len(results) > 1:
-            raise IndexError(f"Multiple log records found for device ID '{device_id}' at time '{time}'.")
+            msg = f"Multiple log records found for device ID '{device_id}' at time '{time}'."
+            raise IndexError(msg)
 
         self._logger.info(
             "Fetched log record ID: '%s' for device ID: '%s'", results[0]["id"], results[0]["device"]["id"]
         )
         return results[0]
 
-    def fetch_active_assets(self) -> Generator[AssetNew, None, None]:
+    def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
+        """
+        Acquire devices as assets.
+
+        - all assets returned by this provider are assumed to be active
+        - Assets can be easily distinguished via an ID
+        - asset names are used as the preferred label, if available, otherwise the serial number is used
+        - the platform type is determined by a machine type group assigned in the Geotab interface
+        - some platform types do not yet have specific terms in the L06 vocabulary and so use a general class
+        """
         self._logger.info("Fetching Geotab devices as assets...")
 
         try:
             devices = self._fetch_devices()
         except RuntimeError as e:
             msg = "Failed to fetch devices from Geotab."
-            self._logger.error(msg)
+            self._logger.exception(msg)
             raise RuntimeError(msg) from e
 
         for device in devices:
@@ -186,7 +233,15 @@ class GeotabProvider(Provider):
 
             yield AssetNew(labels=labels)
 
-    def fetch_latest_positions(self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+    def fetch_latest_positions(self: Self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+        """
+        Acquire device statuses as asset positions.
+
+        - Positions can be cannot be distinguished via a device status alone
+        - a log record correlating to each device status is used as a proxy to provide a distinguishing property
+        - heading values can be unknown, determined using a sentinel value
+        - the Geotab SDK uses Python dates which need to converting to JSON serializable strings for use in a label
+        """
         self._logger.info("Fetching status of Geotab devices as positions...")
 
         indexed_assets = self._index_assets(assets)
@@ -195,7 +250,7 @@ class GeotabProvider(Provider):
             device_statuses = self._fetch_device_statuses()
         except RuntimeError as e:
             msg = "Failed to fetch device statuses from Geotab."
-            self._logger.error(msg)
+            self._logger.exception(msg)
             raise RuntimeError(msg) from e
 
         for device_status in device_statuses:

@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Self
 from unittest.mock import PropertyMock
 
 import pytest
@@ -13,17 +14,20 @@ from assets_tracking_service.models.asset import AssetNew
 from assets_tracking_service.providers.providers_manager import ProvidersManager
 from tests.examples.example_provider import ExampleProvider
 
-creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=timezone.utc)
+creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 
 
 class TestProvidersManager:
+    """Providers manager tests."""
+
     def test_init(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,
         fx_logger: logging.Logger,
     ):
+        """Initialises."""
         mock_geotab_client = mocker.MagicMock(auto_spec=True)
         mock_geotab_client.authenticate.return_value = []
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
@@ -33,8 +37,9 @@ class TestProvidersManager:
         assert len(manager._providers) > 0
 
     def test_init_no_providers(
-        self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
+        self: Self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
     ):
+        """Initialises with no providers."""
         mock_config = mocker.Mock()
         type(mock_config).enabled_providers = PropertyMock(return_value=[])
         manager = ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
@@ -43,12 +48,13 @@ class TestProvidersManager:
 
     @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"]])
     def test_make_each_provider(
-        self,
+        self: Self,
         mocker: MockerFixture,
         fx_db_client_tmp_db_mig: DatabaseClient,
         fx_logger: logging.Logger,
         enabled_providers: list[str],
     ):
+        """Makes each provider."""
         mock_geotab_client = mocker.MagicMock(auto_spec=True)
         mock_geotab_client.authenticate.return_value = []
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
@@ -62,13 +68,14 @@ class TestProvidersManager:
 
     @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"]])
     def test_make_providers_error(
-        self,
+        self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
         fx_db_client_tmp_db_mig: DatabaseClient,
         fx_logger: logging.Logger,
         enabled_providers: list[str],
     ):
+        """Skips providers that error during creation."""
         provider_title = " ".join(word.capitalize() for word in enabled_providers[0].split("_"))
 
         mock_config = mocker.Mock()
@@ -85,7 +92,8 @@ class TestProvidersManager:
         assert len(manager._providers) == 0
         assert f"{provider_title} provider will be skipped." in caplog.text
 
-    def test_filter_entities(self, fx_providers_manager_no_providers: ProvidersManager, fx_asset_new: AssetNew):
+    def test_filter_entities(self: Self, fx_providers_manager_no_providers: ProvidersManager, fx_asset_new: AssetNew):
+        """Filters entities."""
         db_rows = [{"dist_label_value": "1"}, {"dist_label_value": "2"}]
         fetched_entities = {"2": fx_asset_new, "3": fx_asset_new}
         expected_new_entities = [fx_asset_new]
@@ -98,12 +106,13 @@ class TestProvidersManager:
         )
 
     def test_fetch_active_assets(
-        self,
+        self: Self,
         freezer: FrozenDateTimeFactory,
         caplog: pytest.LogCaptureFixture,
         fx_providers_manager_no_providers: ProvidersManager,
         fx_provider_example: ExampleProvider,
     ):
+        """Fetches active assets."""
         freezer.move_to(creation_time)
 
         fx_providers_manager_no_providers._providers = [fx_provider_example]
@@ -118,10 +127,11 @@ class TestProvidersManager:
         assert assets[0].labels.filter_by_scheme("ats:last_fetched").value == 1339338620
 
     def test_fetch_latest_positions(
-        self,
+        self: Self,
         caplog: pytest.LogCaptureFixture,
         fx_providers_manager_eg_provider: ProvidersManager,
     ):
+        """Fetches latest positions."""
         fx_providers_manager_eg_provider.fetch_active_assets()  # to have assets to fetch positions for
 
         fx_providers_manager_eg_provider.fetch_latest_positions()

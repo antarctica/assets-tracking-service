@@ -5,7 +5,7 @@ from psycopg.sql import SQL
 from rich import print
 
 from assets_tracking_service.config import Config
-from assets_tracking_service.db import DatabaseClient, make_conn, DatabaseMigrationError, DatabaseError
+from assets_tracking_service.db import DatabaseClient, DatabaseError, DatabaseMigrationError, make_conn
 
 _ok = "[green]Ok.[/green]"
 _no = "[red]No.[/red]"
@@ -49,7 +49,6 @@ def migrate_db_up() -> None:
 @db_cli.command(name="rollback", help="Reset application database.")
 def rollback_db_down() -> None:
     """Rollback DB migrations."""
-
     # prompt user to continue
     print("[yellow]WARNING![/yellow] This will remove all data from database!")
     if not typer.confirm("Continue?"):

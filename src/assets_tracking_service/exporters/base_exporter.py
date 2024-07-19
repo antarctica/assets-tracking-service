@@ -1,11 +1,17 @@
 from abc import ABC, abstractmethod
+from typing import Self
 
 
 class Exporter(ABC):
-    """Abstract base class for exporters."""
+    """
+    Abstract base class for providers.
+
+    Defines a required interface all exporters must implement to allow operations to be performed across a set of
+    exporters without knowledge of how each works.
+    """
 
     @abstractmethod
-    def export(self) -> None:
+    def export(self: Self) -> None:
         """
         Public entrypoint for exporters.
 

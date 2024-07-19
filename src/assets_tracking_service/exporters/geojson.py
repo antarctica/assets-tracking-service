@@ -1,8 +1,11 @@
 import json
 import logging
 from pathlib import Path
+from typing import Self
 
-from geojson import FeatureCollection, loads as geojson_loads, dump as geojson_dump
+from geojson import FeatureCollection
+from geojson import dump as geojson_dump
+from geojson import loads as geojson_loads
 from psycopg.sql import SQL
 
 from assets_tracking_service.config import Config
@@ -11,7 +14,13 @@ from assets_tracking_service.exporters.base_exporter import Exporter
 
 
 class GeoJsonExporter(Exporter):
-    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger):
+    """
+    Exports data as GeoJSON.
+
+    Limited to a single collection of a summary information for assets and their latest position.
+    """
+
+    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
@@ -19,7 +28,13 @@ class GeoJsonExporter(Exporter):
         self._path = config.EXPORTER_GEOJSON_OUTPUT_PATH
 
     @property
-    def data(self) -> FeatureCollection:
+    def data(self: Self) -> FeatureCollection:
+        """
+        Get data from database as a feature collection.
+
+        Uses the `summary_geojson` view which contains a PostGIS generated feature collection.
+        This is parsed and validated as a FeatureCollection type (wrapper around a dict).
+        """
         result = self._db.get_query_result(SQL("""SELECT geojson_feature_collection FROM summary_geojson;"""))
         self._logger.debug("Raw GeoJSON data: %s", result[0][0])
 
@@ -33,7 +48,13 @@ class GeoJsonExporter(Exporter):
 
         return fc
 
-    def export(self, path: Path | None = None):
+    def export(self: Self, path: Path | None = None) -> None:
+        """
+        Export data to GeoJSON file.
+
+        The configured output path is used unless a specific path is given.
+        If any parents to the directory containing the path given don't exist they will be created.
+        """
         path = path or self._path
 
         self._logger.info("Ensuring parent path '%s' exists", path.parent.resolve())
