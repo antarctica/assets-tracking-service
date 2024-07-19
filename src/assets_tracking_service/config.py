@@ -98,6 +98,23 @@ class Config:
             except EnvError as e:
                 raise ConfigurationError("EXPORTER_GEOJSON_OUTPUT_PATH must be set.") from e
 
+        if self.ENABLE_EXPORTER_ARCGIS:
+            if not self.ENABLE_EXPORTER_GEOJSON:
+                raise ConfigurationError("ENABLE_EXPORTER_ARCGIS requires ENABLE_EXPORTER_GEOJSON to be True.")
+
+            try:
+                _ = self.EXPORTER_ARCGIS_USERNAME
+            except EnvError as e:
+                raise ConfigurationError("EXPORTER_ARCGIS_USERNAME must be set.") from e
+            try:
+                _ = self.EXPORTER_ARCGIS_PASSWORD
+            except EnvError as e:
+                raise ConfigurationError("EXPORTER_ARCGIS_PASSWORD must be set.") from e
+            try:
+                _ = self.EXPORTER_ARCGIS_ITEM_ID
+            except EnvError as e:
+                raise ConfigurationError("EXPORTER_ARCGIS_ITEM_ID must be set.") from e
+
     class ConfigDumpSafe(TypedDict):
         version: str
         db_dsn: str
@@ -105,6 +122,7 @@ class Config:
         enable_provider_aircraft_tracking: bool
         enabled_providers: list[str]
         enable_exporter_geojson: bool
+        enable_exporter_arcgis: bool
         enabled_exporters: list[str]
         provider_geotab_username: str
         provider_geotab_password: str
@@ -114,6 +132,9 @@ class Config:
         provider_aircraft_tracking_password: str
         provider_aircraft_tracking_api_key: str
         exporter_geojson_output_path: Path
+        exporter_arcgis_username: str
+        exporter_arcgis_password: str
+        exporter_arcgis_item_id: str
 
     def dumps_safe(self) -> ConfigDumpSafe:
         """Dump config for output to the user with sensitive data redacted."""
@@ -124,6 +145,7 @@ class Config:
             "enable_provider_aircraft_tracking": self.ENABLE_PROVIDER_AIRCRAFT_TRACKING,
             "enabled_providers": self.enabled_providers,
             "enable_exporter_geojson": self.ENABLE_EXPORTER_GEOJSON,
+            "enable_exporter_arcgis": self.ENABLE_EXPORTER_ARCGIS,
             "enabled_exporters": self.enabled_exporters,
             "provider_geotab_username": self.PROVIDER_GEOTAB_USERNAME,
             "provider_geotab_password": self.provider_geotab_password_safe,
@@ -133,6 +155,9 @@ class Config:
             "provider_aircraft_tracking_password": self.provider_aircraft_tracking_password_safe,
             "provider_aircraft_tracking_api_key": self.provider_aircraft_tracking_api_key_safe,
             "exporter_geojson_output_path": self.EXPORTER_GEOJSON_OUTPUT_PATH,
+            "exporter_arcgis_username": self.EXPORTER_ARCGIS_USERNAME,
+            "exporter_arcgis_password": self.exporter_arcgis_password_safe,
+            "exporter_arcgis_item_id": self.EXPORTER_ARCGIS_ITEM_ID,
         }
 
     @property
@@ -201,9 +226,18 @@ class Config:
             return self.env.bool("ENABLE_EXPORTER_GEOJSON", True)
 
     @property
+    def ENABLE_EXPORTER_ARCGIS(self) -> bool:
+        """Controls whether ArcGIS exporter is used."""
+        with self.env.prefixed(self._app_prefix):
+            return self.env.bool("ENABLE_EXPORTER_ARCGIS", True)
+
+    @property
     def enabled_exporters(self) -> list[str]:
         """List of enabled exporters."""
         exporters = []
+
+        if self.ENABLE_EXPORTER_ARCGIS:
+            exporters.append("arcgis")
 
         if self.ENABLE_EXPORTER_GEOJSON:
             exporters.append("geojson")
@@ -288,3 +322,29 @@ class Config:
         with self.env.prefixed(self._app_prefix):
             with self.env.prefixed("EXPORTER_GEOJSON_"):
                 return self.env.path("OUTPUT_PATH")
+
+    @property
+    def EXPORTER_ARCGIS_USERNAME(self) -> str:
+        """Username of user used to publish ArcGIS exporter outputs."""
+        with self.env.prefixed(self._app_prefix):
+            with self.env.prefixed("EXPORTER_ARCGIS_"):
+                return self.env.str("USERNAME")
+
+    @property
+    def EXPORTER_ARCGIS_PASSWORD(self) -> str:
+        """Password of user used to publish ArcGIS exporter outputs."""
+        with self.env.prefixed(self._app_prefix):
+            with self.env.prefixed("EXPORTER_ARCGIS_"):
+                return self.env.str("PASSWORD")
+
+    @property
+    def exporter_arcgis_password_safe(self) -> str:
+        """EXPORTER_ARCGIS_PASSWORD with value redacted."""
+        return self._safe_value
+
+    @property
+    def EXPORTER_ARCGIS_ITEM_ID(self) -> str:
+        """Item ID of ArcGIS feature service updated by ArcGIS exporter."""
+        with self.env.prefixed(self._app_prefix):
+            with self.env.prefixed("EXPORTER_ARCGIS_"):
+                return self.env.str("ITEM_ID")

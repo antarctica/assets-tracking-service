@@ -4,7 +4,7 @@
 
 Requirements:
 
-* Python 3.12 ([pyenv](https://github.com/pyenv/pyenv) recommended)
+* Python 3.11 ([pyenv](https://github.com/pyenv/pyenv) recommended)
 * [Poetry](https://python-poetry.org/docs/#installation)
 * Git (`brew install git`)
 * Postgres with PostGIS extension (`brew install postgis`)
@@ -24,6 +24,7 @@ Install project:
 ```
 $ poetry config http-basic.ats-air __token__
 $ poetry install
+$ poetry run python -m pip install --no-deps arcgis
 ```
 
 Create databases:
@@ -61,7 +62,19 @@ Conventions:
 - use logging to record how actions progress, using the app [`logger`](../src/assets_tracking_service/loging.py)
   - (e.g. `logger = logging.getLogger('app')`)
 
+## Python version
+
+The Python version is limited to 3.11 it is the latest version supported by the `arcgis` dependency.
+
 ## Dependencies
+
+### `arcgis` dependency
+
+The [`arcgis`](https://developers.arcgis.com/python/) package (ArcGIS API for Python) is not included in the main
+package dependencies because it is incompatible with Poetry and depends on a large number of dependencies that we don't
+need.
+
+This dependency therefore needs to be installed manually after the main project dependencies are installed.
 
 ### Vulnerability scanning
 

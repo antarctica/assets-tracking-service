@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from importlib.resources import files as resources_files, as_file as resources_as_file
+from importlib_resources import files as resources_files, as_file as resources_as_file
 from pathlib import Path
 from typing import Any, Mapping, Sequence, Literal
 
