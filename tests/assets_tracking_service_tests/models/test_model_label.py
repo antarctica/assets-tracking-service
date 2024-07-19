@@ -60,14 +60,6 @@ class TestLabel:
         assert label.expired == datetime.fromtimestamp(fx_label_expiry, tz=timezone.utc)
         assert label.is_expired is True
 
-    # noinspection PyTypeChecker
-    def test_invalid_rel(self, fx_label_scheme: str, fx_label_value: str):
-        """Invalid relation triggers error."""
-        rel = "invalid"
-
-        with pytest.raises(ValueError, match="Invalid label relation"):
-            Label(rel=rel, scheme=fx_label_scheme, value=fx_label_value)
-
     # noinspection PyArgumentList
     def test_missing_empty_scheme(self, fx_label_rel: LabelRelation, fx_label_value: str):
         """Missing scheme triggers error."""

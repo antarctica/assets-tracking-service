@@ -30,7 +30,7 @@ from tests.examples.example_exporter import ExampleExporter
 from tests.examples.example_provider import ExampleProviderConfig, ExampleProvider
 
 # unused-imports are needed for the `factory_name` import to work
-from tests.pytest_postgresql import (  # noqa: F401
+from tests.pytest_pg_factories import (  # noqa: F401
     postgresql_proc_factory,
     postgresql_noproc_factory,
     factory_name as postgresql_factory_name,

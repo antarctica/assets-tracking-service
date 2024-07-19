@@ -29,7 +29,7 @@ class Label:
 
     def __post_init__(self):
         """Validate fields."""
-        if self.rel not in LabelRelation:
+        if self.rel.name not in LabelRelation.__members__:
             raise ValueError(f"Invalid label relation: [{self.rel}]. It must be a LabelRelation enum member.")
 
         if not self.scheme:
