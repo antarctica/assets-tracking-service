@@ -18,6 +18,7 @@ from ulid import ULID, parse as ulid_parse
 from assets_tracking_service.cli import app_cli
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
+from assets_tracking_service.exporters.arcgis import ArcGISExporter
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.models.asset import AssetNew, Asset, AssetsClient
@@ -479,6 +480,19 @@ def fx_exporter_geojson(
 @pytest.fixture
 def fx_exporter_example(fx_config: Config, fx_db_client_tmp_db_pop, fx_logger: logging.Logger) -> ExampleExporter:
     return ExampleExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_exporter_arcgis(
+    mocker: MockerFixture, fx_config: Config, fx_db_client_tmp_db_pop, fx_logger: logging.Logger
+) -> ArcGISExporter:
+    mocker.patch("assets_tracking_service.exporters.arcgis.GIS", return_value=mocker.MagicMock(auto_spec=True))
+    mocker.patch(
+        "assets_tracking_service.exporters.arcgis.FeatureLayerCollection", return_value=mocker.MagicMock(auto_spec=True)
+    )
+    mocker.patch("assets_tracking_service.exporters.arcgis.Item", return_value=None)
+
+    return ArcGISExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
 
 
 @pytest.fixture

@@ -13,10 +13,13 @@ from tests.examples.example_exporter import ExampleExporter
 class TestExportersManager:
     def test_init(
         self,
+        mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,
         fx_logger: logging.Logger,
     ):
+        mocker.patch("assets_tracking_service.exporters.arcgis.GIS", return_value=mocker.MagicMock(auto_spec=True))
+
         manager = ExportersManager(config=fx_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
         assert len(manager._exporters) > 0
@@ -30,7 +33,7 @@ class TestExportersManager:
 
         assert len(manager._exporters) == 0
 
-    @pytest.mark.parametrize("enabled_exporters", [["geojson"]])
+    @pytest.mark.parametrize("enabled_exporters", [["arcgis"], ["geojson"]])
     def test_make_each_exporter(
         self,
         mocker: MockerFixture,
@@ -45,17 +48,15 @@ class TestExportersManager:
 
         assert len(manager._exporters) == 1
 
-    def test_fetch_active_assets(
+    def test_export(
         self,
         mocker: MockerFixture,
         caplog: pytest.LogCaptureFixture,
         fx_exporters_manager_no_exporters: ExportersManager,
         fx_exporter_example: ExampleExporter,
     ):
-        mock_geojson_exporter = mocker.MagicMock(auto_spec=True)
-        mocker.patch(
-            "assets_tracking_service.exporters.exporters_manager.GeoJsonExporter", return_value=mock_geojson_exporter
-        )
+        mocker.patch("assets_tracking_service.exporters.exporters_manager.ArcGISExporter", return_value=mocker.MagicMock(auto_spec=True))
+        mocker.patch("assets_tracking_service.exporters.exporters_manager.GeoJsonExporter", return_value=mocker.MagicMock(auto_spec=True))
 
         fx_exporters_manager_no_exporters._exporters = [fx_exporter_example]
 

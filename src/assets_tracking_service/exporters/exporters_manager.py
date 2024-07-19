@@ -1,6 +1,7 @@
 import logging
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
+from assets_tracking_service.exporters.arcgis import ArcGISExporter
 from assets_tracking_service.exporters.base_exporter import Exporter
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
 
@@ -16,6 +17,11 @@ class ExportersManager:
     def _make_exporters(self, exporter_names: list[str]) -> list[Exporter]:
         self._logger.info("Creating exporters...")
         exporters = []
+
+        if "arcgis" in exporter_names:
+            self._logger.info("Creating ArcGIS exporter...")
+            exporters.append(ArcGISExporter(config=self._config, db=self._db, logger=self._logger))
+            self._logger.info("Created ArcGIS exporter.")
 
         if "geojson" in exporter_names:
             self._logger.info("Creating GeoJSON exporter...")
