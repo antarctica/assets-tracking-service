@@ -211,11 +211,11 @@ class Config:
         """List of enabled providers."""
         providers = []
 
-        if self.ENABLE_PROVIDER_GEOTAB:
-            providers.append("geotab")
-
         if self.ENABLE_PROVIDER_AIRCRAFT_TRACKING:
             providers.append("aircraft_tracking")
+
+        if self.ENABLE_PROVIDER_GEOTAB:
+            providers.append("geotab")
 
         return providers
 

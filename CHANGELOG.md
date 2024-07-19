@@ -31,7 +31,7 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ### Changed
 
-* derived units in latest asset positions export database view
+* Derived units in latest asset positions export database view
   [#36](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/36)
 * Downgrading to Python 3.11 due to `arcgis` dependency
   [#11](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/11)
