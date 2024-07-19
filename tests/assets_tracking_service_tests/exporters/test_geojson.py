@@ -1,4 +1,6 @@
 import logging
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 from geojson import FeatureCollection, load as geojson_load
@@ -57,7 +59,6 @@ class TestExporterGeoJson:
         assert len(result["features"]) == 0
 
     def test_export(self, fx_exporter_geojson: GeoJsonExporter):
-        """Handles empty features list."""
         expected_path = fx_exporter_geojson._config.EXPORTER_GEOJSON_OUTPUT_PATH
 
         fx_exporter_geojson.export()
@@ -68,3 +69,11 @@ class TestExporterGeoJson:
         with expected_path.open("r") as f:
             fc: FeatureCollection = geojson_load(f)
             assert fc.is_valid
+
+    def test_export_path(self, fx_exporter_geojson: GeoJsonExporter):
+        with TemporaryDirectory() as temp_dir:
+            expected_path = Path(temp_dir) / "custom.geojson"
+
+        fx_exporter_geojson.export(path=expected_path)
+
+        assert expected_path.exists()

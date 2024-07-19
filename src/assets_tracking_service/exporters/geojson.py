@@ -1,5 +1,6 @@
 import json
 import logging
+from pathlib import Path
 
 from geojson import FeatureCollection, loads as geojson_loads, dump as geojson_dump
 from psycopg.sql import SQL
@@ -32,13 +33,14 @@ class GeoJsonExporter(Exporter):
 
         return fc
 
-    def export(self):
-        self._logger.info("Ensuring parent path '%s' exists", self._path.parent.resolve())
-        self._path.parent.mkdir(parents=True, exist_ok=True)
+    def export(self, path: Path | None = None):
+        path = path or self._path
+
+        self._logger.info("Ensuring parent path '%s' exists", path.parent.resolve())
+        path.parent.mkdir(parents=True, exist_ok=True)
 
         data = self.data
 
-        self._logger.info("Writing data to '%s'", self._path.resolve())
-        # print(geojson_dumps(self.data, indent=2, sort_keys=False))
-        with self._path.open("w") as geojson_file:
+        self._logger.info("Writing data to '%s'", path.resolve())
+        with path.open("w") as geojson_file:
             geojson_dump(data, geojson_file, indent=2, sort_keys=False)
