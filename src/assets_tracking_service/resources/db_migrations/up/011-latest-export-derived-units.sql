@@ -1,9 +1,9 @@
 -- see https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/36 for background
 
-DROP VIEW summary_geojson;
-DROP VIEW summary_export;
+DROP VIEW IF EXISTS summary_geojson;
+DROP VIEW IF EXISTS summary_export;
 
-CREATE OR REPLACE VIEW summary_export AS
+CREATE VIEW summary_export AS
 SELECT
     uuid_to_ulid(a.id) as asset_id,
     jsonb_extract_path_text(asset_name.label, 'value') as asset_pref_label,
@@ -76,7 +76,7 @@ JOIN LATERAL (
     WHERE elem.label->>'scheme' = 'ats:last_fetched'
 ) as asset_last_fetched ON TRUE;
 
-CREATE OR REPLACE VIEW summary_geojson AS
+CREATE VIEW summary_geojson AS
 SELECT jsonb_build_object(
     'type', 'FeatureCollection',
     'features', jsonb_agg(feature)
