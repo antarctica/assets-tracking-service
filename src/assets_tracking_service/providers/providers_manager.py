@@ -35,17 +35,7 @@ class ProvidersManager:
         if "geotab" in provider_names:
             self._logger.info("Creating Geotab provider...")
             try:
-                providers.append(
-                    GeotabProvider(
-                        config={
-                            "username": self._config.PROVIDER_GEOTAB_USERNAME,
-                            "password": self._config.PROVIDER_GEOTAB_PASSWORD,
-                            "database": self._config.PROVIDER_GEOTAB_DATABASE,
-                            "nvs_l06_group_mappings": self._config.provider_geotab_group_nvs_l06_code_mapping,
-                        },
-                        logger=self._logger,
-                    )
-                )
+                providers.append(GeotabProvider(config=self._config, logger=self._logger))
                 self._logger.info("Created Geotab provider.")
             except RuntimeError:
                 self._logger.exception("Failed to create Geotab provider.")
@@ -54,16 +44,7 @@ class ProvidersManager:
         if "aircraft_tracking" in provider_names:
             self._logger.info("Creating Aircraft Tracking provider...")
             try:
-                providers.append(
-                    AircraftTrackingProvider(
-                        config={
-                            "username": self._config.PROVIDER_AIRCRAFT_TRACKING_USERNAME,
-                            "password": self._config.PROVIDER_AIRCRAFT_TRACKING_PASSWORD,
-                            "api_key": self._config.PROVIDER_AIRCRAFT_TRACKING_API_KEY,
-                        },
-                        logger=self._logger,
-                    )
-                )
+                providers.append(AircraftTrackingProvider(config=self._config, logger=self._logger))
                 self._logger.info("Created Aircraft Tracking provider.")
             except RuntimeError:
                 self._logger.exception("Failed to create Aircraft Tracking provider.")

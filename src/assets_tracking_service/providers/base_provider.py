@@ -52,19 +52,6 @@ class Provider(ABC):
         return {asset.labels.filter_by_scheme(self.distinguishing_asset_label_scheme).value: asset for asset in assets}
 
     @abstractmethod
-    def _check_config(self: Self, config: dict) -> None:
-        """
-        Abstract method to validate the configuration for each provider.
-
-        This extends the basic configuration validation performed in the app Config class and SHOULD apply any checks
-        specific to each provider such as verifying credentials.
-
-        This method SHOULD be called from __init__ and raise an exception if invalid to prevent unusable providers
-        from being used.
-        """
-        pass
-
-    @abstractmethod
     def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
         """
         Public entrypoint for fetching active assets.

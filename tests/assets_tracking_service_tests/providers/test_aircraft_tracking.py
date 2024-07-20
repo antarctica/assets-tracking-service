@@ -9,10 +9,11 @@ from requests import HTTPError
 from shapely import Point
 from ulid import new as new_ulid
 
+from assets_tracking_service.config import Config
 from assets_tracking_service.models.asset import Asset, AssetNew
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
-from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingConfig, AircraftTrackingProvider
+from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
 
 creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 
@@ -20,37 +21,14 @@ creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 class TestAircraftTrackingProvider:
     """Aircraft Tracking provider tests."""
 
-    def test_init(
-        self: Self,
-        caplog: pytest.LogCaptureFixture,
-        fx_logger: logging.Logger,
-        fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
-    ):
+    def test_init(self: Self, caplog: pytest.LogCaptureFixture, fx_config: Config, fx_logger: logging.Logger):
         """Initialises."""
-        AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+        AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         assert "Creating Aircraft Tracking SDK client..." in caplog.text
         assert "Aircraft Tracking SDK client created." in caplog.text
 
-    @pytest.mark.parametrize(
-        "config",
-        [
-            {"password": "x", "api_key": "x"},
-            {"username": "x", "api_key": "x"},
-            {"username": "x", "password": "x"},
-        ],
-    )
-    def test_init_error(self: Self, config: AircraftTrackingConfig):
-        """Errors if missing required config option."""
-        with pytest.raises(RuntimeError, match="Missing required config key"):
-            AircraftTrackingProvider(config=config, logger=logging.getLogger())
-
-    def test_fetch_aircraft(
-        self: Self,
-        mocker: MockerFixture,
-        fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
-        fx_logger: logging.Logger,
-    ):
+    def test_fetch_aircraft(self: Self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
         """Fetches aircraft."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_active_aircraft.return_value = [
@@ -67,7 +45,7 @@ class TestAircraftTrackingProvider:
             return_value=mock_aircraft_tracker_client,
         )
 
-        provider = AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+        provider = AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         assert provider._fetch_aircraft()[0] == {
             "aircraft_id": "4658",
@@ -77,12 +55,7 @@ class TestAircraftTrackingProvider:
             "registration": "VP-FAZ",
         }
 
-    def test_fetch_aircraft_error(
-        self: Self,
-        mocker: MockerFixture,
-        fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
-        fx_logger: logging.Logger,
-    ):
+    def test_fetch_aircraft_error(self: Self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
         """Raises error if fetching aircraft fails."""
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_active_aircraft.side_effect = HTTPError
@@ -91,7 +64,7 @@ class TestAircraftTrackingProvider:
             return_value=mock_aircraft_tracker_client,
         )
 
-        provider = AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+        provider = AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         with pytest.raises(RuntimeError):
             provider._fetch_aircraft()
@@ -100,7 +73,7 @@ class TestAircraftTrackingProvider:
         self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
-        fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
+        fx_config: Config,
         fx_logger: logging.Logger,
     ):
         """Raises error if fetched aircraft missing required properties."""
@@ -120,7 +93,7 @@ class TestAircraftTrackingProvider:
             return_value=mock_aircraft_tracker_client,
         )
 
-        provider = AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+        provider = AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         assert len(provider._fetch_aircraft()) == 1
         assert "Skipping aircraft: 'unknown' due to missing required fields." in caplog.text
@@ -128,7 +101,7 @@ class TestAircraftTrackingProvider:
     def test_fetch_latest_aircraft_positions(
         self: Self,
         mocker: MockerFixture,
-        fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
+        fx_config: Config,
         fx_logger: logging.Logger,
     ):
         """Fetches latest aircraft positions."""
@@ -152,7 +125,7 @@ class TestAircraftTrackingProvider:
             return_value=mock_aircraft_tracker_client,
         )
 
-        provider = AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+        provider = AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         assert provider._fetch_latest_positions()[0] == {
             "position_id": "88803930",
@@ -168,7 +141,7 @@ class TestAircraftTrackingProvider:
     def test_fetch_latest_aircraft_positions_error(
         self: Self,
         mocker: MockerFixture,
-        fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
+        fx_config: Config,
         fx_logger: logging.Logger,
     ):
         """Raises error if fetching aircraft positions fails."""
@@ -179,7 +152,7 @@ class TestAircraftTrackingProvider:
             return_value=mock_aircraft_tracker_client,
         )
 
-        provider = AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+        provider = AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         with pytest.raises(RuntimeError):
             provider._fetch_latest_positions()
@@ -188,7 +161,7 @@ class TestAircraftTrackingProvider:
         self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
-        fx_provider_aircraft_tracking_config: AircraftTrackingConfig,
+        fx_config: Config,
         fx_logger: logging.Logger,
     ):
         """Raises error if fetched aircraft positions missing required properties."""
@@ -213,7 +186,7 @@ class TestAircraftTrackingProvider:
             return_value=mock_aircraft_tracker_client,
         )
 
-        provider = AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+        provider = AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         assert len(provider._fetch_latest_positions()) == 1
         assert (
@@ -266,9 +239,7 @@ class TestAircraftTrackingProvider:
         assert list(fx_provider_aircraft_tracking.fetch_active_assets())[0] == expected_asset  # noqa: RUF015
 
     def test_fetch_active_assets_error(
-        self: Self,
-        mocker: MockerFixture,
-        fx_provider_aircraft_tracking: AircraftTrackingProvider,
+        self: Self, mocker: MockerFixture, fx_provider_aircraft_tracking: AircraftTrackingProvider
     ):
         """Raises error if fetching active assets fails."""
         mocker.patch.object(fx_provider_aircraft_tracking, "_fetch_aircraft", side_effect=RuntimeError)
@@ -350,9 +321,7 @@ class TestAircraftTrackingProvider:
         assert position == expected_position
 
     def test_fetch_latest_positions_error(
-        self: Self,
-        mocker: MockerFixture,
-        fx_provider_aircraft_tracking: AircraftTrackingProvider,
+        self: Self, mocker: MockerFixture, fx_provider_aircraft_tracking: AircraftTrackingProvider
     ):
         """Raises error if fetching latest positions fails."""
         mocker.patch.object(fx_provider_aircraft_tracking, "_fetch_latest_positions", side_effect=RuntimeError)

@@ -1,27 +1,19 @@
 import logging
 from collections.abc import Generator
 from datetime import datetime
-from typing import Self, TypedDict
+from typing import Self
 
 # noinspection PyPep8Naming
 from mygeotab import API as Geotab  # noqa: N811
 from mygeotab import MyGeotabException, TimeoutException
 from shapely import Point
 
+from assets_tracking_service.config import Config
 from assets_tracking_service.models.asset import Asset, AssetNew
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
 from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.units import UnitsConverter
-
-
-class GeotabConfig(TypedDict):
-    """Configuration for `GeotabProvider`."""
-
-    username: str
-    password: str
-    database: str
-    nvs_l06_group_mappings: dict[str, str]
 
 
 class GeotabProvider(Provider):
@@ -33,19 +25,20 @@ class GeotabProvider(Provider):
     distinguishing_asset_label_scheme = f"{prefix}:device_id"
     distinguishing_position_label_scheme = f"{prefix}:log_record_id"
 
-    def __init__(self: Self, config: GeotabConfig, logger: logging.Logger) -> None:
+    def __init__(self: Self, config: Config, logger: logging.Logger) -> None:
         self._units = UnitsConverter()
         self._logger = logger
 
         self._logger.debug("Setting Geotab configuration...")
-        self._check_config(config)
         self._config = config
         self._logger.debug("Geotab configuration ok.")
 
         self._logger.debug("Creating Geotab SDK client...")
         try:
             self._client = Geotab(
-                username=self._config["username"], password=self._config["password"], database=self._config["database"]
+                username=self._config.PROVIDER_GEOTAB_USERNAME,
+                password=self._config.PROVIDER_GEOTAB_PASSWORD,
+                database=self._config.PROVIDER_GEOTAB_DATABASE,
             )
             self._logger.debug("Geotab SDK client created.")
             self._logger.debug("Authenticating Geotab SDK client.")
@@ -54,14 +47,6 @@ class GeotabProvider(Provider):
         except (MyGeotabException, TimeoutException) as e:
             msg = "Failed to initialise Geotab Provider."
             raise RuntimeError(msg) from e
-
-    def _check_config(self: Self, config: GeotabConfig) -> None:
-        """Check credentials are provided."""
-        for key in ["username", "password", "database", "nvs_l06_group_mappings"]:
-            if key not in config:
-                msg = f"Missing required config key: '{key}'"
-                self._logger.error(msg)
-                raise RuntimeError(msg)
 
     def _fetch_devices(self: Self) -> list[dict[str, str]]:
         """
@@ -208,9 +193,9 @@ class GeotabProvider(Provider):
             self._logger.debug("Determining platform type from group mappings...")
             self._logger.debug("Raw groups: '%s'", device["device_group_ids"])
             platform_types = [
-                self._config["nvs_l06_group_mappings"][group_id]
+                self._config.provider_geotab_group_nvs_l06_code_mapping[group_id]
                 for group_id in device["device_group_ids"].split(",")
-                if group_id in self._config["nvs_l06_group_mappings"]
+                if group_id in self._config.provider_geotab_group_nvs_l06_code_mapping
             ]
             self._logger.debug("Platform types: '%s'", platform_types)
             platform_type_value = platform_types[0] if len(platform_types) == 1 else "0"

@@ -1,21 +1,15 @@
 import logging
 from collections.abc import Generator
 from datetime import UTC, datetime
-from typing import Self, TypedDict
+from typing import Self
 
 from shapely import Point
 
+from assets_tracking_service.config import Config
 from assets_tracking_service.models.asset import Asset, AssetNew
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
 from assets_tracking_service.providers.base_provider import Provider
-
-
-class ExampleProviderConfig(TypedDict):
-    """Example Provider configuration."""
-
-    username: str
-    password: str
 
 
 class ExampleProvider(Provider):
@@ -27,20 +21,12 @@ class ExampleProvider(Provider):
     distinguishing_asset_label_scheme = f"{prefix}:asset_id"
     distinguishing_position_label_scheme = f"{prefix}:position_id"
 
-    def __init__(self: Self, config: ExampleProviderConfig, logger: logging.Logger) -> None:
+    def __init__(self: Self, config: Config, logger: logging.Logger) -> None:
         self._logger = logger
 
         self._logger.debug("Setting Example Provider configuration...")
-        self._check_config(config)
         self._config = config
         self._logger.debug("Example Provider configuration ok.")
-
-    def _check_config(self: Self, config: ExampleProviderConfig) -> None:
-        for key in ["username", "password"]:
-            if key not in config:
-                msg = f"Missing required config key: '{key}'"
-                self._logger.error(msg)
-                raise RuntimeError(msg)
 
     def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
         """Fetch active assets."""

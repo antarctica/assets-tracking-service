@@ -9,10 +9,11 @@ from pytest_mock import MockerFixture
 from shapely import Point
 from ulid import new as new_ulid
 
+from assets_tracking_service.config import Config
 from assets_tracking_service.models.asset import Asset, AssetNew
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
-from assets_tracking_service.providers.geotab import GeotabConfig, GeotabProvider
+from assets_tracking_service.providers.geotab import GeotabProvider
 
 creation_time = datetime.datetime(2012, 6, 10, 14, 30, 20, tzinfo=datetime.UTC)
 
@@ -24,33 +25,17 @@ class TestGeotabProvider:
         self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
+        fx_config: Config,
         fx_logger: logging.Logger,
-        fx_provider_geotab_config: GeotabConfig,
     ):
         """Initialises."""
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mocker.MagicMock())
 
-        GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+        GeotabProvider(config=fx_config, logger=fx_logger)
 
         assert "Creating Geotab SDK client..." in caplog.text
 
-    @pytest.mark.parametrize(
-        "config",
-        [
-            {"password": "x", "database": "x", "nvs_l06_group_mappings": {}},
-            {"username": "x", "database": "x", "nvs_l06_group_mappings": {}},
-            {"username": "x", "password": "x", "nvs_l06_group_mappings": {}},
-            {"username": "x", "password": "x", "database": "x"},
-        ],
-    )
-    def test_init_error_config(self: Self, config: GeotabConfig):
-        """Errors if config is invalid."""
-        with pytest.raises(RuntimeError, match="Missing required config key"):
-            GeotabProvider(config=config, logger=logging.getLogger())
-
-    def test_init_error_geotab(
-        self: Self, mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
-    ):
+    def test_init_error_geotab(self: Self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
         """Errors if initialising Geotab fails."""
         mock_geotab_client = mocker.MagicMock(auto_spec=True)
         mock_geotab_client.authenticate.side_effect = MyGeotabException(
@@ -59,14 +44,14 @@ class TestGeotabProvider:
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
         with pytest.raises(RuntimeError, match="Failed to initialise Geotab Provider."):
-            GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+            GeotabProvider(config=fx_config, logger=fx_logger)
 
         mock_geotab_client = mocker.MagicMock(auto_spec=True)
         mock_geotab_client.authenticate.side_effect = TimeoutException(server="Fake Server")
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
         with pytest.raises(RuntimeError, match="Failed to initialise Geotab Provider."):
-            GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+            GeotabProvider(config=fx_config, logger=fx_logger)
 
     @pytest.mark.vcr()
     def test_fetch_devices(self: Self, fx_provider_geotab: GeotabProvider):
@@ -96,7 +81,7 @@ class TestGeotabProvider:
         self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
-        fx_provider_geotab_config: GeotabConfig,
+        fx_config: Config,
         fx_logger: logging.Logger,
     ):
         """Errors if fetching devices fails due to missing keys."""
@@ -108,7 +93,7 @@ class TestGeotabProvider:
         ]
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
-        client = GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+        client = GeotabProvider(config=fx_config, logger=fx_logger)
         results = client._fetch_devices()
 
         # the first item is incomplete, and so should be skipped
@@ -144,7 +129,7 @@ class TestGeotabProvider:
         self: Self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
-        fx_provider_geotab_config: GeotabConfig,
+        fx_config: Config,
         fx_logger: logging.Logger,
     ):
         """Errors if fetching device statuses fails due to missing keys."""
@@ -174,7 +159,7 @@ class TestGeotabProvider:
         ]
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
-        client = GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+        client = GeotabProvider(config=fx_config, logger=fx_logger)
         results = client._fetch_device_statuses()
 
         # the first item is incomplete, and so should be skipped
@@ -212,29 +197,25 @@ class TestGeotabProvider:
             fx_provider_geotab_mocked_error_timeout._fetch_log_record(device_id=device_id, time=time)
 
     @pytest.mark.cov()
-    def test_fetch_log_record_none(
-        self: Self, mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
-    ):
+    def test_fetch_log_record_none(self: Self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
         """Errors if no log record is found."""
         mock_geotab_client = mocker.MagicMock(auto_spec=True)
         mock_geotab_client.get.return_value = []
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
-        client = GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+        client = GeotabProvider(config=fx_config, logger=fx_logger)
 
         with pytest.raises(IndexError, match="No log record found"):
             client._fetch_log_record(device_id="x", time=datetime.datetime.now(tz=datetime.UTC))
 
     @pytest.mark.cov()
-    def test_fetch_log_record_multiple(
-        self: Self, mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
-    ):
+    def test_fetch_log_record_multiple(self: Self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
         """Errors if multiple log records are found."""
         mock_geotab_client = mocker.MagicMock(auto_spec=True)
         mock_geotab_client.get.return_value = [1, 2]
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
-        client = GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+        client = GeotabProvider(config=fx_config, logger=fx_logger)
 
         with pytest.raises(IndexError, match="Multiple log records found"):
             client._fetch_log_record(device_id="x", time=datetime.datetime.now(tz=datetime.UTC))
