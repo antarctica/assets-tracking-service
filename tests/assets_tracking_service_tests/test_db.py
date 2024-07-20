@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Self
@@ -113,6 +114,24 @@ class TestDBClient:
         """Getting invalid query triggers error."""
         with pytest.raises(DatabaseError):
             fx_db_client_tmp_db.get_query_result(SQL("SELECT * FROM {};").format(Identifier("unknown")))
+
+    def test_select_timezone_utc(self: Self, fx_db_client_tmp_db: DatabaseClient):
+        """Date times are returned in UTC."""
+        fx_db_client_tmp_db.execute(
+            SQL("""
+                CREATE TABLE IF NOT EXISTS public.test
+                (
+                    id      INTEGER  GENERATED ALWAYS AS IDENTITY CONSTRAINT test_pk PRIMARY KEY,
+                    time    TIMESTAMPTZ
+                );
+                INSERT INTO public.test (time) VALUES ('2021-01-01 14:30:00+00:00');
+                """)
+        )
+
+        result = fx_db_client_tmp_db.get_query_result(SQL("SELECT time FROM public.test;"))
+
+        assert isinstance(result[0][0], datetime)
+        assert result[0][0].tzinfo == UTC
 
     # noinspection SqlResolve
     def test_insert_dict(self: Self, fx_db_client_tmp_db: DatabaseClient):
