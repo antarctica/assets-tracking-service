@@ -27,10 +27,15 @@ class DatabaseClient:
     """Basic database client."""
 
     def __init__(self: Self, conn: Connection) -> None:
-        """Create client using injected database connection."""
-        self._logger = logging.getLogger("app")
+        """
+        Create client using injected database connection.
 
+        All date times are fetched as UTC.
+        """
+        self._logger = logging.getLogger("app")
         self._conn = conn
+
+        self._conn.execute("set timezone to 'UTC';")
 
     @property
     def conn(self: Self) -> Connection:
