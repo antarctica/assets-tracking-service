@@ -34,6 +34,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#41](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/41)
 * Changing `psycopg` dependency to binary variant to avoid installation issues
   [#49](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/49)
+* Migrations could not be run if already migrated
+  [#51](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/51)
 
 ### Changed
 

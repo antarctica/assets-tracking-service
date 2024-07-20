@@ -1,4 +1,9 @@
-CREATE OR REPLACE VIEW summary_basic AS
+DROP VIEW IF EXISTS summary_basic;
+DROP VIEW IF EXISTS summary_latest;
+DROP VIEW IF EXISTS summary_geojson;
+DROP VIEW IF EXISTS summary_export;
+
+CREATE VIEW summary_basic AS
 SELECT
     uuid_to_ulid(a.id) as asset_id,
     uuid_to_ulid(p.id) as position_id,
@@ -22,7 +27,7 @@ JOIN
         p.time_utc = latest_p_by_asset.max_time
 INNER JOIN asset as a ON p.asset_id = a.id;
 
-CREATE OR REPLACE VIEW summary_latest AS
+CREATE VIEW summary_latest AS
 SELECT
     uuid_to_ulid(a.id) as asset_id,
     jsonb_extract_path_text(asset_name.label, 'value') as asset_pref_label,
@@ -88,7 +93,7 @@ JOIN LATERAL (
     WHERE elem.label->>'scheme' = 'ats:last_fetched'
 ) as asset_last_fetched ON TRUE;
 
-CREATE OR REPLACE VIEW summary_export AS
+CREATE VIEW summary_export AS
 SELECT
     uuid_to_ulid(a.id) as asset_id,
     jsonb_extract_path_text(asset_name.label, 'value') as asset_pref_label,
@@ -147,7 +152,7 @@ JOIN LATERAL (
     WHERE elem.label->>'scheme' = 'ats:last_fetched'
 ) as asset_last_fetched ON TRUE;
 
-CREATE OR REPLACE VIEW summary_geojson AS
+CREATE VIEW summary_geojson AS
 SELECT jsonb_build_object(
     'type', 'FeatureCollection',
     'features', jsonb_agg(feature)

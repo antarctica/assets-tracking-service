@@ -1,8 +1,8 @@
 -- see https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/merge_requests/14#note_121556 for background
 
-DROP VIEW summary_geojson;
+DROP VIEW IF EXISTS summary_geojson;
 
-CREATE OR REPLACE VIEW summary_geojson AS
+CREATE VIEW summary_geojson AS
 SELECT json_build_object(
     'type', 'FeatureCollection',
     'features', json_agg(feature)

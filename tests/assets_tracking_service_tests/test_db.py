@@ -230,6 +230,12 @@ class TestDBClient:
         with pytest.raises(DatabaseError):
             fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT PostGIS_Version();"))
 
+    def test_migrate_migrate(self: Self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp_db_mig: DatabaseClient):
+        """Database can be migrated up if already at head migration."""
+        fx_db_client_tmp_db_mig.migrate_upgrade()
+
+        assert "Upgrading database to head revision..." in caplog.text
+
 
 class TestMakeConn:
     """Test method to make a database connection."""
