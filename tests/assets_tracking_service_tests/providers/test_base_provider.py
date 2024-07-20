@@ -1,4 +1,3 @@
-import logging
 from datetime import UTC, datetime
 from typing import Self
 
@@ -8,7 +7,7 @@ from ulid import parse as ulid_parse
 
 from assets_tracking_service.models.asset import Asset
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
-from tests.examples.example_provider import ExampleProvider, ExampleProviderConfig
+from tests.examples.example_provider import ExampleProvider
 
 creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 
@@ -35,12 +34,6 @@ class TestBaseProvider:
     def test_distinguishing_position_label_scheme(self: Self, fx_provider_example: ExampleProvider):
         """Distinguishing position label scheme class property."""
         assert fx_provider_example.distinguishing_position_label_scheme == "example:position_id"
-
-    @pytest.mark.parametrize("config", [{"password": "x"}, {"username": "x"}])
-    def test_init_error(self: Self, fx_logger: logging.Logger, config: ExampleProviderConfig):
-        """Raises error if required config key is missing."""
-        with pytest.raises(RuntimeError, match="Missing required config key"):
-            ExampleProvider(config=config, logger=fx_logger)
 
     def test_provider_labels(self: Self, freezer: FrozenDateTimeFactory, fx_provider_example: ExampleProvider):
         """Makes provider labels."""

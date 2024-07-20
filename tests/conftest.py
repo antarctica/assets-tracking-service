@@ -25,11 +25,11 @@ from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.models.asset import Asset, AssetNew, AssetsClient
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import Position, PositionNew, PositionsClient
-from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingConfig, AircraftTrackingProvider
-from assets_tracking_service.providers.geotab import GeotabConfig, GeotabProvider
+from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
+from assets_tracking_service.providers.geotab import GeotabProvider
 from assets_tracking_service.providers.providers_manager import ProvidersManager
 from tests.examples.example_exporter import ExampleExporter
-from tests.examples.example_provider import ExampleProvider, ExampleProviderConfig
+from tests.examples.example_provider import ExampleProvider
 from tests.pytest_pg_factories import (
     factory_name as postgresql_factory_name,
 )
@@ -375,71 +375,32 @@ def fx_positions_client_empty(fx_assets_client_one: AssetsClient) -> PositionsCl
 
 
 @pytest.fixture()
-def fx_provider_example_config() -> ExampleProviderConfig:
-    """ExampleProviderConfig."""
-    return ExampleProviderConfig(username="x", password="x")  # noqa: S106
-
-
-@pytest.fixture()
-def fx_provider_example(
-    fx_provider_example_config: ExampleProviderConfig, fx_logger: logging.Logger
-) -> ExampleProvider:
+def fx_provider_example(fx_config: Config, fx_logger: logging.Logger) -> ExampleProvider:
     """ExampleProvider."""
-    return ExampleProvider(config=fx_provider_example_config, logger=fx_logger)
+    return ExampleProvider(config=fx_config, logger=fx_logger)
 
 
 @pytest.fixture()
-def fx_provider_aircraft_tracking_config() -> AircraftTrackingConfig:
-    """AircraftTrackingConfig."""
-    return {
-        "username": "x",
-        "password": "x",
-        "api_key": "x",
-    }
-
-
-@pytest.fixture()
-def fx_provider_aircraft_tracking(
-    fx_provider_aircraft_tracking_config: AircraftTrackingConfig, fx_logger: logging.Logger
-) -> AircraftTrackingProvider:
+def fx_provider_aircraft_tracking(fx_config: Config, fx_logger: logging.Logger) -> AircraftTrackingProvider:
     """AircraftTrackingProvider."""
-    return AircraftTrackingProvider(config=fx_provider_aircraft_tracking_config, logger=fx_logger)
+    return AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
 
 @pytest.fixture()
-def fx_provider_geotab_config() -> GeotabConfig:
-    """GeotabConfig."""
-    return {
-        "username": "x",
-        "password": "x",
-        "database": "x",
-        "nvs_l06_group_mappings": {
-            "b2795": "15",
-            "b2794": "31",
-            "b2796": "15",  # ideally needs to be a separate term
-        },
-    }
-
-
-@pytest.fixture()
-def fx_provider_geotab(fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger) -> GeotabProvider:
+def fx_provider_geotab(fx_config: Config, fx_logger: logging.Logger) -> GeotabProvider:
     """GeotabProvider."""
-    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+    return GeotabProvider(config=fx_config, logger=fx_logger)
 
 
 @pytest.fixture()
-def fx_provider_geotab_mocked(
-    mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
-) -> GeotabProvider:
+def fx_provider_geotab_mocked(mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger) -> GeotabProvider:
     """GeotabProvider with a mocked client."""
     mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mocker.MagicMock(auto_spec=True))
-    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+    return GeotabProvider(config=fx_config, logger=fx_logger)
 
 
 @pytest.fixture()
-def fx_provider_geotab_mocked_error_mygeotab(
-    mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
-):
+def fx_provider_geotab_mocked_error_mygeotab(mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
     """GeotabProvider with a mocked client that raises a MyGeotabException."""
     mock_geotab_client = mocker.MagicMock(auto_spec=True)
     mock_geotab_client.get.side_effect = MyGeotabException(
@@ -447,19 +408,17 @@ def fx_provider_geotab_mocked_error_mygeotab(
     )
     mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
-    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+    return GeotabProvider(config=fx_config, logger=fx_logger)
 
 
 @pytest.fixture()
-def fx_provider_geotab_mocked_error_timeout(
-    mocker: MockerFixture, fx_provider_geotab_config: GeotabConfig, fx_logger: logging.Logger
-):
+def fx_provider_geotab_mocked_error_timeout(mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
     """GeotabProvider with a mocked client that raises a TimeoutException."""
     mock_geotab_client = mocker.MagicMock(auto_spec=True)
     mock_geotab_client.get.side_effect = TimeoutException(server="Fake Server")
     mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
-    return GeotabProvider(config=fx_provider_geotab_config, logger=fx_logger)
+    return GeotabProvider(config=fx_config, logger=fx_logger)
 
 
 @pytest.fixture()

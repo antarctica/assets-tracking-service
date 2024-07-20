@@ -37,6 +37,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#36](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/36)
 * Downgrading to Python 3.11 due to `arcgis` dependency
   [#11](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/11)
+* Provider configs refactored to use main config class
+  [#43](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/43)
 
 ## [0.2.2] - 2024-04-30
 

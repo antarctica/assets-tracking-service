@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Generator
 from datetime import UTC, datetime
-from typing import Self, TypedDict
+from typing import Self
 
 from assets_tracking_service_aircraft_provider.providers.aircraft_tracking import (
     AircraftTrackerProvider as AircraftTrackerClient,
@@ -9,19 +9,12 @@ from assets_tracking_service_aircraft_provider.providers.aircraft_tracking impor
 from requests import HTTPError
 from shapely import Point
 
+from assets_tracking_service.config import Config
 from assets_tracking_service.models.asset import Asset, AssetNew
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.position import PositionNew
 from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.units import UnitsConverter
-
-
-class AircraftTrackingConfig(TypedDict):
-    """Configuration for `AircraftTrackingProvider`."""
-
-    username: str
-    password: str
-    api_key: str
 
 
 class AircraftTrackingProvider(Provider):
@@ -33,28 +26,21 @@ class AircraftTrackingProvider(Provider):
     distinguishing_asset_label_scheme = f"{prefix}:aircraft_id"
     distinguishing_position_label_scheme = f"{prefix}:position_id"
 
-    def __init__(self: Self, config: AircraftTrackingConfig, logger: logging.Logger) -> None:
+    def __init__(self: Self, config: Config, logger: logging.Logger) -> None:
         self._units = UnitsConverter()
         self._logger = logger
 
         self._logger.debug("Setting Aircraft Tracking configuration...")
-        self._check_config(config)
         self._config = config
         self._logger.debug("Aircraft Tracking configuration ok.")
 
         self._logger.debug("Creating Aircraft Tracking SDK client...")
         self.client = AircraftTrackerClient(
-            eclair=self._config["username"], croissant=self._config["password"], baguette=self._config["api_key"]
+            eclair=self._config.PROVIDER_AIRCRAFT_TRACKING_USERNAME,
+            croissant=self._config.PROVIDER_AIRCRAFT_TRACKING_PASSWORD,
+            baguette=self._config.PROVIDER_AIRCRAFT_TRACKING_API_KEY,
         )
         self._logger.debug("Aircraft Tracking SDK client created.")
-
-    def _check_config(self: Self, config: AircraftTrackingConfig) -> None:
-        """Check credentials are provided."""
-        for key in ["username", "password", "api_key"]:
-            if key not in config:
-                msg = f"Missing required config key: '{key}'"
-                self._logger.error(msg)
-                raise RuntimeError(msg)
 
     def _fetch_aircraft(self: Self) -> list[dict[str, str]]:
         """
