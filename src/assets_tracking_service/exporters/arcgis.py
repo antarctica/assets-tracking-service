@@ -91,7 +91,7 @@ class ArcGISExporter(Exporter):
         replacement_path = str(self._get_data_with_name(origin_item.name))
         self._logger.info("Replacement path: %s", replacement_path)
 
-        self._logger.debug("Overwriting item layer features...")
+        self._logger.info("Overwriting item layer features...")
         collection = FeatureLayerCollection.fromitem(item)
         result = collection.manager.overwrite(str(replacement_path))
         self._logger.info("Overwrite result: %s", result)

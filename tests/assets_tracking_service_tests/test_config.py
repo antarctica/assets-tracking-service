@@ -141,12 +141,13 @@ class TestConfig:
             "exporter_arcgis_username": "x",
             "exporter_arcgis_password": redacted_value,
             "exporter_arcgis_item_id": "x",
-            "exporter_geojson_output_path": Path("export.geojson"),
+            "exporter_geojson_output_path": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
         }
 
         output = fx_config.dumps_safe()
         assert output == expected
         assert redacted_value in output["db_dsn"]
+        assert "export.geojson" in output["exporter_geojson_output_path"]
 
     def test_validate(self: Self, fx_config: Config):
         """Valid configuration is ok."""

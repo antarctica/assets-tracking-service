@@ -146,7 +146,7 @@ class Config:
         provider_aircraft_tracking_username: str
         provider_aircraft_tracking_password: str
         provider_aircraft_tracking_api_key: str
-        exporter_geojson_output_path: Path
+        exporter_geojson_output_path: str
         exporter_arcgis_username: str
         exporter_arcgis_password: str
         exporter_arcgis_item_id: str
@@ -170,7 +170,7 @@ class Config:
             "provider_aircraft_tracking_username": self.PROVIDER_AIRCRAFT_TRACKING_USERNAME,
             "provider_aircraft_tracking_password": self.provider_aircraft_tracking_password_safe,
             "provider_aircraft_tracking_api_key": self.provider_aircraft_tracking_api_key_safe,
-            "exporter_geojson_output_path": self.EXPORTER_GEOJSON_OUTPUT_PATH,
+            "exporter_geojson_output_path": str(self.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
             "exporter_arcgis_username": self.EXPORTER_ARCGIS_USERNAME,
             "exporter_arcgis_password": self.exporter_arcgis_password_safe,
             "exporter_arcgis_item_id": self.EXPORTER_ARCGIS_ITEM_ID,
