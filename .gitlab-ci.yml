@@ -34,17 +34,17 @@ variables:
   ATS_AIR_ACCESS_IDENTIFIER: "gitlab_ci"
 
   # Deployment
-  SSH_PRIVATE_KEY: id_ed25519.pem
-  DEPLOY_HOST: bslws01.nerc-bas.ac.uk
-  DEPLOY_USER: geoweb
-  DEPLOY_APP_DB_DSN: "XXX"
-  DEPLOY_APP_NAME: assets-tracking-service
-  DEPLOY_APP_PIP_PACKAGE: $DEPLOY_APP_NAME
-  DEPLOY_APP_PIP_EXTRA_INDEX: https://$PACKAGE_ACCESS_IDENTIFIER:$PACKAGE_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/$CI_PROJECT_ID/packages/pypi/simple
-  DEPLOY_ATS_AIR_PIP_EXTRA_INDEX: https://$ATS_AIR_ACCESS_IDENTIFIER:$ATS_AIR_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/1216/packages/pypi/simple
-  DEPLOY_VENV: /users/felnne/.venv/$DEPLOY_APP_NAME
-  DEPLOY_MODULE_BASE: ~/Modules/modulefiles/$DEPLOY_APP_NAME
-  DEPLOY_MODULE_GDAL: hpc/gdal/3.6.2
+  SSH_PRIVATE_KEY: "id_ed25519.pem"
+  DEPLOY_HOST: "bslws01.nerc-bas.ac.uk"
+  DEPLOY_USER: "geoweb"
+  DEPLOY_HOME: "/users/$DEPLOY_USER"
+  DEPLOY_APP_DB_DSN_1P_REF: "op://Infrastructure/Assets Tracking Service - Staging DB/PSQL connection string"
+  DEPLOY_APP_NAME: "assets-tracking-service"
+  DEPLOY_APP_PIP_PACKAGE: "$DEPLOY_APP_NAME"
+  DEPLOY_APP_PIP_EXTRA_INDEX: "https://$PACKAGE_ACCESS_IDENTIFIER:$PACKAGE_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/$CI_PROJECT_ID/packages/pypi/simple"
+  DEPLOY_ATS_AIR_PIP_EXTRA_INDEX: "https://$ATS_AIR_ACCESS_IDENTIFIER:$ATS_AIR_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/1216/packages/pypi/simple"
+  DEPLOY_VENV: "/users/$DEPLOY_USER/.venv/$DEPLOY_APP_NAME"
+  DEPLOY_MODULE_BASE: "/users/$DEPLOY_USER/Modules/modulefiles/$DEPLOY_APP_NAME"
 
   # Secrets (set in GitLab CI/CD settings)
   # - PROJECT_ACCESS_TOKEN
@@ -128,6 +128,17 @@ image: python:3.11-slim
   - ssh-add ~/.ssh/$SSH_PRIVATE_KEY
   - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
   - chmod 644 ~/.ssh/known_hosts
+
+  # get secrets
+  - export DEPLOY_APP_DB_DSN=$(op read "op://Infrastructure/Assets Tracking Service - Staging DB/PSQL connection string")
+  - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_USERNAME=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/username")
+  - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_PASSWORD=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/password")
+  - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_API_KEY=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/API/API Key")
+  - export DEPLOY_APP_PROVIDER_GEOTAB_USERNAME=$(op read "op://Infrastructure/Assets Tracking Service - Geotab User/username")
+  - export DEPLOY_APP_PROVIDER_GEOTAB_PASSWORD=$(op read "op://Infrastructure/Assets Tracking Service - Geotab User/password")
+  - export DEPLOY_APP_PROVIDER_GEOTAB_DATABASE=$(op read "op://Infrastructure/Assets Tracking Service - Geotab User/database")
+  - export DEPLOY_APP_EXPORTER_ARCGIS_USERNAME=$(op read "op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/username")
+  - export DEPLOY_APP_EXPORTER_ARCGIS_PASSWORD=$(op read "op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/password")
 
 .before_script_release: &before_script_release
   - apk add --no-cache curl jq
@@ -241,8 +252,24 @@ deploy:
       module-whatis "Control CLI for the Assets Tracking Service.\n"
 
       set basedir "$DEPLOY_VENV"
+
+      setenv ASSETS_TRACKING_SERVICE_ENABLE_FEATURE_SENTRY true
       setenv ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT production
       setenv ASSETS_TRACKING_SERVICE_DB_DSN $DEPLOY_APP_DB_DSN
+      setenv ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB true
+      setenv ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING true
+      setenv ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS true
+      setenv ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON true
+      setenv ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME $DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_USERNAME
+      setenv ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD $DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_PASSWORD
+      setenv ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY $DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_API_KEY
+      setenv ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME $DEPLOY_APP_PROVIDER_GEOTAB_USERNAME
+      setenv ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD $DEPLOY_APP_PROVIDER_GEOTAB_PASSWORD
+      setenv ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE $DEPLOY_APP_PROVIDER_GEOTAB_DATABASE
+      setenv ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME $DEPLOY_APP_EXPORTER_ARCGIS_USERNAME
+      setenv ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD $DEPLOY_APP_EXPORTER_ARCGIS_PASSWORD
+      setenv ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID c85b4a215ef045aeb452c5ae28d6644d
+      setenv ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH $DEPLOY_HOME/projects/$DEPLOY_APP_NAME/exports/summary.geojson
 
       prepend-path PATH \${basedir}/bin
       EOF
