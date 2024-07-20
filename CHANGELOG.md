@@ -32,6 +32,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#32](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/32)
 * Incorrect timezone in GeoJSON export
   [#41](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/41)
+* Changing `psycopg` dependency to binary variant to avoid installation issues
+  [#49](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/49)
 
 ### Changed
 

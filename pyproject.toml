@@ -18,7 +18,7 @@ dsnparse = "^0.2.1"
 environs = "^11.0.0"
 importlib-resources = "^6.4.0"
 pint = "^0.24.3"
-psycopg = "^3.2.1"
+psycopg = {extras = ["binary"], version = "^3.2.1"}
 rich = "^13.7.1"
 sentry-sdk = "^2.10.0"
 shapely = "^2.0.5"
