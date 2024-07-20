@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 from typing import Self
@@ -35,14 +34,14 @@ class GeoJsonExporter(Exporter):
         Uses the `summary_geojson` view which contains a PostGIS generated feature collection.
         This is parsed and validated as a FeatureCollection type (wrapper around a dict).
         """
-        result = self._db.get_query_result(SQL("""SELECT geojson_feature_collection FROM summary_geojson;"""))
+        result = self._db.get_query_result(SQL("""SELECT geojson_feature_collection::text FROM summary_geojson;"""))
         self._logger.debug("Raw GeoJSON data: %s", result[0][0])
 
-        if result[0][0]["features"] is None:
+        if result[0][0] == '{"type" : "FeatureCollection", "features" : null}':
             self._logger.debug("Features list is empty, convert from `None` to `[]`.")
-            result[0][0]["features"] = []
+            result = (('{"type" : "FeatureCollection", "features" : []}',),)
 
-        fc: FeatureCollection = geojson_loads(json.dumps(result[0][0]))
+        fc: FeatureCollection = geojson_loads(result[0][0])
         self._logger.debug("Parsed GeoJSON data: %s", fc)
         self._logger.info("Loaded FeatureCollection with '%d' features.", len(fc["features"]))
 
