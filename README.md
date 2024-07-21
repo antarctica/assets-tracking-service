@@ -11,17 +11,119 @@ project members respectively. Contact the [Project Maintainer](#project-maintain
 ### Purpose
 
 A service to collect, standardise, and then make available, the positions of large assets operated by the British
-Antarctic Survey.
+Antarctic Survey. Data collected by this service can be used in other tools and services, such as GIS applications.
 
+See the original
+[Project Proposal 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/locations-register/-/blob/5c0610db5d9e6cf3b85143910320154d26722415/docs/planning/project-proposal.md)
+for more information.
 
+## Tracked assets
 
+[Assets](./docs/tracked-assets.md) tracked by this service are:
 
+- 🚢 ships (the SDA)
+- ✈️ aircraft (the Dash and Twin Otters)
+- 🚜 vehicles (snowmobiles, Pistonbully's, loaders, etc.)
 
+Assets are tracked using a range of external [Providers](./docs/providers.md). Assets, and their latest positions are
+fetched from providers every 5 minutes (providers may update less frequently than we check).
 
+## Data access
 
+**Note:** Data is currently restricted. See the [Permissions](#permissions) section for more information.
 
+### Latest asset positions
 
+For the last known position of all assets (optionally filterable by name or platform type):
 
+- [Overview](https://bas.maps.arcgis.com/home/item.html?id=75fda8d96a334d39aa55fa559d1c9e5b)
+- [ArcGIS Feature Service 🔒](https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis/rest/services/agol_test13/FeatureServer)
+- [OGC API - Features 🔒](https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis/rest/services/agol_test13/OGCFeatureServer)
+
+**Note:** These endpoints are provisional with limited metadata and will be replaced. See
+[MAGIC/assets-tracking-service#44 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/44).
+
+### Permissions
+
+Whilst data access is verified with data owners, access is limited to MAGIC team members.
+
+Data MUST NOT be shared with others without prior approval from @felnne.
+
+### ArcGIS Online
+
+Data made available through ArcGIS Online (AGOL) is contained in an
+[Assets Tracking Service](https://bas.maps.arcgis.com/home/group.html?id=46d7a701202442c6abc1b47e4958c0fd&view=list#content)
+group, including all the services listed above.
+
+### Historic asset locations
+
+This service focuses on current and recent positions of assets. Long term records of the location and activity of BAS
+assets, including retired assets, are held in other systems operated by other teams:
+
+- for ships (inc. the JCR, ES, etc.), contact the [UK Polar Data Centre](https://www.bas.ac.uk/data/uk-pdc/)
+- for aircraft, contact the [BAS Air Unit](https://www.bas.ac.uk/team/operational-teams/operational-delivery/air-unit/)
+- for vehicles, contact the [BAS Vehicles Section](https://www.bas.ac.uk/team/operational-teams/engineering-and-technology/vehicles/)
+
+## Related projects
+
+This project forms part of a wider set of data, services and tools to provide BAS with trustworthy and timely geospatial
+information, including:
+
+- the [BAS Operations Data Store 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/ops-data-store)
+  - for BAS Operations datasets such as depots and instruments
+
+Data provided by this project is used in projects including:
+
+- the [BAS Field Operations GIS 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/operations/field-operations-gis-data)
+- the [BAS Public Website](https://www.bas.ac.uk)
+
+This project was previously known as the [Locations Register 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/locations-register)
+and preceded by other implementations. This iteration was initially developed in this
+[Experiment 🛡](https://gitlab.data.bas.ac.uk/felnne/pytest-pg-exp).
+
+## Usage
+
+### Control CLI
+
+A control CLI is available on the central workstations using the `geoweb` user:
+
+```
+$ ssh geoweb@bslws01.nerc-bas.ac.uk
+$ module load ats-ctl
+$ ats-ctl --help
+```
+
+See the [CLI Reference](./docs/cli-reference.md) documentation for available commands.
+
+**Note:** You need to be on the BAS network to access the workstations. Contact @felnne if you do not have access to
+the `geoweb` user.
+
+### Automatic processing
+
+The CLI commands to fetch and export data are automatically ran every 5 minutes to maintain accurate information.
+
+Automatic monitoring will raise alerts if:
+
+- an error occurs when processing data
+- processing has not been attempted for 15 minutes
+
+Processing logs for the last 24 hours are available from `/users/geoweb/cron_logs/assets-tracking-service/`.
+
+## Data and information model
+
+See the [Information](./docs/info-model.md) and [Data](./docs/data-model.md) Model documentation.
+
+## Implementation
+
+See [Implementation](./docs/implementation.md) documentation.
+
+## Installation and upgrades
+
+See [Installation and Upgrades](./docs/install-upgrade.md) documentation.
+
+## Infrastructure
+
+See [Infrastructure](./docs/infrastructure.md) documentation.
 
 ## Development
 
@@ -44,19 +146,20 @@ GitLab CI/CD will automatically create a GitLab Release based on the tag, includ
 - package artefact
 - link to README at the relevant tag
 
+GitLab CI/CD will automatically trigger a [Deployment](#deployment) of the new release.
+
 ## Deployment
 
-...
-
-### Deployment workflow
-
-Create a [deployment issue](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/new?issue[title]=x.x.x%20deploy&issuable_template=deploy) 
-and follow the instructions.
+See [Deployment](./docs/deploy.md) documentation.
 
 ## Project maintainer
 
 British Antarctic Survey ([BAS](https://www.bas.ac.uk)) Mapping and Geographic Information Centre
 ([MAGIC](https://www.bas.ac.uk/teams/magic)) - [magic@bas.ac.uk](mailto:magic@bas.ac.uk).
+
+## Data protection
+
+This project has had a [Data Protection Impact Assessment](./docs/dpia.md).
 
 ## Licence
 

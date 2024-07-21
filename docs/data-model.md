@@ -187,5 +187,3 @@ an implementation detail and:
 
 - MUST NOT be relied upon existing or being correct
 - values are set automatically to the current time in UTC when data in a row is changed via a trigger
-
-

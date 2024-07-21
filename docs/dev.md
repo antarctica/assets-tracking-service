@@ -59,7 +59,7 @@ Conventions:
 
 - all deployable code should be contained in the `assets-tracking-service` package
 - use `Path.resolve()` if displaying or logging file/directory paths
-- use logging to record how actions progress, using the app [`logger`](../src/assets_tracking_service/loging.py)
+- use logging to record how actions progress, using the app [`logger`](../src/assets_tracking_service/logging.py)
   - (e.g. `logger = logging.getLogger('app')`)
 
 ## Python version
@@ -210,11 +210,35 @@ In the [`Config`](../src/assets_tracking_service/config.py) class:
 In the [Configuration](./config.md) documentation:
 
 - add to either configurable or unconfigurable options table in alphabetical order
+- update the [`.env.example`](../.env.example) template and local `.env` file
+- update the `deploy` job in the [`.gitlab-ci.yml`](../.gitlab-ci.yml) file
+- update the `[tool.pytest_env]` section in [`pyproject.toml`](../pyproject.toml)
 
 In the [test_config.py](../tests/assets_tracking_service_tests/test_config.py) module:
 
+- update the expected response in the `test_dumps_safe` method
+- if validated, update the `test_`
 - update or create tests as needed
 
+## Adding database migrations
+
+In the [`db_migrations`](../src/assets_tracking_service/resources/db_migrations) resource directory:
+
+- create an *up* migration, which applies the change in the `up/` subdirectory
+- create a *down* migration, which reverts the change in the `down/` subdirectory
+
+Migration files are numbered to ensure they apply in the correct order:
+
+- *up* migrations count upwards
+- *down* migrations count backwards
+
+Migrations should be grouped into logical units, for example if creating a new entity define a table and it's indexes
+in a single migration. Define separate entities (even if related and part of the same change/feature) in separate
+migrations.
+
+Existing migrations MUST NOT be amended. I.e. if a column type should change, use an `ALTER` command in a new migration.
+
+See the [Implementation](./implementation.md#database-migrations) documentation for more information on migrations.
 
 ## Adding CLI commands
 
@@ -234,3 +258,35 @@ In the [CLI Reference](./cli-reference.md) documentation:
 
 - if needed, create a new command group section
 - list and summarise the new command in the relevant group section
+
+## Adding providers
+
+**[WIP]** This section is a work in progress.
+
+- add config option for enabling/disabling provider
+- update `enabled_providers` property to include new provider
+- add provider specific [config options](#adding-configuration-options) as needed
+- create a new module in the [`providers`](../src/assets_tracking_service/providers) package
+- create a new class inheriting from the [`BaseProvider`](../src/assets_tracking_service/providers/base_provider.py)
+- implement methods required by the base class
+- integrate into the ProvidersManager class
+  - update the `_make_providers` method
+- add tests as needed
+
+## Adding exporters
+
+**[WIP]** This section is a work in progress.
+
+- add config option for enabling/disabling exporter
+- update `enabled_exporters` property to include new exporter
+- add exporter specific [config options](#adding-configuration-options) as needed
+- if another exporter is required, update the config validation method to ensure the dependant exporter is enabled
+- create a new module in the [`exporters`](../src/assets_tracking_service/exporters) package
+- create a new class inheriting from the [`BaseExporter`](../src/assets_tracking_service/exporters/base_exporter.py)
+- implement methods required by the base class
+- integrate into the [ExportersManager](../src/assets_tracking_service/exporters/exporters_manager.py) class:
+  - update the `_make_exporters` method
+- add tests as needed:
+  - create a new module in [`exporters`](../tests/assets_tracking_service_tests/exporters) test package
+  - [`test_make_each_exporter`](../tests/assets_tracking_service_tests/exporters/test_exporters_manager.py)
+  - add mock for exporter in [`test_export](../tests/assets_tracking_service_tests/exporters/test_exporters_manager.py)

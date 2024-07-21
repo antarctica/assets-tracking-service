@@ -1,13 +1,13 @@
 # BAS Assets Tracking Service - Providers
 
-Providers are interfaces between the application and external tracking services.
+Providers are interfaces between external tracking services and the application.
 
 Providers fetch data on available assets and their positions using per-provider SDKs, APIs or by other means. They
 isolate and abstract this logic, containing them within a per-provider [Client](#provider-clients).
 
 ## Provider clients
 
-Provider clients inherit from an abstract [Provider](../src/assets_tracking_service/models/provider.py) model
+Provider clients inherit from an abstract [Provider](../src/assets_tracking_service/providers/base_provider.py) class
 which defines a public interface and general structure/conventions. Clients typically call private, per-provider,
 methods to implement this interface.
 
@@ -64,3 +64,52 @@ To indicate when assets where last checked, a label with the `ats:last_fetched` 
 ## Disabling providers
 
 See the [Configuration](./config.md) documentation for options to disable one or more providers.
+
+## Available providers
+
+See [Infrastructure](./infrastructure.md#providers) documentation for provider credentials.
+
+### Aircraft tracking
+
+**Note:** The provider used by BAS for aircraft tracking is subject to an NDA and cannot be discussed publicly. A
+private [GitLab project 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=ffy5l25mjdv577qj6izuk6lo4m&i=sextpqiz6qcqb6icpy4b7un5wq&h=magic.1password.eu)
+(which requires specific permission to access) provides more information to authorised users.
+
+#### Aircraft tracking configuration options
+
+Required options:
+
+- `PROVIDER_AIRCRAFT_TRACKING_USERNAME`
+- `PROVIDER_AIRCRAFT_TRACKING_PASSWORD`
+- `PROVIDER_AIRCRAFT_TRACKING_API_KEY`
+
+**Note:** Details about these configuration options are restricted. If authorised, see the private provider project for
+more information.
+
+### Geotab
+
+[Geotab](https://www.geotab.com/uk/) are a fleet/vehicle management and telematics provider. They supply tracking
+hardware that attach to vehicles and report data back to Geotab over either cellular or Iridium connections.
+
+Reports include position information, engine information, fuel use and other parameters. Over Iridium, reports are sent
+every ~15 minutes (unless emergency or crevasse mode is enabled).
+
+BAS has partnered with Geotab for a number of years, primarily for tracking vehicles used in traverses. It's use has
+since expanded to a large number of vehicles, including the SDA.
+
+Geotab provides a Python SDK (`mygeotab`) that wraps around their API. Geotab uses RBAC with a user assigned to MAGIC
+for tracking assets. This SDK is used by the app [Geotab Provider](../src/assets_tracking_service/providers/geotab.py).
+
+- [SDK Documentation](http://mygeotab-python.readthedocs.io)
+- [API Documentation](https://developers.geotab.com/myGeotab/introduction)
+
+#### Geotab configuration options
+
+Required options:
+
+- `PROVIDER_GEOTAB_USERNAME` -> `username` SDK parameter
+- `PROVIDER_GEOTAB_PASSWORD` -> `password` SDK parameter
+- `PROVIDER_GEOTAB_DATABASE` -> `database` SDK parameter
+
+See the [Geotab Python SDK](https://mygeotab-python.readthedocs.io/en/latest/api.html#mygeotab.api.API.__init__)
+documentation for more information on how to configure these values.
