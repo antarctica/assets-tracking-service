@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.3.0] - 2024-07-21
+
 ### CHANGED [BREAKING!]
 
 * resetting project based on experiments from [Pytest-postgres](https://gitlab.data.bas.ac.uk/felnne/pytest-pg-exp)
