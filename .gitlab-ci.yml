@@ -121,7 +121,7 @@ image: python:3.11-slim
   - apt-get install -y openssh-client
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
-  - op read --out-file ~/.ssh/$SSH_PRIVATE_KEY '"op://Infrastructure/Assets Tracking Service - GitLab CI private key/private key"?ssh-format=openssh'
+  - op read --out-file ~/.ssh/$SSH_PRIVATE_KEY "op://Infrastructure/Assets Tracking Service - GitLab CI private key/private key?ssh-format=openssh"
   - eval $(ssh-agent -s)
   - chmod 400 ~/.ssh/$SSH_PRIVATE_KEY
   - ssh-add ~/.ssh/$SSH_PRIVATE_KEY
