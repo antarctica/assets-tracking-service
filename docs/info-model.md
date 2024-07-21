@@ -5,7 +5,7 @@
 This model is bespoke to this project rather than using a model from a standard such as SensorML which were considered
 unsuitable. Alignments with any standards should be possible through an [Exporter](./implementation.md#exporters).
 
-This information model is abstract and requires a concrete implementation through the [Data Model](#data-model).
+This information model is abstract and requires a concrete implementation through the [Data Model](./data-model.md).
 
 ## Entities
 
@@ -21,8 +21,8 @@ There are 4 entities:
 - many-to-many relationship between **Provider** and **Asset** (providers track many assets)
 - one-to-many relationship between **Provider** and **Asset Position** (providers give many positions for each asset)
 - one-to-many relationship between **Asset** and **Asset Position** (a position relates to a single asset)
-- one-to-many relationship between **Asset** and **Label** (an asset has multiple labels specific to that asset)
-- one-to-many relationship between **Asset Position** and **Label** (a position has multiple labels specific to that positi-n)-
+- one-to-many relationship between **Asset** and **Label** (an asset has multiple labels)
+- one-to-many relationship between **Asset Position** and **Label** (a position has multiple labels)
 
 ## Example
 
@@ -89,7 +89,7 @@ This label:
 
 - MUST use [`nvs:l06`](http://vocab.nerc.ac.uk/collection/L06/current/0) as the scheme
 - MUST use a value from the [SeaVoX Platform Categories](http://vocab.nerc.ac.uk/collection/L06/current/0) vocabulary
-  - where no suitable term (yet) exists, use the (['unknown'](http://vocab.nerc.ac.uk/collection/L06/current/0/)) term
+  - where no suitable term (yet) exists, use the '([unknown](http://vocab.nerc.ac.uk/collection/L06/current/0/))' term
   - additional vocabulary terms can be [requested](https://github.com/nvs-vocabs/L06) if needed
 
 ### Asset labels
@@ -182,7 +182,7 @@ See also the [Provider Labels](#provider-labels) section.
 ## Labels
 
 Labels record additional information about an entity. Labels are intended to be generic and used across multiple
-entities, with some some unique, others common.
+entities, with some unique, others common.
 
 This concept:
 

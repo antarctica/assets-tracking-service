@@ -25,6 +25,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#11](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/11)
 * Preparing for deployment
   [#8](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/8)
+* Project documentation
+  [#2](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/2)
 
 ### Fixed
 

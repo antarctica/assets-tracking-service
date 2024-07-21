@@ -29,6 +29,11 @@ I.e. An option `FOO` should be set as `ASSETS_TRACKING_SERVICE_FOO`.
 | `PROVIDER_GEOTAB_PASSWORD`            | String   | Yes [1]   | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
 | `PROVIDER_GEOTAB_DATABASE`            | String   | Yes [1]   | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
 
+[1] If associated exporter or provider is enabled.
+
+- see [Exporters](./exporters.md) documentation for relevant exporter configuration options
+- see [Providers](./providers.md) documentation for relevant provider configuration options
+
 ### Configurable option types
 
 All configuration options (whether defined as an environment variable or in an `.env` file) are read as
@@ -42,6 +47,7 @@ E.g. a boolean option will be read as `'true'`, `'True'`, etc. and parsed as `Tr
 | Option                                       | Type            | Summary                                                             | Example                                                   |
 |----------------------------------------------|-----------------|---------------------------------------------------------------------|-----------------------------------------------------------|
 | `db_dsn_safe`                                | String          | `DB_DSN` with sensitive elements redacted                           | 'postgresql://username:REDACTED@$db.example.com/database' |
+| `enabled_exporters`                          | List of Strings | Derived list of enabled exporter names                              | '['arcgis', 'geojson]'                                    |
 | `enabled_providers`                          | List of Strings | Derived list of enabled provider names                              | '['geotab']'                                              |
 | `provider_aircraft_tracking_password_safe`   | String          | `PROVIDER_AIRCRAFT_TRACKING_PASSWORD` with sensitive value redacted | 'REDACTED'                                                |
 | `provider_aircraft_tracking_api_key_safe`    | String          | `PROVIDER_AIRCRAFT_TRACKING_API_KEY` with sensitive value redacted  | 'REDACTED'                                                |
@@ -81,4 +87,4 @@ See the [CLI Reference](./cli-reference.md#config-commands) documentation for ho
 
 ## Adding configuration options
 
-See the [Developing](./dev.md#adding-configuration-options) documentation for how to add a new configuration option.
+See the [Developing](./dev.md#adding-configuration-options) documentation.
