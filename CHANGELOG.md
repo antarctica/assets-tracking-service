@@ -9,6 +9,13 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.3.1] - 2024-07-21
+
+### Fixed
+
+* Outdated private key reference in Continuous Deployment
+  [#59](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/59)
+
 ## [0.3.0] - 2024-07-21
 
 ### CHANGED [BREAKING!]

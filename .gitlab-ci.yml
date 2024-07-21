@@ -38,7 +38,6 @@ variables:
   DEPLOY_HOST: "bslws01.nerc-bas.ac.uk"
   DEPLOY_USER: "geoweb"
   DEPLOY_HOME: "/users/$DEPLOY_USER"
-  DEPLOY_APP_DB_DSN_1P_REF: "op://Infrastructure/Assets Tracking Service - Staging DB/PSQL connection string"
   DEPLOY_APP_NAME: "assets-tracking-service"
   DEPLOY_APP_PIP_PACKAGE: "$DEPLOY_APP_NAME"
   DEPLOY_APP_PIP_EXTRA_INDEX: "https://$PACKAGE_ACCESS_IDENTIFIER:$PACKAGE_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/$CI_PROJECT_ID/packages/pypi/simple"
@@ -122,7 +121,7 @@ image: python:3.11-slim
   - apt-get install -y openssh-client
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
-  - op read --out-file ~/.ssh/$SSH_PRIVATE_KEY 'op://Infrastructure/gl-cd-assets-tracking-service/private key?ssh-format=openssh'
+  - op read --out-file ~/.ssh/$SSH_PRIVATE_KEY '"op://Infrastructure/Assets Tracking Service - GitLab CI private key/private key"?ssh-format=openssh'
   - eval $(ssh-agent -s)
   - chmod 400 ~/.ssh/$SSH_PRIVATE_KEY
   - ssh-add ~/.ssh/$SSH_PRIVATE_KEY
