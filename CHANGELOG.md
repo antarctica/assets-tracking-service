@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Fixed
+
+* Error handling where ArcGIS Feature Service update triggers an internal server error
+  [#68](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/68)
+
 ## [0.3.2] - 2024-07-21
 
 ### Fixed

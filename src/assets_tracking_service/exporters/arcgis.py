@@ -19,6 +19,12 @@ class ArcGISAuthenticationError(Exception):
     pass
 
 
+class ArcGISInternalServerError(Exception):
+    """Raised when an internal server error occurs within an ArcGIS service."""
+
+    pass
+
+
 class ArcGISExporter(Exporter):
     """
     Exports data as an ArcGIS Feature Service.
@@ -93,8 +99,16 @@ class ArcGISExporter(Exporter):
 
         self._logger.info("Overwriting item layer features...")
         collection = FeatureLayerCollection.fromitem(item)
-        result = collection.manager.overwrite(str(replacement_path))
-        self._logger.info("Overwrite result: %s", result)
+        try:
+            result = collection.manager.overwrite(str(replacement_path))
+            self._logger.info("Overwrite result: %s", result)
+        except Exception as e:
+            if "Internal Server Error" in str(e):
+                self._logger.exception("Overwrite failed", exc_info=e)
+                raise ArcGISInternalServerError() from e
+
+            self._logger.exception("Overwrite failed", exc_info=e)
+            raise e from e
 
     def export(self: Self) -> None:
         """
