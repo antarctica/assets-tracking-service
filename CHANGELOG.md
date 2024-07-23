@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.3.3] - 2024-07-23
+
 ### Fixed
 
 * Error handling where ArcGIS Feature Service update triggers an internal server error
