@@ -9,7 +9,11 @@ from pytest_mock import MockerFixture
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
-from assets_tracking_service.exporters.arcgis import ArcGISAuthenticationError, ArcGISExporter
+from assets_tracking_service.exporters.arcgis import (
+    ArcGISAuthenticationError,
+    ArcGISExporter,
+    ArcGISInternalServerError,
+)
 
 
 class TestExporterArcGIS:
@@ -65,6 +69,33 @@ class TestExporterArcGIS:
     def test_overwrite_fs_data(self: Self, fx_exporter_arcgis: ArcGISExporter):
         """Overwrites data."""
         fx_exporter_arcgis._overwrite_fs_data()
+
+    def test_overwrite_fs_data_500_error(self: Self, mocker: MockerFixture, fx_exporter_arcgis: ArcGISExporter):
+        """Handles internal service error when overwriting data."""
+        mock_manager = mocker.MagicMock()
+        mock_manager.overwrite.side_effect = Exception("Internal Server Error\n(Error Code: 500)")
+        mock_collection = mocker.MagicMock()
+        mock_collection.manager = mock_manager
+        mocker.patch(
+            "assets_tracking_service.exporters.arcgis.FeatureLayerCollection.fromitem", return_value=mock_collection
+        )
+
+        with pytest.raises(ArcGISInternalServerError):
+            fx_exporter_arcgis._overwrite_fs_data()
+
+    @pytest.mark.cov()
+    def test_overwrite_fs_data_other_error(self: Self, mocker: MockerFixture, fx_exporter_arcgis: ArcGISExporter):
+        """Does not handle unknown errors when overwriting data."""
+        mock_manager = mocker.MagicMock()
+        mock_manager.overwrite.side_effect = Exception("Unknown")
+        mock_collection = mocker.MagicMock()
+        mock_collection.manager = mock_manager
+        mocker.patch(
+            "assets_tracking_service.exporters.arcgis.FeatureLayerCollection.fromitem", return_value=mock_collection
+        )
+
+        with pytest.raises(Exception, match="Unknown"):
+            fx_exporter_arcgis._overwrite_fs_data()
 
     def test_export(self: Self, fx_exporter_arcgis: ArcGISExporter):
         """Exports."""
