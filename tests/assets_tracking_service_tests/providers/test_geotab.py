@@ -68,6 +68,7 @@ class TestGeotabProvider:
         self: Self,
         fx_provider_geotab_mocked_error_mygeotab: GeotabProvider,
         fx_provider_geotab_mocked_error_timeout: GeotabProvider,
+        fx_provider_geotab_mocked_error_http: GeotabProvider,
     ):
         """Errors if fetching devices fails."""
         with pytest.raises(RuntimeError, match="Failed to fetch devices."):
@@ -75,6 +76,9 @@ class TestGeotabProvider:
 
         with pytest.raises(RuntimeError, match="Failed to fetch devices."):
             fx_provider_geotab_mocked_error_timeout._fetch_devices()
+
+        with pytest.raises(RuntimeError, match="Failed to fetch devices."):
+            fx_provider_geotab_mocked_error_http._fetch_devices()
 
     @pytest.mark.cov()
     def test_fetch_devices_error_keys(
@@ -116,6 +120,7 @@ class TestGeotabProvider:
         self: Self,
         fx_provider_geotab_mocked_error_mygeotab: GeotabProvider,
         fx_provider_geotab_mocked_error_timeout: GeotabProvider,
+        fx_provider_geotab_mocked_error_http: GeotabProvider,
     ):
         """Errors if fetching device statuses fails."""
         with pytest.raises(RuntimeError, match="Failed to fetch device statues."):
@@ -123,6 +128,9 @@ class TestGeotabProvider:
 
         with pytest.raises(RuntimeError, match="Failed to fetch device statues."):
             fx_provider_geotab_mocked_error_timeout._fetch_device_statuses()
+
+        with pytest.raises(RuntimeError, match="Failed to fetch device statues."):
+            fx_provider_geotab_mocked_error_http._fetch_device_statuses()
 
     @pytest.mark.cov()
     def test_fetch_devices_statues_error_keys(
@@ -185,6 +193,7 @@ class TestGeotabProvider:
         self: Self,
         fx_provider_geotab_mocked_error_mygeotab: GeotabProvider,
         fx_provider_geotab_mocked_error_timeout: GeotabProvider,
+        fx_provider_geotab_mocked_error_http: GeotabProvider,
     ):
         """Errors if fetching log record fails."""
         device_id = "b7"
@@ -195,6 +204,9 @@ class TestGeotabProvider:
 
         with pytest.raises(RuntimeError, match="Failed to fetch LogRecord."):
             fx_provider_geotab_mocked_error_timeout._fetch_log_record(device_id=device_id, time=time)
+
+        with pytest.raises(RuntimeError, match="Failed to fetch LogRecord."):
+            fx_provider_geotab_mocked_error_http._fetch_log_record(device_id=device_id, time=time)
 
     @pytest.mark.cov()
     def test_fetch_log_record_none(self: Self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):

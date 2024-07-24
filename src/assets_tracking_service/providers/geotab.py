@@ -6,6 +6,7 @@ from typing import Self
 # noinspection PyPep8Naming
 from mygeotab import API as Geotab  # noqa: N811
 from mygeotab import MyGeotabException, TimeoutException
+from requests import HTTPError
 from shapely import Point
 
 from assets_tracking_service.config import Config
@@ -58,7 +59,7 @@ class GeotabProvider(Provider):
 
         try:
             devices = self._client.get("Device")
-        except (MyGeotabException, TimeoutException) as e:
+        except (MyGeotabException, TimeoutException, HTTPError) as e:
             msg = "Failed to fetch devices."
             raise RuntimeError(msg) from e
 
@@ -99,7 +100,7 @@ class GeotabProvider(Provider):
 
         try:
             device_statues = self._client.get("DeviceStatusInfo")
-        except (MyGeotabException, TimeoutException) as e:
+        except (MyGeotabException, TimeoutException, HTTPError) as e:
             msg = "Failed to fetch device statues."
             raise RuntimeError(msg) from e
 
@@ -146,7 +147,7 @@ class GeotabProvider(Provider):
                     "deviceSearch": {"id": device_id},
                 },
             )
-        except (MyGeotabException, TimeoutException) as e:
+        except (MyGeotabException, TimeoutException, HTTPError) as e:
             msg = "Failed to fetch LogRecord."
             raise RuntimeError(msg) from e
 
