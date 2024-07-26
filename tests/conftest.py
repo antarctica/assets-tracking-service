@@ -11,6 +11,7 @@ from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
 from pytest_mock import MockerFixture
 from pytest_postgresql import factories
+from requests import HTTPError
 from shapely import Point
 from typer.testing import CliRunner
 from ulid import ULID
@@ -416,6 +417,16 @@ def fx_provider_geotab_mocked_error_timeout(mocker: MockerFixture, fx_config: Co
     """GeotabProvider with a mocked client that raises a TimeoutException."""
     mock_geotab_client = mocker.MagicMock(auto_spec=True)
     mock_geotab_client.get.side_effect = TimeoutException(server="Fake Server")
+    mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
+
+    return GeotabProvider(config=fx_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_provider_geotab_mocked_error_http(mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
+    """GeotabProvider with a mocked client that raises an HTTPError."""
+    mock_geotab_client = mocker.MagicMock(auto_spec=True)
+    mock_geotab_client.get.side_effect = HTTPError()
     mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
     return GeotabProvider(config=fx_config, logger=fx_logger)

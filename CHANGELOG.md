@@ -9,6 +9,13 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.3.4] - 2024-07-24
+
+### Fixed
+
+* Error handling where Geotab SDK triggers a HTTP error
+  [#76](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/76)
+
 ## [0.3.3] - 2024-07-23
 
 ### Fixed
