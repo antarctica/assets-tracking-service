@@ -21,8 +21,12 @@ are long-lived and run centrally (on the BAS workstations, managed by BAS IT as 
 ## Databases
 
 - [Staging 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=fqyqeoxzt6vmosuxowqdj7rgoq&h=magic.1password.eu)
+  - hosted using Neon
   - for storing initial test data
   - see [MAGIC/assets-tracking-service#8 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/8) for initial setup
+- [Staging 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=qmhl6un36h3gxnjzlqtkahgqqy&h=magic.1password.eu)
+  - for testing / non-production use
+  - see [MAGIC/assets-tracking-service#48 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/48) for initial setup
 
 ## 1Password
 
