@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: '{"id":-1,"method":"Authenticate","params":{"database":"bas_uk","userName":"basmagic@bas.ac.uk","password":"4CktMXMsF4nFpzcouEgxxM7E"}}'
+    body: '{"id":-1,"method":"Authenticate","params":{"database":"x","userName":"x","password":"x"}}'
     headers:
       Accept:
       - '*/*'

@@ -14,6 +14,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 * IT staging database
   [#48](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/48)
 
+### Fixed
+
+* Redacting Geotab provider credentials in test file
+  [#85](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/85)
+
 ## [0.3.4] - 2024-07-24
 
 ### Fixed
