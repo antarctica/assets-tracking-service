@@ -8,7 +8,7 @@ Service to track the location of BAS assets, including ships, aircraft, and vehi
 are of interest to others. Some resources, indicated with a '🛡' or '🔒' symbol, can only be accessed by BAS staff or
 project members respectively. Contact the [Project Maintainer](#project-maintainer) to request access.
 
-### Purpose
+## Purpose
 
 A service to collect, standardise, and then make available, the positions of large assets operated by the British
 Antarctic Survey. Data collected by this service can be used in other tools and services, such as GIS applications.
@@ -19,11 +19,11 @@ for more information.
 
 ## Tracked assets
 
-[Assets](./docs/tracked-assets.md) tracked by this service are:
+[Assets tracked](./docs/tracked-assets.md) by this service are:
 
 - 🚢 ships (the SDA)
 - ✈️ aircraft (the Dash and Twin Otters)
-- 🚜 vehicles (snowmobiles, Pistonbully's, loaders, etc.)
+- 🚜 vehicles (snowmobiles, Pisten Bully's, loaders, etc.)
 
 Assets are tracked using a range of external [Providers](./docs/providers.md). Assets, and their latest positions are
 fetched from providers every 5 minutes (providers may update less frequently than we check).
@@ -40,14 +40,15 @@ For the last known position of all assets (optionally filterable by name or plat
 - [ArcGIS Feature Service 🔒](https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis/rest/services/agol_test13/FeatureServer)
 - [OGC API - Features 🔒](https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis/rest/services/agol_test13/OGCFeatureServer)
 
-**Note:** These endpoints are provisional with limited metadata and will be replaced. See
+**Note:** These endpoints are provisional, with limited metadata and will be replaced. See
 [MAGIC/assets-tracking-service#44 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/44).
 
 ### Permissions
 
-Whilst data access is verified with data owners, access is limited to MAGIC team members.
+Whilst data access is [verified 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/46) with data
+owners, access is limited to MAGIC staff. Data MUST NOT be shared with others without prior approval from @felnne.
 
-Data MUST NOT be shared with others without prior approval from @felnne.
+In practice this means data MUST NOT be shared beyond the Assets Tracking Service [AGOL group](#arcgis-online).
 
 ### ArcGIS Online
 
@@ -89,7 +90,7 @@ A control CLI is available on the central workstations using the `geoweb` user:
 
 ```
 $ ssh geoweb@bslws01.nerc-bas.ac.uk
-$ module load ats-ctl
+$ module load assets-tracking-service
 $ ats-ctl --help
 ```
 
@@ -102,16 +103,18 @@ the `geoweb` user.
 
 The CLI commands to fetch and export data are automatically ran every 5 minutes to maintain accurate information.
 
-Automatic monitoring will raise alerts if:
+Automatic monitoring will raise alerts with relevant staff if:
 
 - an error occurs when processing data
-- processing has not been attempted for 15 minutes
+  - [Sentry Dashboard 🔒](https://antarctica.sentry.io/issues/?project=4507581411229696)
+- processing has not run for 15 minutes
+  - [Sentry Dashboard 🔒](https://antarctica.sentry.io/crons/assets-tracking-service/ats-run/)
 
 Processing logs for the last 24 hours are available from `/users/geoweb/cron_logs/assets-tracking-service/`.
 
 ## Data and information model
 
-See the [Information](./docs/info-model.md) and [Data](./docs/data-model.md) Model documentation.
+See [Information](./docs/info-model.md) and [Data](./docs/data-model.md) model documentation.
 
 ## Implementation
 
@@ -155,7 +158,9 @@ See [Deployment](./docs/deploy.md) documentation.
 ## Project maintainer
 
 British Antarctic Survey ([BAS](https://www.bas.ac.uk)) Mapping and Geographic Information Centre
-([MAGIC](https://www.bas.ac.uk/teams/magic)) - [magic@bas.ac.uk](mailto:magic@bas.ac.uk).
+([MAGIC](https://www.bas.ac.uk/teams/magic)). Contact [magic@bas.ac.uk](mailto:magic@bas.ac.uk).
+
+The project lead is [@felnne](https://www.bas.ac.uk/profile/felnne).
 
 ## Data protection
 
@@ -163,7 +168,7 @@ This project has had a [Data Protection Impact Assessment](./docs/dpia.md).
 
 ## Licence
 
-Copyright (c) 2019-2024 UK Research and Innovation (UKRI), British Antarctic Survey.
+Copyright (c) 2019-2025 UK Research and Innovation (UKRI), British Antarctic Survey (BAS).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

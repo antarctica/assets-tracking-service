@@ -13,7 +13,8 @@ Generic requirements:
 Specific requirements:
 
 - access to the BAS central workstations with a shared user and project authorised key
-- a dedicated database in the BAS central Postgres server
+- a dedicated database and database owner role in the BAS central Postgres server with:
+  - the PostGIS extension enabled, or delegated permissions for the database owner role to enable extensions
   - an additional read only user, with delegated permissions for the database owner role to grant select privileges
 - a project in the [BAS Sentry 🛡️](http://antarctica.sentry.io) account
 - a project in the [BAS GitLab 🛡️](https://gitlab.data.bas.ac.uk) server with:
@@ -144,6 +145,7 @@ source /etc/profile.d/modules.sh
 export MODULEPATH=/users/geoweb/Modules/modulefiles:$MODULEPATH
 
 module load assets-tracking-service
+ats-ctl	--version
 ats-ctl data fetch
 ats-ctl data export
 module unload assets-tracking-service

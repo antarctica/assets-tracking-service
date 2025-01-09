@@ -1,11 +1,11 @@
-# BAS Assets Tracking Service - Deployment
+# BAS Assets Tracking Service - Development
 
 ## Local development environment
 
 Requirements:
 
 * Python 3.11 ([pyenv](https://github.com/pyenv/pyenv) recommended)
-* [Poetry](https://python-poetry.org/docs/#installation)
+* [Poetry](https://python-poetry.org/docs/#installation) (1.8+)
 * Git (`brew install git`)
 * Postgres with PostGIS extension (`brew install postgis`)
 * Pre-commit (`pipx install pre-commit`)
@@ -57,7 +57,7 @@ See the [CLI Reference](./cli-reference.md) documentation for available commands
 
 ## Contributing
 
-All changes MUST:
+All changes except minor tweaks (typos, comments, etc.) MUST:
 
 - be associated with an issue (either directly or by reference)
 - be included in the [Change Log](../CHANGELOG.md)
@@ -71,7 +71,7 @@ Conventions:
 
 ## Python version
 
-The Python version is limited to 3.11 it is the latest version supported by the `arcgis` dependency.
+The Python version is limited to 3.11 due to the `arcgis` dependency.
 
 ## Dependencies
 
@@ -97,6 +97,8 @@ $ poetry run safety scan
 ```
 
 ## Linting
+
+### Ruff
 
 [Ruff](https://docs.astral.sh/ruff/) is used to lint and format Python files. Specific checks and config options are
 set in [`pyproject.toml`](../pyproject.toml). Linting checks are run automatically in
@@ -145,14 +147,14 @@ $ pre-commit run --all-files
 [`pyproject.toml`](../pyproject.toml). Tests checks are run automatically in
 [Continuous Integration](#continuous-integration).
 
+Tests for the application are defined in the
+[`tests/assets_tracking_service_tests`](../tests/assets_tracking_service_tests) module.
+
 To run tests locally:
 
 ```
 $ poetry run pytest
 ```
-
-Tests for the application are defined in the
-[`tests/assets_tracking_service_tests`](../tests/assets_tracking_service_tests) module.
 
 ### Pytest fixtures
 
@@ -175,6 +177,8 @@ def fx_test_foo() -> str:
 - `# pragma: no cover` - for general exemptions
 - `# pragma: no branch` - where a conditional branch can never be called
 
+[Continuous Integration](#continuous-integration) will check coverage automatically.
+
 To run tests with coverage locally:
 
 ```
@@ -186,7 +190,7 @@ Where tests are added to ensure coverage, use the `cov` [mark](https://docs.pyte
 ```python
 import pytest
 
-@pytest.mark.cov
+@pytest.mark.cov()
 def test_foo():
     assert 'foo' == 'foo'
 ```
@@ -196,13 +200,12 @@ def test_foo():
 [pytest-recording](https://github.com/kiwicom/pytest-recording) is used to mock HTTP calls to provider APIs (ensuring
 known values are used in tests).
 
-To (re-)record responses:
+To (re-)record all responses:
 
-- if re-recording, remove some or all existing 'cassette' YAML files
 - update test fixtures to use real credentials
-- run tests in record mode: `poetry run pytest --record-mode=once`
+- run tests in record mode: `poetry run pytest --record-mode=all`
 - update test fixtures to use fake/safe credentials
-- redact credentials captured in captured cassettes
+- review captured requests/responses to determine which to keep
 
 ### Continuous Integration
 
