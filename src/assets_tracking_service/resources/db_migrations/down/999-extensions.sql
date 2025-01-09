@@ -1,3 +1,4 @@
-DROP EXTENSION fuzzystrmatch CASCADE;
-DROP EXTENSION pgcrypto CASCADE;
-DROP EXTENSION postgis CASCADE;
+---- disabled as IT databases don't allow us to manage extensions
+-- DROP EXTENSION fuzzystrmatch CASCADE;
+-- DROP EXTENSION pgcrypto CASCADE;
+-- DROP EXTENSION postgis CASCADE;

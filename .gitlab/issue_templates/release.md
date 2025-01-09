@@ -5,6 +5,3 @@
 1. [ ] bump Python package version: `poetry version [minor/patch]`
 1. [ ] close release in `CHANGELOG.md`
 1. [ ] push changes, merge into `main` and tag commit with version
-1. [ ] create a deployment issue using the `deploy` issue template
-
-See #... for post-release & deployment tasks.

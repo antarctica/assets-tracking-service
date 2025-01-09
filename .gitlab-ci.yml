@@ -43,7 +43,7 @@ variables:
   DEPLOY_APP_PIP_EXTRA_INDEX: "https://$PACKAGE_ACCESS_IDENTIFIER:$PACKAGE_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/$CI_PROJECT_ID/packages/pypi/simple"
   DEPLOY_ATS_AIR_PIP_EXTRA_INDEX: "https://$ATS_AIR_ACCESS_IDENTIFIER:$ATS_AIR_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/1216/packages/pypi/simple"
   DEPLOY_VENV: "/users/$DEPLOY_USER/.venv/$DEPLOY_APP_NAME"
-  DEPLOY_MODULE_BASE: "/users/$DEPLOY_USER/Modules/modulefiles/$DEPLOY_APP_NAME"
+  DEPLOY_MODULE_BASE: "/data/magic/.Modules/modulefiles/$DEPLOY_APP_NAME"
 
   # Secrets (set in GitLab CI/CD settings)
   # - PROJECT_ACCESS_TOKEN
@@ -128,8 +128,7 @@ image: python:3.11-slim
   - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
   - chmod 644 ~/.ssh/known_hosts
 
-  # get secrets
-  - export DEPLOY_APP_DB_DSN=$(op read "op://Infrastructure/Assets Tracking Service - Staging DB/PSQL connection string")
+  - export DEPLOY_APP_DB_DSN=$(op read "op://Infrastructure/qmhl6un36h3gxnjzlqtkahgqqy/PSQL connection string")
   - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_USERNAME=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/username")
   - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_PASSWORD=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/password")
   - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_API_KEY=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/API/API Key")
@@ -272,7 +271,6 @@ deploy:
 
       prepend-path PATH \${basedir}/bin
       EOF
-    - cat module.tpl
     - ssh $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $DEPLOY_MODULE_BASE"
     - scp module.tpl $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_MODULE_BASE/latest
   rules:

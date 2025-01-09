@@ -117,4 +117,3 @@ END
 $$
 LANGUAGE plpgsql
 IMMUTABLE;
-
