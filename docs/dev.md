@@ -8,6 +8,7 @@ Requirements:
 * [Poetry](https://python-poetry.org/docs/#installation)
 * Git (`brew install git`)
 * Postgres with PostGIS extension (`brew install postgis`)
+* Pre-commit (`pipx install pre-commit`)
 
 **Note:** You will need a BAS GitLab access token with at least the `read_api`scope to install this package as it
 depends on privately published dependencies.
@@ -38,6 +39,12 @@ Set configuration as per the [Configuration](./config.md) documentation:
 
 ```
 $ cp .env.example .env
+```
+
+Install pre-commit hooks:
+
+```
+$ pre-commit install
 ```
 
 ## Running control CLI locally
@@ -119,6 +126,16 @@ In particular this tool can't check for issues that are only be detectable when 
 
 For consistency, it's strongly recommended to configure your IDE or other editor to use the
 [EditorConfig](https://editorconfig.org/) settings defined in [`.editorconfig`](../.editorconfig).
+
+### Pre-commit hook
+
+A [Pre-Commit](https://pre-commit.com) hook is configured in [`.pre-commit-config.yaml`](/.pre-commit-config.yaml).
+
+To run pre-commit checks against all files manually:
+
+```
+$ pre-commit run --all-files
+```
 
 ## Testing
 
