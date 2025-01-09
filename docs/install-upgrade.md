@@ -14,6 +14,7 @@ Specific requirements:
 
 - access to the BAS central workstations with a shared user and project authorised key
 - a dedicated database in the BAS central Postgres server
+  - an additional read only user, with delegated permissions for the database owner role to grant select privileges
 - a project in the [BAS Sentry 🛡️](http://antarctica.sentry.io) account
 - a project in the [BAS GitLab 🛡️](https://gitlab.data.bas.ac.uk) server with:
   - a deployment token configured:
