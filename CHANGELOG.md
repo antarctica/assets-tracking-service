@@ -13,6 +13,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * IT staging database
   [#48](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/48)
+* Read-only database user
+  [#90](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/90)
 * Pre-commit hook
   [#88](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/88)
 

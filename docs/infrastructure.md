@@ -27,6 +27,10 @@ are long-lived and run centrally (on the BAS workstations, managed by BAS IT as 
 - [Staging 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=qmhl6un36h3gxnjzlqtkahgqqy&h=magic.1password.eu)
   - for testing / non-production use
   - see [MAGIC/assets-tracking-service#48 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/48) for initial setup
+- [Production 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=qmhl6un36h3gxnjzlqtkahgqqy&h=magic.1password.eu)
+  - for testing / non-production use
+  - see [MAGIC/assets-tracking-service#48 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/48) for initial setup
+  - has a [Read Only](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=ffy5l25mjdv577qj6izuk6lo4m&i=64uzvr6vsnfkrdtfv25lsb3jxe&h=magic.1password.eu) user
 
 ## 1Password
 
