@@ -9,6 +9,7 @@ from unittest.mock import PropertyMock
 import pytest
 from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
+from psycopg.sql import SQL
 from pytest_mock import MockerFixture
 from pytest_postgresql import factories
 from requests import HTTPError
@@ -280,8 +281,10 @@ def fx_assets_client_one(
     # update asset with the expected id
     # noinspection PyTypeChecker,PyProtectedMember
     fx_assets_client_empty._db.execute(
-        f"UPDATE public.asset SET id = ulid_to_uuid('{fx_asset_id}') "  # noqa: S608 - can't be exploited by users
-        f"WHERE id = (SELECT id FROM public.asset LIMIT 1);"
+        SQL(
+            f"UPDATE public.asset SET id = ulid_to_uuid('{fx_asset_id}') "  # noqa: S608
+            f"WHERE id = (SELECT id FROM public.asset LIMIT 1);"
+        )
     )
 
     return fx_assets_client_empty

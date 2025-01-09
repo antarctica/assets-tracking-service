@@ -228,7 +228,7 @@ class TestDBClient:
 
         # verify an expected object does not exist
         with pytest.raises(DatabaseError):
-            fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT PostGIS_Version();"))
+            fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT generate_ulid();"))
 
     def test_migrate_migrate(self: Self, caplog: pytest.LogCaptureFixture, fx_db_client_tmp_db_mig: DatabaseClient):
         """Database can be migrated up if already at head migration."""
