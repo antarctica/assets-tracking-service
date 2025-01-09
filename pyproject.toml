@@ -147,7 +147,10 @@ filterwarnings = [
 skip_empty = true
 show_missing = false
 fail_under = 100
-exclude_lines = ["@abstractmethod"]
+exclude_lines = [
+  "pragma: nocover",
+  "@abstractmethod"
+]
 
 [tool.coverage.html]
 directory = "htmlcov"
