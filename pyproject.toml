@@ -132,6 +132,7 @@ markers = [
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:mygeotab.*",
+    "ignore::FutureWarning:dask.*",
 ]
 
 [tool.coverage.report]
