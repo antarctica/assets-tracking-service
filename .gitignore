@@ -1,9 +1,24 @@
-/.idea/
+# Python generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
-/.venv/
-__pycache__
+# UV generated files
+.venv
 
+# Ruff generated files
+.ruff_cache/
+
+# PyCharm generated files
+.idea/
+
+# Pytest generated files
+.pytest_cache/
 htmlcov/
 .coverage
 
+# App generated files
 exports/
