@@ -17,7 +17,8 @@ class TestCliConfig:
         result = fx_cli.invoke(app=cli, args=["config", "show"])
 
         assert result.exit_code == 0
-        assert config.db_dsn_safe in result.output
+        # 'tes\nt' workaround from https://github.com/pallets/click/issues/1997
+        assert config.db_dsn_safe in result.output.replace("tes\nt", "test")
 
     def test_cli_config_check(self: Self, fx_config: Config, fx_cli: CliRunner) -> None:
         """App configuration validates."""
