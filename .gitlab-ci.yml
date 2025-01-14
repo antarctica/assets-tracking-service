@@ -30,11 +30,10 @@ variables:
   ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
 
   # Packaging
-  PACKAGE_ACCESS_IDENTIFIER: "public_access"  # ('read_package_registry` scope)
-  PACKAGE_ACCESS_TOKEN: "pygX3Ar5sRL7BXhk_SyN"
+  PACKAGE_ACCESS_IDENTIFIER: "gitlab-ci"
 
   # Dependencies
-  ATS_AIR_ACCESS_IDENTIFIER: "gitlab_ci"
+  ATS_AIR_ACCESS_IDENTIFIER: "gitlab-ci"
 
   # Deployment
   SSH_PRIVATE_KEY: "id_ed25519.pem"
@@ -44,17 +43,18 @@ variables:
   DEPLOY_APP_NAME: "assets-tracking-service"
   DEPLOY_APP_PIP_PACKAGE: "$DEPLOY_APP_NAME"
   DEPLOY_APP_PIP_EXTRA_INDEX: "https://$PACKAGE_ACCESS_IDENTIFIER:$PACKAGE_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/$CI_PROJECT_ID/packages/pypi/simple"
-  DEPLOY_ATS_AIR_PIP_EXTRA_INDEX: "https://$ATS_AIR_ACCESS_IDENTIFIER:$ATS_AIR_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/1216/packages/pypi/simple"
+  DEPLOY_ATS_AIR_PIP_EXTRA_INDEX: "https://$ATS_AIR_ACCESS_IDENTIFIER:$ATS_AIR_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/1291/packages/pypi/simple"
   DEPLOY_VENV: "/users/$DEPLOY_USER/.venv/$DEPLOY_APP_NAME"
   DEPLOY_MODULE_BASE: "/data/magic/.Modules/modulefiles/$DEPLOY_APP_NAME"
 
   # Secrets (set in GitLab CI/CD settings)
+  # - PACKAGE_ACCESS_TOKEN
+  #   - https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/settings/repository, ('Gitlab CI', 'gitlab-ci', 'read_package_registry` scope)
   # - PROJECT_ACCESS_TOKEN
   #   - https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/settings/access_tokens
   #   - (name: 'gitlab_ci' scope: 'read_api', role: 'reporter')
   # - ATS_AIR_ACCESS_TOKEN
-  #   - https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/settings/repository
-  #   - (name: 'GitLab CI', username: 'gitlab_ci', scope: 'read_package_registry')
+  #   - copy the `PACKAGE_ACCESS_TOKEN` CI secret from project 1291
   # - SAFETY_API_KEY
   #   - https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=swbuhnii4ego6qycyqknvtk7gi&h=magic.1password.eu
   # - OP_SERVICE_ACCOUNT_TOKEN
@@ -62,15 +62,16 @@ variables:
 
 image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 
-.before_script_common: &before_script_common
+.before_script_testing: &before_script_testing
   - apt-get update
 
-.before_script_python: &before_script_python
-  - *before_script_common
-
-
-.before_script_python_app_deps: &before_script_python_app_deps
-  - *before_script_python
+  # setup postgres
+  - apt-get install -y postgresql-client
+  - export PGPASSWORD=$POSTGRES_PASSWORD    # best practice way to provide password to psql
+  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 'OK' AS status;"
+  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_tiger_geocoder;"
+  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_topology;"
+  - uv run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.db_dsn_safe)'
 
   # setup gdal
   - apt-get install -y build-essential gdal-bin libgdal-dev
@@ -78,21 +79,10 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 
   # setup app deps
   - apt-get install -y libkrb5-dev
-
-.before_script_postgres_testing: &before_script_postgres_testing
-  - *before_script_common
-
-  # setup postgres (testing)
-  - apt-get install -y postgresql-client
-  - export PGPASSWORD=$POSTGRES_PASSWORD    # best practice way to provide password to psql
-  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 'OK' AS status;"
-  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_tiger_geocoder;"
-  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_topology;"
-  - poetry run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.db_dsn_safe)'
   - uv sync --all-groups
 
 .before_script_deploy: &before_script_deploy
-  - *before_script_common
+  - apt-get update
 
   # setup 1Password CLI
   - apt-get install -y curl unzip
@@ -132,8 +122,7 @@ pytest:
     - name: postgis/postgis:16-3.4-alpine
       alias: postgres
   before_script:
-    - *before_script_python_app_deps
-    - *before_script_postgres_testing
+    - *before_script_testing
   script:
     - uv run pytest -o junit_family=xunit2 --junitxml=test-results.xml --cov --cov-report=html --continue-on-collection-errors
     # --continue-on-collection-errors counteracts `-x` flag set in pyproject.toml
