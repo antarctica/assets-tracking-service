@@ -18,6 +18,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 * Pre-commit hook
   [#88](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/88)
 
+### Changed
+
+* Switching from Poetry to UV
+  [#89](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/89)
+
 ## [0.3.5] - 2024-12-09
 
 ### Fixed

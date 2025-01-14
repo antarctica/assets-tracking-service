@@ -1,7 +1,6 @@
 /.idea/
 
 /.venv/
-/.python-version
 __pycache__
 
 htmlcov/
