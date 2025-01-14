@@ -21,12 +21,12 @@ variables:
 
   # Postgres Service
   POSTGRES_HOST: "postgres"
-  POSTGRES_DB: "assets-tracking-test"
+  POSTGRES_DB: "assets_tracking_test"
   POSTGRES_USER: "postgres"
   POSTGRES_PASSWORD: "password"
 
   # App
-  APP_DB_DATABASE: "assets-tracking-dev"  # intentionally different to service DB as not used for tests
+  APP_DB_DATABASE: "assets_tracking_dev"  # intentionally different to service DB as not used for tests
   ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
 
   # Packaging
