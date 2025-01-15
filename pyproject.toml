@@ -128,11 +128,14 @@ addopts = "--strict-markers --random-order -x --ff"
 # -x               | stop after first failure [Overriden in CI]
 # --ff             | run failed tests first
 markers = [
-  "cov: coverage checks (deselect with '-m \"not cov\"')",
+    "cov: coverage checks (deselect with '-m \"not cov\"')",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:mygeotab.*",
-    "ignore::FutureWarning:dask.*",
+    "ignore::DeprecationWarning:arcgis.*", # arcgis
+    "ignore::DeprecationWarning:jupyter_client.*", # arcgis
+    "ignore::DeprecationWarning:notebook.*", # arcgis
+    "ignore::FutureWarning:dask.*", # arcgis
 ]
 
 [tool.coverage.report]
