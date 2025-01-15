@@ -34,6 +34,8 @@ variables:
 
   # Dependencies
   ATS_AIR_ACCESS_IDENTIFIER: "gitlab-ci"
+  UV_INDEX_ATS_AIR_USERNAME: "$ATS_AIR_ACCESS_IDENTIFIER"
+  UV_INDEX_ATS_AIR_PASSWORD: "$ATS_AIR_ACCESS_TOKEN"
 
   # Deployment
   SSH_PRIVATE_KEY: "id_ed25519.pem"
@@ -65,6 +67,10 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 .before_script_testing: &before_script_testing
   - apt-get update
 
+  # setup app deps
+  - apt-get install -y gcc libkrb5-dev
+  - uv sync --all-groups
+
   # setup postgres
   - apt-get install -y postgresql-client
   - export PGPASSWORD=$POSTGRES_PASSWORD    # best practice way to provide password to psql
@@ -72,14 +78,6 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_tiger_geocoder;"
   - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_topology;"
   - uv run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.db_dsn_safe)'
-
-  # setup gdal
-  - apt-get install -y build-essential gdal-bin libgdal-dev
-  - ogrinfo --version
-
-  # setup app deps
-  - apt-get install -y libkrb5-dev
-  - uv sync --all-groups
 
 .before_script_deploy: &before_script_deploy
   - apt-get update
@@ -146,11 +144,9 @@ pytest:
 ruff:
   stage: 📋 lint
   needs: []
-  before_script:
-    - uv sync --group dev
   script:
-    - uv run ruff check src/ tests/
-    - uv run ruff format --check src/ tests/
+    - uv run --only-group dev --frozen ruff check src/ tests/
+    - uv run --only-group dev --frozen ruff format --check src/ tests/
   rules:
     -
       changes:
@@ -160,10 +156,8 @@ ruff:
 safety:
   stage: 📋 lint
   needs: []
-  before_script:
-    - uv sync --group dev
   script:
-    - uv run safety --stage cicd scan --detailed-output
+    - uv run -only-group dev --frozen safety --stage cicd scan --detailed-output
   rules:
     -
       changes:

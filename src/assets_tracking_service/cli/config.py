@@ -1,7 +1,7 @@
 import logging
 
 import typer
-from rich import print
+from rich import print as rprint
 
 from assets_tracking_service.config import Config, ConfigurationError
 
@@ -22,12 +22,12 @@ def check() -> None:
         config.validate()
     except ConfigurationError as e:
         logger.error(e, exc_info=True)
-        print(f"{_no} Configuration invalid.")
+        rprint(f"{_no} Configuration invalid.")
         typer.echo(e)
         raise typer.Abort() from e
 
     logger.info("App config ok.")
-    print(f"{_ok} Configuration ok.")
+    rprint(f"{_ok} Configuration ok.")
 
 
 @config_cli.command(help="Display current app configuration.")
@@ -36,4 +36,4 @@ def show() -> None:
     config = Config()
 
     logger.info("Dumping app config with sensitive values redacted.")
-    print(config.dumps_safe())
+    rprint(config.dumps_safe())
