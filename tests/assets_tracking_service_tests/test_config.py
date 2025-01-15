@@ -15,7 +15,7 @@ class TestEditableDsn:
     @pytest.mark.cov()
     def test_database(self: Self):
         """Can get database property."""
-        db = "assets-tracking-test"
+        db = "assets_tracking_test"
         dsn = f"postgresql://test:password@localhost:5432/{db}"
         dsn_parsed = dsnparse.parse(dsn, EditableDsn)
 
@@ -25,7 +25,7 @@ class TestEditableDsn:
     def test_secret(self: Self):
         """Can get secret property."""
         password = "password"  # noqa: S105
-        dsn = f"postgresql://test:{password}@localhost:5432/assets-tracking-test"
+        dsn = f"postgresql://test:{password}@localhost:5432/assets_tracking_test"
         dsn_parsed = dsnparse.parse(dsn, EditableDsn)
 
         assert dsn_parsed.secret == password
@@ -77,7 +77,7 @@ class TestConfig:
 
     def test_db_dsn_explicit(self: Self):
         """Gets DB DSN when set explicitly as part of test."""
-        dsn = "postgresql://test:password@localhost:5432/assets-tracking-dev"
+        dsn = "postgresql://test:password@localhost:5432/assets_tracking_dev"
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": dsn, "ASSETS_TRACKING_SERVICE_DB_DATABASE": None}
         envs_bck = self._set_envs(envs)
 
@@ -102,7 +102,7 @@ class TestConfig:
     def test_db_safe(self: Self):
         """Gets DB DSN with password redacted."""
         password = "password"  # noqa: S105
-        dsn = f"postgresql://test:{password}@localhost:5432/assets-tracking-test"
+        dsn = f"postgresql://test:{password}@localhost:5432/assets_tracking_test"
         safe_dsn = dsn.replace(password, "[**REDACTED**]")
 
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": dsn}
@@ -454,7 +454,7 @@ class TestConfig:
 
         Note: The `ASSETS_TRACKING_SERVICE_DB_DSN` option is trickier to check and covered by a specific test.
         """
-        static_env = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://postgres@localhost:5432/assets-tracking-test"}
+        static_env = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://postgres@localhost:5432/assets_tracking_test"}
         envs = {**static_env, **envs}
         envs_bck = self._set_envs(envs)
 
