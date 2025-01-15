@@ -2,7 +2,7 @@ import logging
 
 import typer
 from psycopg.sql import SQL
-from rich import print
+from rich import print as rprint
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient, DatabaseError, DatabaseMigrationError, make_conn
@@ -22,10 +22,10 @@ def check_db() -> None:
 
     try:
         db_client.execute(SQL("SELECT 1;"))
-        print(f"{_ok} Database ok.")
+        rprint(f"{_ok} Database ok.")
     except DatabaseError as e:
         logger.error(e, exc_info=True)
-        print(f"{_no} Error accessing database.")
+        rprint(f"{_no} Error accessing database.")
         typer.echo(e)
         raise typer.Abort() from e
 
@@ -38,10 +38,10 @@ def migrate_db_up() -> None:
 
     try:
         db_client.migrate_upgrade()
-        print(f"{_ok} Database migrated.")
+        rprint(f"{_ok} Database migrated.")
     except DatabaseMigrationError as e:
         logger.error(e, exc_info=True)
-        print(f"{_no} Error migrating database.")
+        rprint(f"{_no} Error migrating database.")
         typer.echo(e)
         raise typer.Abort() from e
 
@@ -50,9 +50,9 @@ def migrate_db_up() -> None:
 def rollback_db_down() -> None:
     """Rollback DB migrations."""
     # prompt user to continue
-    print("[yellow]WARNING![/yellow] This will remove all data from database!")
+    rprint("[yellow]WARNING![/yellow] This will remove all data from database!")
     if not typer.confirm("Continue?"):
-        print(f"{_no} Aborted.")
+        rprint(f"{_no} Aborted.")
         raise typer.Exit(code=0)
 
     config = Config()
@@ -60,9 +60,9 @@ def rollback_db_down() -> None:
 
     try:
         db_client.migrate_downgrade()
-        print(f"{_ok} DB rolled back.")
+        rprint(f"{_ok} DB rolled back.")
     except DatabaseMigrationError as e:
         logger.error(e, exc_info=True)
-        print(f"{_no} Error rolling back database.")
+        rprint(f"{_no} Error rolling back database.")
         typer.echo(e)
         raise typer.Abort() from e

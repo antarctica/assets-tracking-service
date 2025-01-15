@@ -1,7 +1,7 @@
 import logging
 
 import typer
-from rich import print
+from rich import print as rprint
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient, make_conn
@@ -31,7 +31,7 @@ def fetch() -> None:
 
     providers.fetch_active_assets()
     providers.fetch_latest_positions()
-    print(f"{_ok} Command exited normally. Check log for any errors.")
+    rprint(f"{_ok} Command exited normally. Check log for any errors.")
 
 
 @data_cli.command(name="export", help="Export summary data for assets and their last known positions.")
@@ -46,4 +46,4 @@ def export() -> None:
     exporters = ExportersManager(config=config, db=db, logger=logger)
 
     exporters.export()
-    print(f"{_ok} Command exited normally. Check log for any errors.")
+    rprint(f"{_ok} Command exited normally. Check log for any errors.")
