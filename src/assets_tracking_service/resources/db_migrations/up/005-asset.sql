@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION are_labels_v1_valid_asset(jsonb_labels jsonb) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION are_labels_v1_valid_asset(jsonb_labels jsonb) RETURNS boolean AS $$
 DECLARE
     element jsonb;
     prefLabel_count INTEGER := 0;
@@ -21,14 +21,14 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 CREATE TABLE IF NOT EXISTS public.asset
 (
-    pk         INTEGER  GENERATED ALWAYS AS IDENTITY
-        CONSTRAINT asset_pk PRIMARY KEY,
-    id         UUID NOT NULL UNIQUE DEFAULT generate_ulid(),
-    labels     JSONB NOT NULL
-        CONSTRAINT asset_labels_valid_base CHECK (are_labels_v1_valid(labels))
-        CONSTRAINT asset_labels_valid_asset CHECK (are_labels_v1_valid_asset(labels)),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    pk integer GENERATED ALWAYS AS IDENTITY
+    CONSTRAINT asset_pk PRIMARY KEY,
+    id uuid NOT NULL UNIQUE DEFAULT generate_ulid(),
+    labels jsonb NOT NULL
+    CONSTRAINT asset_labels_valid_base CHECK (are_labels_v1_valid(labels))
+    CONSTRAINT asset_labels_valid_asset CHECK (are_labels_v1_valid_asset(labels)),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS asset_id_idx ON public.asset USING hash (id);
