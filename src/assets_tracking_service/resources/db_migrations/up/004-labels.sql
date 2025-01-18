@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION are_labels_v1_valid(jsonb_labels jsonb) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION are_labels_v1_valid(jsonb_labels jsonb) RETURNS boolean AS $$
 DECLARE
     element jsonb;
 BEGIN

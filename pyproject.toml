@@ -33,6 +33,7 @@ ats-ctl = "assets_tracking_service.cli:app_cli"
 dev = [
     "ruff>=0.9.1",
     "safety>=3.2.14",
+    "sqlfluff>=3.3.0",
 ]
 test = [
     "pytest>=8.3.4",
@@ -104,6 +105,12 @@ ignore = ["D100", "D104", "D107", "D203", "D212", "D402", "E501", "PT001", "PT02
 #   tests/* | ANN401 | ignore use of 'Any' type
 #   tests/* |   S101 | ignore use of assert
 # config.py |   N802 | ignore use of upper case method names
+
+[tool.sqlfluff.core]
+dialect = "postgres"
+templater = "raw"
+max_line_length = 120
+exclude_rules = "ST06, ST10"  # see docs/dev for more info
 
 [tool.pytest_env]
 ASSETS_TRACKING_SERVICE_ENABLE_FEATURE_SENTRY = "false"

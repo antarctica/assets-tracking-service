@@ -158,11 +158,22 @@ ruff:
         - '**/*.py'
       if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
 
+sqlfluff:
+  stage: 📋 lint
+  needs: []
+  script:
+    - uv run --only-group dev --frozen sqlfluff lint src/
+  rules:
+    -
+      changes:
+        - '**/*.sql'
+      if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
+
 safety:
   stage: 📋 lint
   needs: []
   script:
-    - uv run -only-group dev --frozen safety --stage cicd scan --detailed-output
+    - uv run --only-group dev --frozen safety --stage cicd scan --detailed-output
   rules:
     -
       changes:

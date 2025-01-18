@@ -63,7 +63,7 @@ BEGIN
   RETURN bytes;
 END
 $$
-LANGUAGE plpgsql
+LANGUAGE PLPGSQL
 IMMUTABLE;
 
 
@@ -72,7 +72,7 @@ BEGIN
   RETURN encode(parse_ulid(ulid), 'hex')::uuid;
 END
 $$
-LANGUAGE plpgsql
+LANGUAGE PLPGSQL
 IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION uuid_to_ulid(id uuid) RETURNS text AS $$
@@ -115,5 +115,5 @@ BEGIN
   RETURN output;
 END
 $$
-LANGUAGE plpgsql
+LANGUAGE PLPGSQL
 IMMUTABLE;
