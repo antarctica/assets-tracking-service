@@ -1,4 +1,5 @@
 import logging
+from contextlib import suppress
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
@@ -20,7 +21,7 @@ from ulid import parse as ulid_parse
 
 from assets_tracking_service.cli import app_cli
 from assets_tracking_service.config import Config
-from assets_tracking_service.db import DatabaseClient
+from assets_tracking_service.db import DatabaseClient, DatabaseError
 from assets_tracking_service.exporters.arcgis import ArcGISExporter
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
@@ -76,6 +77,8 @@ def fx_db_client_tmp_db(postgresql: Connection) -> DatabaseClient:
 @pytest.fixture()
 def fx_db_client_tmp_db_mig(fx_db_client_tmp_db: DatabaseClient) -> DatabaseClient:
     """Database client with a migrated, disposable, database."""
+    with suppress(DatabaseError):
+        fx_db_client_tmp_db.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
     fx_db_client_tmp_db.migrate_upgrade()
     fx_db_client_tmp_db.commit()
     return fx_db_client_tmp_db
