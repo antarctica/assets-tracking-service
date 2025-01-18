@@ -6,7 +6,7 @@ BEGIN
         SELECT FROM pg_catalog.pg_roles
         WHERE rolname = 'assets_tracking_service_ro') THEN
 
-        CREATE ROLE assets_tracking_service_ro;
+        RAISE EXCEPTION 'Role "assets_tracking_service_ro" does not exist. Create it manually.';
     END IF;
 END
 $$;

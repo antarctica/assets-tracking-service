@@ -20,6 +20,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 * SQL Fluff for linting SQL files
   [#93](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/93)
 
+### Fixed
+
+* Read-only role migration changed to raise exception to create out of band rather than directly
+  [#94](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/94)
+
 ### Changed
 
 * Switching from Poetry to UV
