@@ -16,6 +16,10 @@ repos:
   hooks:
     - id: ruff
     - id: ruff-format
+- repo: https://github.com/astral-sh/uv-pre-commit
+  rev: 0.5.21
+  hooks:
+    - id: uv-lock
 - repo: https://github.com/sqlfluff/sqlfluff
   rev: 3.3.0
   hooks:
