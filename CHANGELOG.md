@@ -22,6 +22,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * Switching from Poetry to UV
   [#89](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/89)
+* Switching to IT Ansible project for app deployments
+  [#92](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/92)
 
 ## [0.3.5] - 2024-12-09
 
