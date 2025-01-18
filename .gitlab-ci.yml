@@ -38,16 +38,16 @@ variables:
   UV_INDEX_ATS_AIR_PASSWORD: "$ATS_AIR_ACCESS_TOKEN"
 
   # Deployment
-  SSH_PRIVATE_KEY: "id_ed25519.pem"
-  DEPLOY_HOST: "bslws01.nerc-bas.ac.uk"
-  DEPLOY_USER: "geoweb"
-  DEPLOY_HOME: "/users/$DEPLOY_USER"
-  DEPLOY_APP_NAME: "assets-tracking-service"
-  DEPLOY_APP_PIP_PACKAGE: "$DEPLOY_APP_NAME"
-  DEPLOY_APP_PIP_EXTRA_INDEX: "https://$PACKAGE_ACCESS_IDENTIFIER:$PACKAGE_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/$CI_PROJECT_ID/packages/pypi/simple"
-  DEPLOY_ATS_AIR_PIP_EXTRA_INDEX: "https://$ATS_AIR_ACCESS_IDENTIFIER:$ATS_AIR_ACCESS_TOKEN@gitlab.data.bas.ac.uk/api/v4/projects/1291/packages/pypi/simple"
-  DEPLOY_VENV: "/users/$DEPLOY_USER/.venv/$DEPLOY_APP_NAME"
-  DEPLOY_MODULE_BASE: "/data/magic/.Modules/modulefiles/$DEPLOY_APP_NAME"
+  DEPLOY_ANSIBLE_REPO: "gitlab.data.bas.ac.uk/station-data-management/ansible.git"
+  DEPLOY_ANSIBLE_BRANCH: "master"
+  DEPLOY_ANSIBLE_VENV: "/tmp/.venv/ansible"
+  DEPLOY_ANSIBLE_ROOT_PATH: "/tmp/ansible"
+  DEPLOY_ANSIBLE_VAULT_PATH: ".vault_magic.password"
+  ANSIBLE_HOST_KEY_CHECKING: "False"
+  DEPLOY_GROUP: "magic"
+  DEPLOY_ENV: "prod"
+  DEPLOY_SSH_PRIVATE_KEY: "id_ed25519.pem"
+  DEPLOY_PLAYBOOK: "assets-tracking-service.yml"
 
   # Secrets (set in GitLab CI/CD settings)
   # - PACKAGE_ACCESS_TOKEN
@@ -87,26 +87,31 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   - curl -sSfo op.zip https://cache.agilebits.com/dist/1P/op2/pkg/v2.28.0/op_linux_amd64_v2.28.0.zip
   - unzip -od /usr/local/bin/ op.zip
 
+  # clone IT Ansible
+  - apt-get install -y git
+  - git clone --branch $DEPLOY_ANSIBLE_BRANCH https://gitlab-ci-token:$CI_JOB_TOKEN@$DEPLOY_ANSIBLE_REPO $DEPLOY_ANSIBLE_ROOT_PATH
+
+  # setup Ansible
+  - apt-get install -y ssh build-essential
+  - python -m venv $DEPLOY_ANSIBLE_VENV
+  - $DEPLOY_ANSIBLE_VENV/bin/python -m pip install --upgrade pip
+  - $DEPLOY_ANSIBLE_VENV/bin/python -m pip install -r $DEPLOY_ANSIBLE_ROOT_PATH/requirements.txt
+  - export PATH=$DEPLOY_ANSIBLE_VENV/bin:$PATH
+
+  # setup Ansible vault
+  - op read --out-file ~/$DEPLOY_ANSIBLE_VAULT_PATH "op://Infrastructure/Ansible Vault - BAS IT Ansible MAGIC/password"
+
   # setup SSH
   - apt-get install -y openssh-client
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
-  - op read --out-file ~/.ssh/$SSH_PRIVATE_KEY "op://Infrastructure/Assets Tracking Service - GitLab CI private key/private key?ssh-format=openssh"
+  - op read --out-file ~/.ssh/$DEPLOY_SSH_PRIVATE_KEY "op://Infrastructure/Assets Tracking Service - GitLab CI private key/private key?ssh-format=openssh"
   - eval $(ssh-agent -s)
-  - chmod 400 ~/.ssh/$SSH_PRIVATE_KEY
-  - ssh-add ~/.ssh/$SSH_PRIVATE_KEY
-  - ssh-keyscan $DEPLOY_HOST >> ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
+  - chmod 400 ~/.ssh/$DEPLOY_SSH_PRIVATE_KEY
+  - ssh-add ~/.ssh/$DEPLOY_SSH_PRIVATE_KEY
 
-  - export DEPLOY_APP_DB_DSN=$(op read "op://Infrastructure/qmhl6un36h3gxnjzlqtkahgqqy/PSQL connection string")
-  - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_USERNAME=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/username")
-  - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_PASSWORD=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/password")
-  - export DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_API_KEY=$(op read "op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/API/API Key")
-  - export DEPLOY_APP_PROVIDER_GEOTAB_USERNAME=$(op read "op://Infrastructure/Assets Tracking Service - Geotab User/username")
-  - export DEPLOY_APP_PROVIDER_GEOTAB_PASSWORD=$(op read "op://Infrastructure/Assets Tracking Service - Geotab User/password")
-  - export DEPLOY_APP_PROVIDER_GEOTAB_DATABASE=$(op read "op://Infrastructure/Assets Tracking Service - Geotab User/database")
-  - export DEPLOY_APP_EXPORTER_ARCGIS_USERNAME=$(op read "op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/username")
-  - export DEPLOY_APP_EXPORTER_ARCGIS_PASSWORD=$(op read "op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/password")
+  # setup variables
+  - export DEPLOY_APP_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-)
 
 .before_script_release: &before_script_release
   - apk add --no-cache curl jq
@@ -196,44 +201,13 @@ deploy:
   stage: 🚀 deploy
   needs:
     - job: publish
+  image: python:3.6-slim
   before_script:
     - *before_script_deploy
-    - export DEPLOY_APP_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-)
   script:
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "$DEPLOY_VENV/bin/python -m pip install --extra-index $DEPLOY_APP_PIP_EXTRA_INDEX --extra-index $DEPLOY_ATS_AIR_PIP_EXTRA_INDEX --upgrade $DEPLOY_APP_PIP_PACKAGE==$DEPLOY_APP_VERSION"
-    - |
-      cat > module.tpl << EOF
-      #%Module1.0
-
-      proc ModulesHelp { } {
-        puts stderr "Adds the control CLI for the Assets Tracking Service to your environment\n Run `ats-ctl --help` for further help."
-      }
-      module-whatis "Control CLI for the Assets Tracking Service.\n"
-
-      set basedir "$DEPLOY_VENV"
-
-      setenv ASSETS_TRACKING_SERVICE_ENABLE_FEATURE_SENTRY true
-      setenv ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT production
-      setenv ASSETS_TRACKING_SERVICE_DB_DSN $DEPLOY_APP_DB_DSN
-      setenv ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB true
-      setenv ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING true
-      setenv ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS true
-      setenv ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON true
-      setenv ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME $DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_USERNAME
-      setenv ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD $DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_PASSWORD
-      setenv ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY $DEPLOY_APP_PROVIDER_AIRCRAFT_TRACKING_API_KEY
-      setenv ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME $DEPLOY_APP_PROVIDER_GEOTAB_USERNAME
-      setenv ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD $DEPLOY_APP_PROVIDER_GEOTAB_PASSWORD
-      setenv ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE $DEPLOY_APP_PROVIDER_GEOTAB_DATABASE
-      setenv ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME $DEPLOY_APP_EXPORTER_ARCGIS_USERNAME
-      setenv ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD $DEPLOY_APP_EXPORTER_ARCGIS_PASSWORD
-      setenv ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID c85b4a215ef045aeb452c5ae28d6644d
-      setenv ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH $DEPLOY_HOME/projects/$DEPLOY_APP_NAME/exports/summary.geojson
-
-      prepend-path PATH \${basedir}/bin
-      EOF
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $DEPLOY_MODULE_BASE"
-    - scp module.tpl $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_MODULE_BASE/latest
+    - cd $DEPLOY_ANSIBLE_ROOT_PATH
+    - ansible workstations -m ping -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV
+    - ansible-playbook -v -b -e env=$DEPLOY_ENV -e group=$DEPLOY_GROUP -e project=$DEPLOY_ANSIBLE_ROOT_PATH -e app_version=$DEPLOY_APP_VERSION --vault-id ~/$DEPLOY_ANSIBLE_VAULT_PATH -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV playbooks/$DEPLOY_GROUP/$DEPLOY_PLAYBOOK
   rules:
     - if: $CI_COMMIT_TAG
 
