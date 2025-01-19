@@ -225,9 +225,13 @@ prerelease:
   before_script:
     - apt-get update && apt-get install -y git
     - scripts/release.py prerelease
+    - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
   script:
     - uv build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
+  artifacts:
+    reports:
+      dotenv: build.env
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
 
@@ -254,12 +258,12 @@ deploy_stage:
   stage: 🚀 deploy
   needs:
     - job: prerelease
+      artifacts: true
   image: python:3.6-slim
   variables:
     DEPLOY_ENV: "staging"
   before_script:
     - *before_script_deploy
-    - export DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)
   script:
     - cd $DEPLOY_ANSIBLE_ROOT_PATH
     - ansible workstations -m ping -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV
