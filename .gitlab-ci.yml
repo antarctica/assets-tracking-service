@@ -20,13 +20,16 @@ variables:
 
   # Postgres Service
   POSTGRES_HOST: "postgres"
-  POSTGRES_DB: "assets_tracking_test"
+  POSTGRES_DB: "postgres"
   POSTGRES_USER: "postgres"
   POSTGRES_PASSWORD: "password"
+  PSQL_SU_BASE: "psql -h $POSTGRES_HOST -U $POSTGRES_USER"
 
   # App
+  APP_DB_USERNAME: "assets_tracking_owner"
+  APP_DB_PASSWORD: "password"
   APP_DB_DATABASE: "assets_tracking_dev"  # intentionally different to service DB as not used for tests
-  ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
+  ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$APP_DB_USERNAME:$APP_DB_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
 
   # Linting
   RUFF_BIN: "uv run --only-group dev --frozen ruff"
@@ -77,9 +80,17 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   # setup postgres
   - apt-get install -y postgresql-client
   - export PGPASSWORD=$POSTGRES_PASSWORD    # best practice way to provide password to psql
-  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 'OK' AS status;"
-  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_tiger_geocoder;"
-  - psql -h $POSTGRES_HOST -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP EXTENSION IF EXISTS postgis_topology;"
+  - $PSQL_SU_BASE -d $POSTGRES_DB -c "SELECT 'OK' AS status;"
+  - $PSQL_SU_BASE -d $POSTGRES_DB -c "CREATE USER $APP_DB_USERNAME WITH PASSWORD '$APP_DB_PASSWORD';"
+  - $PSQL_SU_BASE -d $POSTGRES_DB -c "CREATE USER assets_tracking_service_ro NOLOGIN;"
+  - $PSQL_SU_BASE -d $POSTGRES_DB -c "CREATE DATABASE $APP_DB_DATABASE OWNER assets_tracking_owner;"
+  - $PSQL_SU_BASE -d $POSTGRES_DB -c "CREATE DATABASE assets_tracking_test OWNER assets_tracking_owner;"
+  - $PSQL_SU_BASE -d $APP_DB_DATABASE -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+  - $PSQL_SU_BASE -d $APP_DB_DATABASE -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+  - $PSQL_SU_BASE -d $APP_DB_DATABASE -c "CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;"
+  - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+  - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+  - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;"
   - uv run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.db_dsn_safe)'
 
 .before_script_deploy: &before_script_deploy
@@ -222,7 +233,7 @@ prerelease:
     - uv build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   rules:
-    - if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
 
 deploy:
   stage: 🚀 deploy
