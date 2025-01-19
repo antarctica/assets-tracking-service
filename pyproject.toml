@@ -47,6 +47,12 @@ test = [
 ]
 
 [[tool.uv.index]]
+name = "self"
+url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1220/packages/pypi/simple"
+publish-url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1220/packages/pypi"
+explicit = true
+
+[[tool.uv.index]]
 name = "ats-air"
 url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1291/packages/pypi/simple"
 explicit = true

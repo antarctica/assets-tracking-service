@@ -1,11 +1,9 @@
-#file: noinspection YAMLSchemaValidation
 ---
 
 include:
   - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
 
 stages:
-  - ⚡️ init
   - 🧪 test
   - 📋 lint
   - 🏗 build
@@ -14,7 +12,7 @@ stages:
   - 📣 release
 
 variables:
-  # CI config
+  # Image
   UV_CACHE_DIR: ".uv-cache"
   UV_VERSION: "0.5"
   PYTHON_VERSION: "3.11"
@@ -29,6 +27,10 @@ variables:
   # App
   APP_DB_DATABASE: "assets_tracking_dev"  # intentionally different to service DB as not used for tests
   ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
+
+  # Linting
+  RUFF_BIN: "uv run --only-group dev --frozen ruff"
+  RUFF_TARGETS: "src/ tests/ scripts/"
 
   # Packaging
   PACKAGE_ACCESS_IDENTIFIER: "gitlab-ci"
@@ -119,14 +121,6 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 
 # Jobs
 
-version:
-  stage: ⚡️ init
-  needs: []
-  script:
-    - scripts/release.py prerelease
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-
 pytest:
   stage: 🧪 test
   needs: []
@@ -149,8 +143,9 @@ pytest:
   rules:
     -
       changes:
-        - '**/*.py'
+        - 'src/assets_tracking_service/*.py'
         - 'src/assets_tracking_service/resources/db_migrations/**/*.sql'
+        - 'tests/**/*.py'
         - 'pyproject.toml'
         - 'uv.lock'
       if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
@@ -159,8 +154,8 @@ ruff:
   stage: 📋 lint
   needs: []
   script:
-    - uv run --only-group dev --frozen ruff check src/ tests/
-    - uv run --only-group dev --frozen ruff format --check src/ tests/
+    - $RUFF_BIN check $RUFF_TARGETS
+    - $RUFF_BIN format --check $RUFF_TARGETS
   rules:
     -
       changes:
@@ -171,11 +166,11 @@ sqlfluff:
   stage: 📋 lint
   needs: []
   script:
-    - uv run --only-group dev --frozen sqlfluff lint src/
+    - uv run --only-group dev --frozen sqlfluff lint src/assets_tracking_service/resources/db_migrations
   rules:
     -
       changes:
-        - '**/*.sql'
+        - 'src/assets_tracking_service/resources/db_migrations/**/*.sql'
       if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
 
 safety:
@@ -199,6 +194,13 @@ build:
     paths:
       - dist/
     expire_in: 1 month
+  rules:
+    -
+      changes:
+        - '**/*.py'
+        - 'pyproject.toml'
+        - 'uv.lock'
+      if: '$CI_COMMIT_BRANCH != "main" || $CI_COMMIT_TAG != null'
 
 publish:
   stage: 📦 publish
@@ -208,7 +210,19 @@ publish:
   script:
     - uv publish --index=gitlab --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG != null'
+
+prerelease:
+  stage: 📦 publish
+  needs: []
+  before_script:
+    - apt-get update && apt-get install -y git
+    - scripts/release.py prerelease
+  script:
+    - uv build
+    - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
 
 deploy:
   stage: 🚀 deploy
