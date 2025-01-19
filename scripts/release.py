@@ -19,6 +19,7 @@ from dunamai import Style, Version
 from tomlkit import dump as toml_dump
 from tomlkit import parse as toml_parse
 
+__VERSION__ = "0.2.0"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
