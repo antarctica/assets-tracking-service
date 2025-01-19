@@ -253,7 +253,7 @@ deploy_prod:
 deploy_stage:
   stage: 🚀 deploy
   needs:
-    - job: publish
+    - job: prerelease
   image: python:3.6-slim
   variables:
     DEPLOY_ENV: "staging"
