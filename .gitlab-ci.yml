@@ -5,6 +5,7 @@ include:
   - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
 
 stages:
+  - ⚡️ init
   - 🧪 test
   - 📋 lint
   - 🏗 build
@@ -118,6 +119,14 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 
 # Jobs
 
+version:
+  stage: ⚡️ init
+  needs: []
+  script:
+    - scripts/release.py prerelease
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
 pytest:
   stage: 🧪 test
   needs: []
@@ -190,13 +199,6 @@ build:
     paths:
       - dist/
     expire_in: 1 month
-  rules:
-    -
-      changes:
-        - '**/*.py'
-        - 'pyproject.toml'
-        - 'uv.lock'
-      if: '$CI_COMMIT_BRANCH != "main" || $CI_COMMIT_TAG != null'
 
 publish:
   stage: 📦 publish
@@ -206,7 +208,7 @@ publish:
   script:
     - uv publish --index=gitlab --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   rules:
-    - if: $CI_COMMIT_TAG
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 deploy:
   stage: 🚀 deploy
