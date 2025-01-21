@@ -33,6 +33,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#89](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/89)
 * Switching to IT Ansible project for app deployments
   [#92](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/92)
+* Rationalising database names/roles
+  [#98](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/98)
 
 ## [0.3.5] - 2024-12-09
 
