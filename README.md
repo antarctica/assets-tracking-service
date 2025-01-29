@@ -45,10 +45,9 @@ For the last known position of all assets (optionally filterable by name or plat
 
 ### Permissions
 
-Whilst data access is [verified 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/46) with data
-owners, access is limited to MAGIC staff. Data MUST NOT be shared with others without prior approval from @felnne.
+The latest positions of all assets is unrestricted.
 
-In practice this means data MUST NOT be shared beyond the Assets Tracking Service [AGOL group](#arcgis-online).
+Previous positions of most asset types is unrestricted but not currently distributed through this service.
 
 ### ArcGIS Online
 
