@@ -37,6 +37,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#98](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/98)
 * Running database migrations in Ansible
   [#100](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/100)
+* Documenting updated access constraints (public access to latest positions)
+  [#46](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/46)
 
 ## [0.3.5] - 2024-12-09
 
