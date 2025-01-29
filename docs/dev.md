@@ -242,21 +242,27 @@ In the [test_config.py](../tests/assets_tracking_service_tests/test_config.py) m
 
 ## Adding database migrations
 
-In the [`db_migrations`](../src/assets_tracking_service/resources/db_migrations) resource directory:
+To create a migration `foo`:
 
-- create an *up* migration, which applies the change in the `up/` subdirectory
-- create a *down* migration, which reverts the change in the `down/` subdirectory
+```
+% scripts/create-migration.py foo
+```
 
-Migration files are numbered to ensure they apply in the correct order:
+This will create an `up` and `down` migration file in the
+[`db_migrations`](../src/assets_tracking_service/resources/db_migrations) resource directory.
 
-- *up* migrations count upwards
-- *down* migrations count backwards
+**Notes**:
 
-Migrations should be grouped into logical units, for example if creating a new entity define a table and it's indexes
-in a single migration. Define separate entities (even if related and part of the same change/feature) in separate
-migrations.
-
-Existing migrations MUST NOT be amended. I.e. if a column type should change, use an `ALTER` command in a new migration.
+- migration are numbered to ensure they apply in the correct order
+- migrations should be grouped into logical units:
+  - for a new entity, define the table and it's indexes, triggers, etc. in a single migration
+  - define separate entities (even if related and part of the same change/feature) in separate migrations
+- existing migrations MUST NOT be amended
+  - if a column type changes, use an `ALTER` command in a new migration
+- include a comment with a related GitLab issue if applicable
+- do not create roles in migrations
+  - the app does not superuser privileges when deployed so migrations will fail
+  - instead, check for the role and emit an exception to create manually if missing
 
 See the [Implementation](./implementation.md#database-migrations) documentation for more information on migrations.
 

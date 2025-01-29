@@ -21,6 +21,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#93](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/93)
 * Release/version script and deployments from main branch
   [#96](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/96)
+* New DB migration script to automatically create/number files
+  [#107](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/107)
 
 ### Fixed
 
