@@ -125,6 +125,9 @@ class TestConfig:
         expected: fx_config.ConfigDumpSafe = {
             "version": fx_package_version,
             "db_dsn": fx_config.db_dsn_safe,
+            "sentry_dsn": fx_config.sentry_dsn,
+            "enable_feature_sentry": False,  # would be True by default but Sentry disabled in tests
+            "sentry_environment": "development",
             "sentry_monitor_slug_ats_run": fx_config.sentry_monitor_slug_ats_run,
             "enable_provider_aircraft_tracking": True,
             "enable_provider_geotab": True,

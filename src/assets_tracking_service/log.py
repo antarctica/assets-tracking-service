@@ -2,7 +2,6 @@ import logging
 from importlib.metadata import version
 
 import sentry_sdk
-from environs import Env
 
 
 def init() -> None:
@@ -13,11 +12,18 @@ def init() -> None:
 
 
 def init_sentry() -> None:
-    """Initialize Sentry SDK if applicable."""
-    env = Env()
+    """
+    Initialize Sentry SDK if enabled.
 
-    dsn = "https://57698b6483c7ac43b7c9c905cdb79943@o39753.ingest.us.sentry.io/4507581411229696"
-    disabled = not env.bool("ASSETS_TRACKING_SERVICE_ENABLE_FEATURE_SENTRY", True)
+    The DSN is embedded here as the config class is not yet available based on when this method is called.
+    """
+    # can't import Config normally due to circular imports
+    from assets_tracking_service.config import Config
+
+    config = Config()
+
+    dsn = config.sentry_dsn
+    disabled = not config.ENABLE_FEATURE_SENTRY
     if disabled:  # pragma: no branch
         dsn = ""  # empty DSN disables Sentry
 
@@ -26,5 +32,5 @@ def init_sentry() -> None:
         traces_sample_rate=0.1,  # 10%
         profiles_sample_rate=0.1,  # 10%
         release=version("assets-tracking-service"),
-        environment=env.str("ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT", "development"),
+        environment=config.SENTRY_ENVIRONMENT,
     )
