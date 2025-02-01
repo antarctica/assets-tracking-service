@@ -133,6 +133,9 @@ class Config:
 
         version: str
         db_dsn: str
+        sentry_dsn: str
+        SENTRY_ENABLED: bool
+        SENTRY_ENVIRONMENT: str
         sentry_monitor_slug_ats_run: str
         enable_provider_geotab: bool
         enable_provider_aircraft_tracking: bool
@@ -214,6 +217,23 @@ class Config:
         dsn_parsed = dsnparse.parse(self.DB_DSN, EditableDsn)
         dsn_parsed.secret = self._safe_value
         return dsn_parsed.geturl()
+
+    @property
+    def sentry_dsn(self) -> str:
+        """Connection string for Sentry monitoring."""
+        return "https://57698b6483c7ac43b7c9c905cdb79943@o39753.ingest.us.sentry.io/4507581411229696"
+
+    @property
+    def ENABLE_FEATURE_SENTRY(self) -> bool:
+        """Controls whether Sentry monitoring is used."""
+        with self.env.prefixed(self._app_prefix):
+            return self.env.bool("ENABLE_FEATURE_SENTRY", True)
+
+    @property
+    def SENTRY_ENVIRONMENT(self) -> str:
+        """Controls whether Sentry monitoring is used."""
+        with self.env.prefixed(self._app_prefix):
+            return self.env.str("SENTRY_ENVIRONMENT", "development")
 
     @property
     def sentry_monitor_slug_ats_run(self) -> str:
