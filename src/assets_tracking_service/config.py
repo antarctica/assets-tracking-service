@@ -136,11 +136,11 @@ class Config:
         SENTRY_DSN: str
         SENTRY_ENABLED: bool
         SENTRY_ENVIRONMENT: str
-        SENTRY_MONITOR_SLUG_RUN: str
+        SENTRY_MONITOR_CONFIG: dict[str, dict]
         ENABLE_PROVIDER_GEOTAB: bool
         ENABLE_PROVIDER_AIRCRAFT_TRACKING: bool
         ENABLED_PROVIDERS: list[str]
-        ENALBE_EXPORTER_GEOJSON: bool
+        ENABLE_EXPORTER_GEOJSON: bool
         ENABLE_EXPORTER_ARCGIS: bool
         ENABLED_EXPORTERS: list[str]
         PROVIDER_GEOTAB_USERNAME: str
@@ -164,7 +164,7 @@ class Config:
             "SENTRY_DSN": self.SENTRY_DSN,
             "ENABLE_FEATURE_SENTRY": self.ENABLE_FEATURE_SENTRY,
             "SENTRY_ENVIRONMENT": self.SENTRY_ENVIRONMENT,
-            "SENTRY_MONITOR_SLUG_RUN": self.SENTRY_MONITOR_SLUG_RUN,
+            "SENTRY_MONITOR_CONFIG": self.SENTRY_MONITOR_CONFIG,
             "ENABLE_PROVIDER_GEOTAB": self.ENABLE_PROVIDER_GEOTAB,
             "ENABLE_PROVIDER_AIRCRAFT_TRACKING": self.ENABLE_PROVIDER_AIRCRAFT_TRACKING,
             "ENABLED_PROVIDERS": self.ENABLED_PROVIDERS,
@@ -236,9 +236,18 @@ class Config:
             return self.env.str("SENTRY_ENVIRONMENT", "development")
 
     @property
-    def SENTRY_MONITOR_SLUG_RUN(self) -> str:
-        """Slug for the Sentry monitor used to track fetch-export runs of the application."""
-        return "ats-run"
+    def SENTRY_MONITOR_CONFIG(self) -> dict[str, dict]:
+        """Configuration for Sentry task monitoring."""
+        return {
+            "ats-run": {
+                "schedule": {"type": "crontab", "value": "*/5 * * * *"},
+                "timezone": "UTC",
+                "checkin_margin": 2,
+                "max_runtime": 5,
+                "failure_issue_threshold": 3,
+                "recovery_threshold": 1,
+            }
+        }
 
     @property
     def ENABLE_PROVIDER_GEOTAB(self: Self) -> bool:

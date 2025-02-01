@@ -59,7 +59,8 @@ def run() -> None:
     providers = ProvidersManager(config=config, db=db, logger=logger)
     exporters = ExportersManager(config=config, db=db, logger=logger)
 
-    with monitor(monitor_slug=config.SENTRY_MONITOR_SLUG_RUN):
+    monitor_slug = "ats-run"
+    with monitor(monitor_slug=monitor_slug, monitor_config=config.SENTRY_MONITOR_CONFIG[monitor_slug]):
         providers.fetch_active_assets()
         providers.fetch_latest_positions()
         exporters.export()

@@ -129,7 +129,7 @@ class TestConfig:
             "SENTRY_DSN": fx_config.SENTRY_DSN,
             "ENABLE_FEATURE_SENTRY": False,  # would be True by default but Sentry disabled in tests
             "SENTRY_ENVIRONMENT": "development",
-            "SENTRY_MONITOR_SLUG_RUN": fx_config.SENTRY_MONITOR_SLUG_RUN,
+            "SENTRY_MONITOR_CONFIG": fx_config.SENTRY_MONITOR_CONFIG,
             "ENABLE_PROVIDER_AIRCRAFT_TRACKING": True,
             "ENABLE_PROVIDER_GEOTAB": True,
             "ENABLED_PROVIDERS": ["aircraft_tracking", "geotab"],
