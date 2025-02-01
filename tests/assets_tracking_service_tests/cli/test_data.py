@@ -32,3 +32,19 @@ class TestCliData:
 
         assert result.exit_code == 0
         assert "Command exited normally" in result.output
+
+    def test_cli_data_fetch_export(
+        self: Self,
+        mocker: MockerFixture,
+        fx_cli: CliRunner,
+        fx_providers_manager_eg_provider: ProvidersManager,
+        fx_exporters_manager_eg_exporter: ExportersManager,
+    ) -> None:
+        """Exports data."""
+        mocker.patch("assets_tracking_service.cli.data.ProvidersManager", return_value=fx_providers_manager_eg_provider)
+        mocker.patch("assets_tracking_service.cli.data.ExportersManager", return_value=fx_exporters_manager_eg_exporter)
+
+        result = fx_cli.invoke(app=cli, args=["data", "run"])
+
+        assert result.exit_code == 0
+        assert "Command exited normally" in result.output

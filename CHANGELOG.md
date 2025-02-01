@@ -23,6 +23,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#96](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/96)
 * New DB migration script to automatically create/number files
   [#107](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/107)
+* `data run` command combining `data fetch` and `data export` commands, replacing cron script logic
+  [#105](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/105)
 
 ### Fixed
 

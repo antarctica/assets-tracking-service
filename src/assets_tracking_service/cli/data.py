@@ -2,6 +2,7 @@ import logging
 
 import typer
 from rich import print as rprint
+from sentry_sdk import monitor
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient, make_conn
@@ -36,14 +37,31 @@ def fetch() -> None:
 
 @data_cli.command(name="export", help="Export summary data for assets and their last known positions.")
 def export() -> None:
-    """
-    Dump assets with latest positions through each exporter.
-
-    Currently limited to GeoJSON.
-    """
+    """Dump assets with latest positions through each exporter."""
     config = Config()
     db = DatabaseClient(conn=make_conn(config.DB_DSN))
     exporters = ExportersManager(config=config, db=db, logger=logger)
 
     exporters.export()
+    rprint(f"{_ok} Command exited normally. Check log for any errors.")
+
+
+@data_cli.command(name="run", help="Fetch and export summary data for assets and their last known positions.")
+def run() -> None:
+    """
+    Fetch and export assets with latest positions.
+
+    As per the `fetch()` and `export()` methods. Triggers Sentry monitoring to ensure data is refreshed regularly.
+    See docs/implementation.md#monitoring for details.
+    """
+    config = Config()
+    db = DatabaseClient(conn=make_conn(config.DB_DSN))
+    providers = ProvidersManager(config=config, db=db, logger=logger)
+    exporters = ExportersManager(config=config, db=db, logger=logger)
+
+    with monitor(monitor_slug=config.sentry_monitor_slug_ats_run):
+        providers.fetch_active_assets()
+        providers.fetch_latest_positions()
+        exporters.export()
+
     rprint(f"{_ok} Command exited normally. Check log for any errors.")

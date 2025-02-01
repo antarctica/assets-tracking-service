@@ -133,6 +133,7 @@ class Config:
 
         version: str
         db_dsn: str
+        sentry_monitor_slug_ats_run: str
         enable_provider_geotab: bool
         enable_provider_aircraft_tracking: bool
         enabled_providers: list[str]
@@ -157,6 +158,10 @@ class Config:
         return {
             "version": self.version,
             "db_dsn": self.db_dsn_safe,
+            "sentry_dsn": self.sentry_dsn,
+            "enable_feature_sentry": self.ENABLE_FEATURE_SENTRY,
+            "sentry_environment": self.SENTRY_ENVIRONMENT,
+            "sentry_monitor_slug_ats_run": self.sentry_monitor_slug_ats_run,
             "enable_provider_geotab": self.ENABLE_PROVIDER_GEOTAB,
             "enable_provider_aircraft_tracking": self.ENABLE_PROVIDER_AIRCRAFT_TRACKING,
             "enabled_providers": self.enabled_providers,
@@ -209,6 +214,11 @@ class Config:
         dsn_parsed = dsnparse.parse(self.DB_DSN, EditableDsn)
         dsn_parsed.secret = self._safe_value
         return dsn_parsed.geturl()
+
+    @property
+    def sentry_monitor_slug_ats_run(self) -> str:
+        """Slug for the Sentry monitor used to track fetch-export runs of the application."""
+        return "ats-run"
 
     @property
     def ENABLE_PROVIDER_GEOTAB(self: Self) -> bool:
