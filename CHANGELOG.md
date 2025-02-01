@@ -30,6 +30,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * Read-only role migration changed to raise exception to create out of band rather than directly
   [#94](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/94)
+* Requests TLS errors related to ArcGIS SDK
+  [#111](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/111)
 
 ### Changed
 
