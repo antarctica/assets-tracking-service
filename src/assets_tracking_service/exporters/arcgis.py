@@ -3,9 +3,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Self
 
-from arcgis import GIS
 from arcgis.features import FeatureLayerCollection
-from arcgis.gis import Item
+from arcgis.gis import GIS, Item
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient

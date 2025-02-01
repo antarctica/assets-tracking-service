@@ -125,6 +125,7 @@ class TestConfig:
         expected: fx_config.ConfigDumpSafe = {
             "version": fx_package_version,
             "db_dsn": fx_config.db_dsn_safe,
+            "sentry_monitor_slug_ats_run": fx_config.sentry_monitor_slug_ats_run,
             "enable_provider_aircraft_tracking": True,
             "enable_provider_geotab": True,
             "enabled_providers": ["aircraft_tracking", "geotab"],
