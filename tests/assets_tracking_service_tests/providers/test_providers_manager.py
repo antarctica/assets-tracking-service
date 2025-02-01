@@ -41,7 +41,7 @@ class TestProvidersManager:
     ):
         """Initialises with no providers."""
         mock_config = mocker.Mock()
-        type(mock_config).enabled_providers = PropertyMock(return_value=[])
+        type(mock_config).ENABLED_PROVIDERS = PropertyMock(return_value=[])
         manager = ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
         assert len(manager._providers) == 0
@@ -60,7 +60,7 @@ class TestProvidersManager:
         mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
         mock_config = mocker.Mock()
-        type(mock_config).enabled_providers = PropertyMock(return_value=enabled_providers)
+        type(mock_config).ENABLED_PROVIDERS = PropertyMock(return_value=enabled_providers)
 
         manager = ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
@@ -79,7 +79,7 @@ class TestProvidersManager:
         provider_title = " ".join(word.capitalize() for word in enabled_providers[0].split("_"))
 
         mock_config = mocker.Mock()
-        type(mock_config).enabled_providers = PropertyMock(return_value=enabled_providers)
+        type(mock_config).ENABLED_PROVIDERS = PropertyMock(return_value=enabled_providers)
 
         mocker.patch("assets_tracking_service.providers.geotab.GeotabProvider.__init__", side_effect=RuntimeError)
         mocker.patch(

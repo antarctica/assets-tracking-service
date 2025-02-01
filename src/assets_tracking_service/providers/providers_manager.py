@@ -25,7 +25,7 @@ class ProvidersManager:
 
         self._assets = AssetsClient(db_client=self._db)
         self._positions = PositionsClient(db_client=self._db)
-        self._providers: list[Provider] = self._make_providers(self._config.enabled_providers)
+        self._providers: list[Provider] = self._make_providers(self._config.ENABLED_PROVIDERS)
 
     def _make_providers(self: Self, provider_names: list[str]) -> list[Provider]:
         """Create instances for enabled providers."""

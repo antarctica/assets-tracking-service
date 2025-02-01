@@ -90,7 +90,7 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS postgis;"
   - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
   - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;"
-  - uv run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.db_dsn_safe)'
+  - uv run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.DB_DSN_SAFE)'
 
 .before_script_deploy: &before_script_deploy
   - apt-get update
@@ -122,9 +122,6 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   - eval $(ssh-agent -s)
   - chmod 400 ~/.ssh/$DEPLOY_SSH_PRIVATE_KEY
   - ssh-add ~/.ssh/$DEPLOY_SSH_PRIVATE_KEY
-
-.before_script_release: &before_script_release
-  - apk add --no-cache curl jq
 
 # Jobs
 
@@ -279,7 +276,7 @@ release:
     - job: publish
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   before_script:
-    - *before_script_release
+    - apk add --no-cache curl jq
 
     - export TAG_NO_PREFIX=$(echo $CI_COMMIT_TAG | cut -c 2-)
     # for a string v0.8.13, replace last digit to always be 0

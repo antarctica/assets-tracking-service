@@ -22,7 +22,7 @@ def init_sentry() -> None:
 
     config = Config()
 
-    dsn = config.sentry_dsn
+    dsn = config.SENTRY_DSN
     disabled = not config.ENABLE_FEATURE_SENTRY
     if disabled:  # pragma: no branch
         dsn = ""  # empty DSN disables Sentry

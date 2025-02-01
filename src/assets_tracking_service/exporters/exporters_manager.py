@@ -16,7 +16,7 @@ class ExportersManager:
         self._logger = logger
         self._db = db
 
-        self._exporters: list[Exporter] = self._make_exporters(self._config.enabled_exporters)
+        self._exporters: list[Exporter] = self._make_exporters(self._config.ENABLED_EXPORTERS)
 
     def _make_exporters(self: Self, exporter_names: list[str]) -> list[Exporter]:
         """Create instances for enabled exporters."""

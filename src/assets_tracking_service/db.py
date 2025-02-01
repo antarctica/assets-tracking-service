@@ -35,7 +35,7 @@ class DatabaseClient:
         self._logger = logging.getLogger("app")
         self._conn = conn
 
-        self._conn.execute("set timezone to 'UTC';")
+        self._conn.execute("SET timezone TO 'UTC';")
 
     @property
     def conn(self: Self) -> Connection:
