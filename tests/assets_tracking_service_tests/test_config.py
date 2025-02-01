@@ -110,54 +110,55 @@ class TestConfig:
 
         config = Config()
         assert dsn == config.DB_DSN
-        assert config.db_dsn_safe == safe_dsn
+        assert safe_dsn == config.DB_DSN_SAFE
 
         self._unset_envs(envs, envs_bck)
 
     def test_version(self: Self):
         """Version is read from package metadata."""
         config = Config()
-        assert config.version == version("assets-tracking-service")
+        assert version("assets-tracking-service") == config.VERSION
 
     def test_dumps_safe(self: Self, fx_package_version: str, fx_config: Config):
         """Config can be exported to a dict with sensitive values redacted."""
         redacted_value = "[**REDACTED**]"
+
         expected: fx_config.ConfigDumpSafe = {
-            "version": fx_package_version,
-            "db_dsn": fx_config.db_dsn_safe,
-            "sentry_dsn": fx_config.sentry_dsn,
-            "enable_feature_sentry": False,  # would be True by default but Sentry disabled in tests
-            "sentry_environment": "development",
-            "sentry_monitor_slug_ats_run": fx_config.sentry_monitor_slug_ats_run,
-            "enable_provider_aircraft_tracking": True,
-            "enable_provider_geotab": True,
-            "enabled_providers": ["aircraft_tracking", "geotab"],
-            "provider_aircraft_tracking_api_key": redacted_value,
-            "provider_aircraft_tracking_password": redacted_value,
-            "provider_aircraft_tracking_username": "x",
-            "provider_geotab_database": "x",
-            "provider_geotab_group_nvs_l06_code_mapping": fx_config.provider_geotab_group_nvs_l06_code_mapping,
-            "provider_geotab_password": redacted_value,
-            "provider_geotab_username": "x",
-            "enable_exporter_arcgis": True,
-            "enable_exporter_geojson": True,
-            "enabled_exporters": ["arcgis", "geojson"],
-            "exporter_arcgis_username": "x",
-            "exporter_arcgis_password": redacted_value,
-            "exporter_arcgis_item_id": "x",
-            "exporter_geojson_output_path": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
+            "VERSION": fx_package_version,
+            "DB_DSN": fx_config.DB_DSN_SAFE,
+            "SENTRY_DSN": fx_config.SENTRY_DSN,
+            "ENABLE_FEATURE_SENTRY": False,  # would be True by default but Sentry disabled in tests
+            "SENTRY_ENVIRONMENT": "development",
+            "SENTRY_MONITOR_SLUG_RUN": fx_config.SENTRY_MONITOR_SLUG_RUN,
+            "ENABLE_PROVIDER_AIRCRAFT_TRACKING": True,
+            "ENABLE_PROVIDER_GEOTAB": True,
+            "ENABLED_PROVIDERS": ["aircraft_tracking", "geotab"],
+            "PROVIDER_AIRCRAFT_TRACKING_API_KEY": redacted_value,
+            "PROVIDER_AIRCRAFT_TRACKING_PASSWORD": redacted_value,
+            "PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
+            "PROVIDER_GEOTAB_DATABASE": "x",
+            "PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING": fx_config.PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING,
+            "PROVIDER_GEOTAB_PASSWORD": redacted_value,
+            "PROVIDER_GEOTAB_USERNAME": "x",
+            "ENABLE_EXPORTER_ARCGIS": True,
+            "ENABLE_EXPORTER_GEOJSON": True,
+            "ENABLED_EXPORTERS": ["arcgis", "geojson"],
+            "EXPORTER_ARCGIS_USERNAME": "x",
+            "EXPORTER_ARCGIS_PASSWORD": redacted_value,
+            "EXPORTER_ARCGIS_ITEM_ID": "x",
+            "EXPORTER_GEOJSON_OUTPUT_PATH": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
         }
 
         output = fx_config.dumps_safe()
         assert output == expected
-        assert redacted_value in output["db_dsn"]
-        assert "export.geojson" in output["exporter_geojson_output_path"]
+        assert redacted_value in output["DB_DSN"]
+        assert "export.geojson" in output["EXPORTER_GEOJSON_OUTPUT_PATH"]
 
     def test_validate(self: Self, fx_config: Config):
         """Valid configuration is ok."""
         fx_config.validate()
 
-    def test_validate_missing_dsn(self: Self):
+    def test_validate_missing_db_dsn(self: Self):
         """Validation fails where DB DSN is missing."""
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": None}
         envs_bck = self._set_envs(envs)
@@ -169,7 +170,7 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_validate_invalid_dsn(self: Self):
+    def test_validate_invalid_db_dsn(self: Self):
         """Validation fails where DB DSN is invalid."""
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://"}
         envs_bck = self._set_envs(envs)
@@ -240,7 +241,7 @@ class TestConfig:
         envs_bck = self._set_envs(envs)
 
         config = Config()
-        assert config.enabled_providers == expected
+        assert expected == config.ENABLED_PROVIDERS
 
         self._unset_envs(envs, envs_bck)
 
@@ -303,7 +304,7 @@ class TestConfig:
         envs_bck = self._set_envs(envs)
 
         config = Config()
-        assert config.enabled_exporters == expected
+        assert expected == config.ENABLED_EXPORTERS
 
         self._unset_envs(envs, envs_bck)
 
@@ -331,7 +332,7 @@ class TestConfig:
         assert getattr(config, property_name) == expected
 
         if sensitive:
-            assert getattr(config, f"{property_name.lower()}_safe") == "[**REDACTED**]"
+            assert getattr(config, f"{property_name}_SAFE") == "[**REDACTED**]"
 
         self._unset_envs(envs, envs_bck)
 
@@ -339,7 +340,7 @@ class TestConfig:
     def test_provider_geotab_group_nvs_l06_code_mapping(self: Self):
         """For completeness."""
         config = Config()
-        assert isinstance(config.provider_geotab_group_nvs_l06_code_mapping, dict)
+        assert isinstance(config.PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING, dict)
 
     @pytest.mark.cov()
     def test_validate_providers_disabled(self: Self):

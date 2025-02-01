@@ -20,7 +20,7 @@ _version_option = typer.Option(None, "-v", "--version", is_eager=True, help="Sho
 
 @app_cli.callback(invoke_without_command=True)
 def cli(version: Union[bool | None] = _version_option) -> None:  # noqa: UP007
-    """Display application version."""
+    """CLI entry point."""
     if version:
-        print(config.version)
+        print(config.VERSION)
         raise typer.Exit()

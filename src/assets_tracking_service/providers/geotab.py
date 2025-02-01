@@ -194,9 +194,9 @@ class GeotabProvider(Provider):
             self._logger.debug("Determining platform type from group mappings...")
             self._logger.debug("Raw groups: '%s'", device["device_group_ids"])
             platform_types = [
-                self._config.provider_geotab_group_nvs_l06_code_mapping[group_id]
+                self._config.PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING[group_id]
                 for group_id in device["device_group_ids"].split(",")
-                if group_id in self._config.provider_geotab_group_nvs_l06_code_mapping
+                if group_id in self._config.PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING
             ]
             self._logger.debug("Platform types: '%s'", platform_types)
             platform_type_value = platform_types[0] if len(platform_types) == 1 else "0"

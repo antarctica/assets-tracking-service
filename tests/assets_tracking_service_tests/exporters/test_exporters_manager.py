@@ -33,7 +33,7 @@ class TestExportersManager:
     ):
         """Initialises with no providers."""
         mock_config = mocker.Mock()
-        type(mock_config).enabled_exporters = PropertyMock(return_value=[])
+        type(mock_config).ENABLED_EXPORTERS = PropertyMock(return_value=[])
         manager = ExportersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
         assert len(manager._exporters) == 0
@@ -48,7 +48,7 @@ class TestExportersManager:
     ):
         """Makes each exporter."""
         mock_config = mocker.Mock()
-        type(mock_config).enabled_exporters = PropertyMock(return_value=enabled_exporters)
+        type(mock_config).ENABLED_EXPORTERS = PropertyMock(return_value=enabled_exporters)
 
         manager = ExportersManager(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
 

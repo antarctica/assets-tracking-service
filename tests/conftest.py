@@ -71,14 +71,19 @@ def fx_config() -> Config:
 @pytest.fixture()
 def fx_db_client_tmp_db(postgresql: Connection) -> DatabaseClient:
     """Database client with an empty, disposable, database."""
-    return DatabaseClient(conn=postgresql)
+    client = DatabaseClient(conn=postgresql)
+    with suppress(DatabaseError):
+        client.execute(query=SQL("SET timezone TO 'UTC';"))
+        client.commit()
+        client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
+        client.commit()
+
+    return client
 
 
 @pytest.fixture()
 def fx_db_client_tmp_db_mig(fx_db_client_tmp_db: DatabaseClient) -> DatabaseClient:
     """Database client with a migrated, disposable, database."""
-    with suppress(DatabaseError):
-        fx_db_client_tmp_db.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
     fx_db_client_tmp_db.migrate_upgrade()
     fx_db_client_tmp_db.commit()
     return fx_db_client_tmp_db
@@ -93,7 +98,7 @@ def fx_db_client_tmp_db_pop(
 ) -> DatabaseClient:
     """Database client with a populated, disposable, database."""
     mock_config = mocker.Mock()
-    type(mock_config).enabled_providers = PropertyMock(return_value=[])
+    type(mock_config).ENABLED_PROVIDERS = PropertyMock(return_value=[])
 
     providers = ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
     providers._providers = [fx_provider_example]
@@ -113,6 +118,13 @@ def fx_cli() -> CliRunner:
 @pytest.fixture()
 def fx_cli_tmp_db(mocker: MockerFixture, postgresql: Connection) -> CliRunner:
     """CLI testing fixture using a disposable database."""
+    client = DatabaseClient(conn=postgresql)
+    with suppress(DatabaseError):
+        client.execute(query=SQL("SET timezone TO 'UTC';"))
+        client.commit()
+        client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
+        client.commit()
+
     mocker.patch("assets_tracking_service.cli.db.make_conn", return_value=postgresql)
     return CliRunner()
 
@@ -444,7 +456,7 @@ def fx_providers_manager_no_providers(
 ) -> ProvidersManager:
     """ProvidersManager with no configured providers."""
     mock_config = mocker.Mock()
-    type(mock_config).enabled_providers = PropertyMock(return_value=[])
+    type(mock_config).ENABLED_PROVIDERS = PropertyMock(return_value=[])
 
     return ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
@@ -503,7 +515,7 @@ def fx_exporters_manager_no_exporters(
 ) -> ExportersManager:
     """ExportersManager with no configured exporters."""
     mock_config = mocker.Mock()
-    type(mock_config).enabled_exporters = PropertyMock(return_value=[])
+    type(mock_config).ENABLED_EXPORTERS = PropertyMock(return_value=[])
 
     return ExportersManager(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
 
