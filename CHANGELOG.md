@@ -47,6 +47,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#46](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/46)
 * Refactoring Sentry related config options into main Config class
   [#112](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/112)
+* Refactoring Sentry monitoring config into app config
+  [#116](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/116)
 
 ## [0.3.5] - 2024-12-09
 
