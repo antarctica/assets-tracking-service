@@ -20,5 +20,8 @@ wheels/
 htmlcov/
 .coverage
 
+# pgsync generated files
+.pgsync.yml
+
 # App generated files
 exports/
