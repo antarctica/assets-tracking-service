@@ -221,7 +221,7 @@ prerelease:
   needs: []
   before_script:
     - apt-get update && apt-get install -y git
-    - scripts/release.py prerelease
+    - scripts/create-release.py prerelease
     - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
   script:
     - uv build
