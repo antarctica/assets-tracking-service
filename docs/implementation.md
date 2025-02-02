@@ -4,19 +4,20 @@
 
 ## Overview
 
-At a high level, the major components of this project are:
+At a high level, the major actors in this project are:
 
-- *assets*: things that have a position (which typically changes but can be static)
-- *tracking services*: services that collect asset positions and return them to clients
-- *end users*: individuals that want to know the position of one or more assets
+- *assets*: things that have a position (which typically changes regularly but can be static)
+- *tracking services*: that record and transmit asset positions to a [Provider](#providers)
+- *end users*: who want to know the position of one or more assets
 
-End users may access position information through a combination of:
+End users may access information through a combination of:
 
 - primary (upstream) tracking services (i.e. that receive data from the GPS device tracking an asset)
-- this service, via one of it's exports
-- another (downstream) tracking service (either downstream of this service, or of another service)
+- this service, via one of it's [Exports](#exporters)
+- another service dependant on this service (such as the Embedded Maps Service)
+- (other unrelated services (such as Flight Radar, Marine Traffic, etc.) - out of scoope for this documentation)
 
-Assuming an end user is accessing data (in)directly from this service, this data flow can be represented as:
+As a high-level data flow:
 
 ![high](./img/architecture-high.png)
 
@@ -27,7 +28,7 @@ Where:
 
 ## Components
 
-At a lower level than the [Overview](#overview), the components used in this project can be broken down into:
+At a lower level, this project can be broken down into:
 
 - *assets*: things that have a position (which typically changes but can be static)
 - *tracking services (primary)*: services that collect asset positions and return them to clients
@@ -39,7 +40,7 @@ At a lower level than the [Overview](#overview), the components used in this pro
 - *end users*: individuals that want to know the position of one or more assets
 - *tracking services (secondary)*: services that collect asset positions from this service for use by end users
 
-This data flow can be represented as:
+As a lower-level data flow:
 
 ![low](./img/architecture-low.png)
 
@@ -52,7 +53,7 @@ Where:
   - directly from this service through an access service
   - indirectly from another tracking service that has acquired data from an access service
 
-**Note:** Providers pull (poll) data from the tracking service. Services that emit events are not currently supported.
+**Note:** Providers pull (poll) data from tracking services. Services that emit events are not currently supported.
 
 ## Providers
 
@@ -78,12 +79,13 @@ See [Infrastructure](./infrastructure.md#exporters) documentation for exporter c
 
 ## Command line interface
 
-[Typer](https://typer.tiangolo.com/), which builds upon [Click](https://click.palletsprojects.com) is used as the
+[Typer](https://typer.tiangolo.com/) (which builds upon [Click](https://click.palletsprojects.com)) is used as the
 framework for the [Control CLI](./cli-reference.md).
 
-## Scheduled running
+## Scheduled tasks
 
-Cron is used to call relevant [CLI](#command-line-interface) commands every 5 minutes.
+Cron is used to call relevant [CLI](#command-line-interface) commands every 5 minutes. See the
+[Automatic Processing](../README.md#automatic-processing) documentation for more information.
 
 ## Configuration
 
@@ -115,14 +117,17 @@ used as an interface between the application and the database.
 
 A basic database migrations implementation is used to manage objects within the application [Database](#database).
 
-Migrations are SQL files defined in [`resources/db_migrations`](../src/assets_tracking_service/resources/db_migrations)
-executed by the application [Database Client](#database-client) through the application [CLI](#command-line-interface).
+Migrations are SQL files defined in [`resources/db_migrations`](../src/assets_tracking_service/resources/db_migrations),
+executed by the application [Database Client](#database-client) through the application [CLI](#command-line-interface). To allow checking all migrations
+have been applied, the latest applied migration is recorded in the `meta_migration` table.
 
-Migrations should be defined in both a forward (create, apply change) and reverse (destroy, revert change) direction
+**Note:** Migrations prior to `014-migrations-tracking` cannot be tracked by this feature.
+
+Migrations MUST be defined in both a forward (create, apply changes) and reverse (destroy, revert changes) direction
 by creating an *up* and *down* migration file.
 
-All migrations are intended to be executed to their full extent - i.e. migrated fully up to the latest set of changes,
-or fully down to the base, empty, state. Branching or migrating to points other than the head and base is not supported.
+Migrations are intended to be applied together - i.e. migrated either fully up to the latest set of changes, or fully
+down to the base, empty, state. Applying migrations to an intermediate state is not supported.
 
 See the [Developing](./dev.md#adding-database-migrations) documentation for how to add a new migration.
 
@@ -132,13 +137,24 @@ Database access is restricted to a role representing the application, which owns
 
 Direct database access by other users, tools and clients is not supported, except via an [Exporter](#exporters).
 
+## Logs
+
+Log messages to *warning* level are written to `stderr` by default. The logging level can be changed via the
+`ASSETS_TRACKING_SERVICE_LOG_LEVEL` environment variable set to a valid Python logging level.
+
 ## Monitoring
 
-Log messages to *info* level are written to `stderr`.
+### Errors
 
-[Sentry](https://sentry.io) monitors:
+If enabled, exceptions and errors are sent to [Sentry](https://sentry.io):
 
-- runtime errors
-- where cron instances fail or not observed as running for 15 minutes
+- [Sentry Dashboard 🔒](https://antarctica.sentry.io/issues/?project=4507581411229696)
 
-Alerts are sent via email and to the `#dev` channel in the MAGIC Slack workspace.
+Alerts are sent via email and to the `#dev` channel in the MAGIC Teams workspace.
+
+### Tasks
+
+If enabled, [Sentry](https://sentry.io) cron monitoring will trigger alerts if [Scheduled Tasks](#scheduled-tasks) fail
+repeatedly, or are not observed as attempted within a defined time period.
+
+Alerts are sent via email and to the `#dev` channel in the MAGIC Teams workspace.

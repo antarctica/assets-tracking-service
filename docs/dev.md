@@ -4,53 +4,85 @@
 
 Requirements:
 
-* Python 3.11 ([pyenv](https://github.com/pyenv/pyenv) recommended)
-* [Poetry](https://python-poetry.org/docs/#installation) (1.8+)
-* Git (`brew install git`)
-* Postgres with PostGIS extension (`brew install postgis`)
-* Pre-commit (`pipx install pre-commit`)
+- Git
+- Postgres + PostGIS
+- [UV](https://docs.astral.sh/uv/)
+- [Pre-commit](https://pre-commit.com)
+- [1Password CLI](https://developer.1password.com/docs/cli/get-started/)
+- [`pysync`](https://github.com/ankane/pgsync) (optional for database syncing)
 
-**Note:** You will need a BAS GitLab access token with at least the `read_api`scope to install this package as it
-depends on privately published dependencies.
+Setup:
 
-Clone project:
+1. install tools [1]
+1. configure access [2]
+1. clone and setup project [3]
+1. configure app [4]
+1. configure local databases [5]
 
-```
-$ git clone https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service.git
-$ cd assets-tracking-service
-```
+[1]
 
-Install project:
-
-```
-$ poetry config http-basic.ats-air __token__
-$ poetry install
-$ poetry run python -m pip install --no-deps arcgis
-```
-
-Create databases:
-
-```
-$ createdb assets-tracking-dev
-$ createdb assets-tracking-test
+```shell
+# required
+% brew install git uv pre-commit 1password-cli
+# optional
+% brew install pgsync
 ```
 
-Set configuration as per the [Configuration](./config.md) documentation:
+[2]
+
+You will need a BAS GitLab access token to install privately published app dependencies set in `~/.netrc`:
 
 ```
-$ cp .env.example .env
+machine gitlab.data.bas.ac.uk login __token__ password {{token}}
 ```
 
-Install pre-commit hooks:
+[3]
 
 ```
-$ pre-commit install
+% git clone https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service.git
+% cd assets-tracking-service/
+% pre-commit install
+% uv sync --all-groups
 ```
+
+[4]
+
+```
+% op inject --in-file tpl/.env.tpl --out-file .env
+```
+
+Set configuration in `.env` as per [Configuration](./config.md) documentation.
+
+[5]
+
+From `psql -d postgres`:
+
+```sql
+CREATE USER assets_tracking_owner WITH PASSWORD 'xxx';
+CREATE USER assets_tracking_service_ro WITH PASSWORD 'xxx';
+
+CREATE DATABASE assets_tracking_dev OWNER assets_tracking_owner;
+CREATE DATABASE assets_tracking_test OWNER assets_tracking_owner;
+
+\c assets_tracking_dev
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+
+\c assets_tracking_test
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+```
+
+Where `xxx` are placeholder values.
+
+If needed, you can [Populate](#syncing-development-database) the database from production.
 
 ## Running control CLI locally
 
 ```
-$ poetry run python ats-ctl ...
+% uv run ats-ctl --help
 ```
 
 See the [CLI Reference](./cli-reference.md) documentation for available commands.
@@ -66,7 +98,7 @@ Conventions:
 
 - all deployable code should be contained in the `assets-tracking-service` package
 - use `Path.resolve()` if displaying or logging file/directory paths
-- use logging to record how actions progress, using the app [`logger`](../src/assets_tracking_service/logging.py)
+- use logging to record how actions progress, using the app [`logger`](../src/assets_tracking_service/log.py)
   - (e.g. `logger = logging.getLogger('app')`)
 
 ## Python version
@@ -75,17 +107,9 @@ The Python version is limited to 3.11 due to the `arcgis` dependency.
 
 ## Dependencies
 
-### `arcgis` dependency
-
-The [`arcgis`](https://developers.arcgis.com/python/) package (ArcGIS API for Python) is not included in the main
-package dependencies because it is incompatible with Poetry and depends on a large number of dependencies that we don't
-need.
-
-This dependency therefore needs to be installed manually after the main project dependencies are installed.
-
 ### Vulnerability scanning
 
-The [Safety](https://pypi.org/project/safety/) package is used to check dependencies against known vulnerabilities.
+The [Safety](https://pypi.org/project/safety/) package checks dependencies for known vulnerabilities.
 
 **WARNING!** As with all security tools, Safety is an aid for spotting common mistakes, not a guarantee of secure code.
 In particular this is using the free vulnerability database, which is updated less frequently than paid options.
@@ -93,7 +117,7 @@ In particular this is using the free vulnerability database, which is updated le
 Checks are run automatically in [Continuous Integration](#continuous-integration). To check locally:
 
 ```
-$ poetry run safety scan
+% uv run safety scan --detailed-output
 ```
 
 ## Linting
@@ -107,15 +131,33 @@ set in [`pyproject.toml`](../pyproject.toml). Linting checks are run automatical
 To check linting locally:
 
 ```
-$ poetry run ruff check src/ tests/
+% uv run ruff check src/ tests/
 ```
 
-To run and check formatting locally:
+To run formatting locally:
 
 ```
-$ poetry run ruff format src/ tests/
-$ poetry run ruff format --check src/ tests/
+% uv run ruff format src/ tests/
 ```
+
+### SQLFluff
+
+[SQLFluff](https://www.sqlfluff.com) is used to lint and format SQL files. Specific checks and config options are set
+in [`pyproject.toml`](../pyproject.toml). Linting checks are run automatically in
+[Continuous Integration](#continuous-integration).
+
+To check linting locally:
+
+```
+% uv run sqlfluff lint src/assets_tracking_service/resources/db_migrations/
+```
+
+#### SQLFluff disabled rules
+
+- [`ST06`](https://docs.sqlfluff.com/en/stable/reference/rules.html#rule-ST06)
+  - where select elements should be ordered by complexity rather than preference/opinion
+- [`ST10`](https://docs.sqlfluff.com/en/stable/reference/rules.html#rule-ST10)
+  - where a condition such as `WHERE elem.label ->> 'scheme' = 'ats:last_fetched'` is incorrectly seen as a constant
 
 ### Static security analysis
 
@@ -136,7 +178,7 @@ A [Pre-Commit](https://pre-commit.com) hook is configured in [`.pre-commit-confi
 To run pre-commit checks against all files manually:
 
 ```
-$ pre-commit run --all-files
+% pre-commit run --all-files
 ```
 
 ## Testing
@@ -153,7 +195,7 @@ Tests for the application are defined in the
 To run tests locally:
 
 ```
-$ poetry run pytest
+% uv run pytest
 ```
 
 ### Pytest fixtures
@@ -172,7 +214,8 @@ def fx_test_foo() -> str:
 
 ### Pytest-cov test coverage
 
-[`pytest-cov`](https://pypi.org/project/pytest-cov/) checks test coverage. We aim for 100% coverage but exemptions are fine with good justification:
+[`pytest-cov`](https://pypi.org/project/pytest-cov/) checks test coverage. We aim for 100% coverage but exemptions are
+fine with good justification:
 
 - `# pragma: no cover` - for general exemptions
 - `# pragma: no branch` - where a conditional branch can never be called
@@ -182,7 +225,7 @@ def fx_test_foo() -> str:
 To run tests with coverage locally:
 
 ```
-$ poetry run pytest --cov --cov-report=html
+% uv run pytest --cov --cov-report=html
 ```
 
 Where tests are added to ensure coverage, use the `cov` [mark](https://docs.pytest.org/en/7.1.x/how-to/mark.html), e.g:
@@ -203,36 +246,55 @@ known values are used in tests).
 To (re-)record all responses:
 
 - update test fixtures to use real credentials
-- run tests in record mode: `poetry run pytest --record-mode=all`
+- run tests in record mode [1]
 - update test fixtures to use fake/safe credentials
 - review captured requests/responses to determine which to keep
+
+[1]
+
+```
+% uv run pytest --record-mode=all
+```
 
 ### Continuous Integration
 
 All commits will trigger Continuous Integration using GitLab's CI/CD platform, configured in `.gitlab-ci.yml`.
 
+### Test exports
+
+See the [Exporters](./exporters.md#test-exports) documentation for available test exports with static values.
+
 ## Managing development database
 
-If using a local Postgres database installed through homebrew (assuming `@14` is the version installed):
+If using a local Postgres database installed through homebrew (assuming `@17` is the version installed):
 
 - manage service: `brew services [command] postgresql@14`
-- view logs: `/usr/local/var/log/postgresql@14.log`
+- view logs: `/usr/local/var/log/postgresql@17.log`
+
+## Syncing development database
+
+To sync data from the production database to development:
+
+```
+% op inject --in-file tpl/.pgsync.yml.tpl --out-file .pgsync.yml
+% pgsync
+```
 
 ## Adding configuration options
 
 In the [`Config`](../src/assets_tracking_service/config.py) class:
 
-- define a new property (use upper case name if configurable by the end user)
+- define a new property
 - add property to `ConfigDumpSafe` typed dict
 - add property to `dumps_safe` method
 - if needed, add logic to `validate` method
 
 In the [Configuration](./config.md) documentation:
 
-- add to either configurable or unconfigurable options table in alphabetical order
-- update the [`.env.example`](../.env.example) template and local `.env` file
-- update the `deploy` job in the [`.gitlab-ci.yml`](../.gitlab-ci.yml) file
-- update the `[tool.pytest_env]` section in [`pyproject.toml`](../pyproject.toml)
+- add to options table in alphabetical order
+- if configurable, update the [`.env.example`](../.env.tpl) template and local `.env` file
+- if configurable, update the [Ansible Deployment Playbook](./deploy.md#bas-it-ansible)
+- if configurable, update the `[tool.pytest_env]` section in [`pyproject.toml`](../pyproject.toml)
 
 In the [test_config.py](../tests/assets_tracking_service_tests/test_config.py) module:
 
@@ -259,10 +321,12 @@ This will create an `up` and `down` migration file in the
   - define separate entities (even if related and part of the same change/feature) in separate migrations
 - existing migrations MUST NOT be amended
   - if a column type changes, use an `ALTER` command in a new migration
+- a
 - include a comment with a related GitLab issue if applicable
 - do not create roles in migrations
   - the app does not superuser privileges when deployed so migrations will fail
   - instead, check for the role and emit an exception to create manually if missing
+- if adding a new table with static data, add to the `exclusions` in `.pgsync.yml` & `tpl/.pgsync.yml.tpl`
 
 See the [Implementation](./implementation.md#database-migrations) documentation for more information on migrations.
 
