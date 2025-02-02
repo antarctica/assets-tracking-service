@@ -6,8 +6,13 @@ import sentry_sdk
 
 def init() -> None:
     """Initialize application logging."""
+    # can't import Config normally due to circular imports
+    from assets_tracking_service.config import Config
+
+    config = Config()
+
     # noinspection SpellCheckingInspection
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(level=config.LOG_LEVEL, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     logging.getLogger("app")
 
 

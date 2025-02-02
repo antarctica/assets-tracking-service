@@ -31,6 +31,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#118](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/118)
 * Meta table for tracking applied migrations
   [#119](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/119)
+* Logging level selection via config option / environment variable
+  [#34](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/34)
 
 ### Fixed
 
