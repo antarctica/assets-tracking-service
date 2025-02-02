@@ -125,6 +125,8 @@ class TestConfig:
 
         expected: fx_config.ConfigDumpSafe = {
             "VERSION": fx_package_version,
+            "LOG_LEVEL": 20,
+            "LOG_LEVEL_NAME": "INFO",
             "DB_DSN": fx_config.DB_DSN_SAFE,
             "SENTRY_DSN": fx_config.SENTRY_DSN,
             "ENABLE_FEATURE_SENTRY": False,  # would be True by default but Sentry disabled in tests
@@ -157,6 +159,18 @@ class TestConfig:
     def test_validate(self: Self, fx_config: Config):
         """Valid configuration is ok."""
         fx_config.validate()
+
+    def test_validate_invalid_logging_level(self: Self):
+        """Validation fails where logging level is invalid."""
+        envs = {"ASSETS_TRACKING_SERVICE_LOG_LEVEL": "INVALID"}
+        envs_bck = self._set_envs(envs)
+
+        config = Config(read_env=False)
+
+        with pytest.raises(ConfigurationError):
+            _ = config.LOG_LEVEL
+
+        self._unset_envs(envs, envs_bck)
 
     def test_validate_missing_db_dsn(self: Self):
         """Validation fails where DB DSN is missing."""

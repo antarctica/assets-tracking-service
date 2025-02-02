@@ -1,9 +1,10 @@
+import logging
 from importlib.metadata import version
 from pathlib import Path
 from typing import Self, TypedDict
 
 import dsnparse
-from environs import Env, EnvError
+from environs import Env, EnvError, EnvValidationError
 
 
 class EditableDsn(dsnparse.ParseResult):
@@ -54,6 +55,8 @@ class Config:
 
         This validation is basic/limited. E.g. We check that the DSN is in a valid format, not that we can make a valid
         database connection.
+
+        Note: Logging level is validated at the point of access by environs automatically.
 
         If invalid a ConfigurationError is raised.
         """
@@ -132,6 +135,8 @@ class Config:
         """Types for `dumps_safe`."""
 
         VERSION: str
+        LOG_LEVEL: int
+        LOG_LEVEL_NAME: str
         DB_DSN: str
         SENTRY_DSN: str
         SENTRY_ENABLED: bool
@@ -160,6 +165,8 @@ class Config:
         # noinspection PyTestUnpassedFixture
         return {
             "VERSION": self.VERSION,
+            "LOG_LEVEL": self.LOG_LEVEL,
+            "LOG_LEVEL_NAME": self.LOG_LEVEL_NAME,
             "DB_DSN": self.DB_DSN_SAFE,
             "SENTRY_DSN": self.SENTRY_DSN,
             "ENABLE_FEATURE_SENTRY": self.ENABLE_FEATURE_SENTRY,
@@ -192,6 +199,22 @@ class Config:
         Read from package metadata.
         """
         return version(self._app_package)
+
+    @property
+    def LOG_LEVEL(self) -> int:
+        """Logging level."""
+        with self.env.prefixed(self._app_prefix):
+            try:
+                return self.env.log_level("LOG_LEVEL", logging.WARNING)
+            except EnvValidationError as e:
+                msg = "LOG_LEVEL is invalid."
+                raise ConfigurationError(msg) from e
+
+    @property
+    def LOG_LEVEL_NAME(self: Self) -> str:
+        """Logging level name."""
+        # noinspection PyTypeChecker
+        return logging.getLevelName(self.LOG_LEVEL)
 
     @property
     def DB_DSN(self: Self) -> str:
