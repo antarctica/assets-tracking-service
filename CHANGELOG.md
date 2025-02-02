@@ -25,6 +25,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#107](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/107)
 * `data run` command combining `data fetch` and `data export` commands, replacing cron script logic
   [#105](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/105)
+* Script to clean up prerelease venvs
+  [#115](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/115)
 
 ### Fixed
 
