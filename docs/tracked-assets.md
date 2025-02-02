@@ -12,7 +12,7 @@ BAS aircraft, including the Dash 7 (x1) and Twin Otters (x4) are tracked using t
 ### RRS SDA
 
 The [Royal Research Ship - Sir David Attenborough](https://www.bas.ac.uk/sda) (RRS SDA), the primary logistics and
-science vessel used by BAS is currently tracked using the [Geotab](./providers.md#geotab) provider.
+science vessel used by BAS is tracked using the [Geotab](./providers.md#geotab) provider.
 
 Additional, redundant, providers may be available in future including:
 
@@ -26,10 +26,10 @@ held in this service. Contact the [UK Polar Data Centre](../README.md#historic-a
 
 ## BAS vehicles
 
-Vehicles used in Antarctica, including for traverse and at Halley and excluding local use on other stations, are
+Vehicles used in Antarctica, including for traverse, at Halley, and excluding local use on other stations, are
 tracked using the [Geotab](./providers.md#geotab) provider.
 
 ## Future assets
 
-See the [Issue Tracker](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/) for additional asset
+See the [Issue Tracker 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/) for additional asset
 types that we may be able to track in the future.

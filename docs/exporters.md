@@ -33,7 +33,15 @@ See the [Configuration](./config.md) documentation for options to disable one or
 
 **Note:** An error will occur if an exporter that another (enabled) exporter depends upon is disabled.
 
-## Available providers
+## Test exports
+
+A set of [static exports](https://data.bas.ac.uk/items/809c3299-9e0b-4e22-bc77-5d55d3ded917) are available for testing
+downstream services, as the [Embedded Maps Service 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/embedded-maps).
+
+Date and time fields in these exports will not update. If testing values relative to the current time, use a library
+which can fake the current time to ensure suitable data is available.
+
+## Available exporters
 
 See [Infrastructure](./infrastructure.md#exporters) documentation for exporter credentials.
 
@@ -128,8 +136,10 @@ ArcGIS exporter creates a
 [feature service](https://enterprise.arcgis.com/en/server/latest/publish-services/windows/what-is-a-feature-service-.htm)
 containing the latest position for each asset using the output from the [GeoJSON](#geojson) exporter.
 
-This feature service is hosted in the [BAS ArcGIS Online organisation](`https://bas.maps.arcgis.com`) (AGOL). It is
-updated by replacing the contents of an initially uploaded GeoJSON file using the
+This feature service is hosted in the [BAS ArcGIS Online organisation](`https://bas.maps.arcgis.com`) (AGOL) within an
+[Assets Tracking Service 🛡️](https://bas.maps.arcgis.com/home/group.html?id=46d7a701202442c6abc1b47e4958c0fd) group.
+
+It is updated by replacing the contents of an uploaded GeoJSON file using the
 [ArcGIS API for Python](https://developers.arcgis.com/python/).
 
 #### ArcGIS schema
@@ -139,11 +149,11 @@ features except:
 
 - an `ObjectID` attribute is appended
  - this is automatically assigned by ArcGIS and MUST be considered an implementation detail
- - values are not stable and SHOULD be ignored
+ - values are not considered stable and SHOULD be ignored
 
 #### ArcGIS permissions
 
-Content is shared with a group of authorised users (to share with a subset of the AGOL organisation).
+Content is shared publicly.
 
 #### ArcGIS requirements:
 
@@ -180,13 +190,13 @@ Publish data:
   - name the service: `ats_all_latest`
   - name the item for the service `Latest Asset Positions (Assets Tracking Service)`
 - from the new feature service:
+  - set the access level for the item to be public accessible
   - set basic default visualisation options:
     - popups: set field order as per [GeoJSON Schema](#geojson-schema)
     - fields:
       - `time_utc`, `last_fetched_utc`: set to use 24 hour time with seconds
       - `lat_dd`, `lon_dd`: show to 8 decimal places
       - `heading_d`: show to 1 decimal place
-  - publish as an OGC Feature Layer
 
 #### ArcGIS configuration options
 

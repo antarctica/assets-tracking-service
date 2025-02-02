@@ -13,6 +13,8 @@
 ## `data` commands
 
 - `ats-ctl data fetch` - fetch active assets and their last known positions
+- `ats-ctl data export` - export summary data for assets and their last known positions
+- `ats-ctl data run` - combines the `fetch` and `export` commands
 
 ## `db` commands
 

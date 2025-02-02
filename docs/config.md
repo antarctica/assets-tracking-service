@@ -8,67 +8,57 @@ an environment variable and in an `.env` file, the environment variable takes pr
 All environment variables (whether defined directly or in an `.env` file) are prefixed with `ASSETS_TRACKING_SERVICE_`.
 I.e. An option `FOO` should be set as `ASSETS_TRACKING_SERVICE_FOO`.
 
-## Configurable options
+## Config options
 
-| Option                                | Type     | Required  | Sensitive | Summary                                    | Default | Example                                                   |
-|---------------------------------------|----------|-----------|-----------|--------------------------------------------|---------|-----------------------------------------------------------|
-| `DB_DSN`                              | String   | Yes       | Yes       | Postgres connection string                 | *N/A*   | `postgresql://username:password@$db.example.com/database` |
-| `DB_DATABASE`                         | String   | No        | No        | Optional override for database in `DB_DSN` | *None*  | `database_test`                                           |
-| `ENABLE_EXPORTER_ARCGIS`              | Boolean  | No        | No        | Enables ArcGIS exporter if true            | 'true'  | 'true'                                                    |
-| `ENABLE_EXPORTER_GEOJSON`             | String   | No        | No        | Enables GeoJSON exporter if true           | 'true'  | 'true'                                                    |
-| `ENABLE_PROVIDER_AIRCRAFT_TRACKING`   | Boolean  | No        | No        | Enables Aircraft Tracking provider if true | 'true'  | 'true'                                                    |
-| `ENABLE_PROVIDER_GEOTAB`              | Boolean  | No        | No        | Enables Geotab provider if true            | 'true'  | 'true'                                                    |
-| `EXPORTER_ARCGIS_USERNAME`            | String   | Yes [1]   | No        | See relevant exporter configuration        | *None*  | 'x'                                                       |
-| `EXPORTER_ARCGIS_PASSWORD`            | String   | Yes [1]   | Yes       | See relevant exporter configuration        | *None*  | 'x'                                                       |
-| `EXPORTER_ARCGIS_ITEM_ID`             | String   | Yes [1]   | No        | See relevant exporter configuration        | *None*  | 'x'                                                       |
-| `EXPORTER_GEOJSON_OUTPUT_PATH`        | Path     | Yes [1]   | No        | See relevant exporter configuration        | *None*  | `/data/exports/output.geojson`                            |
-| `PROVIDER_AIRCRAFT_TRACKING_USERNAME` | String   | Yes [1]   | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_AIRCRAFT_TRACKING_PASSWORD` | String   | Yes [1]   | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_AIRCRAFT_TRACKING_API_KEY`  | String   | Yes [1]   | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_GEOTAB_USERNAME`            | String   | Yes [1]   | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_GEOTAB_PASSWORD`            | String   | Yes [1]   | Yes       | See relevant provider configuration        | *None*  | 'x'                                                       |
-| `PROVIDER_GEOTAB_DATABASE`            | String   | Yes [1]   | No        | See relevant provider configuration        | *None*  | 'x'                                                       |
+| Option                                       | Type            | Configurable | Required | Sensitive | Summary                                                             | Default       | Example                                                   |
+|----------------------------------------------|-----------------|--------------|----------|-----------|---------------------------------------------------------------------|---------------|-----------------------------------------------------------|
+| `DB_DSN`                                     | String          | Yes          | Yes      | Yes       | Postgres connection string                                          | *N/A*         | 'postgresql://username:password@$db.example.com/database' |
+| `DB_DSN_SAFE`                                | String          | No           | -        | -         | `DB_DSN` with sensitive elements redacted                           | *N/A*         | 'postgresql://username:REDACTED@$db.example.com/database' |
+| `DB_DATABASE`                                | String          | Yes          | No       | No        | Optional override for database in `DB_DSN`                          | *None*        | 'database_test'                                           |
+| `ENABLE_EXPORTER_ARCGIS`                     | Boolean         | Yes          | No       | No        | Enables ArcGIS exporter if true                                     | *True*        | *True*                                                    |
+| `ENABLE_EXPORTER_GEOJSON`                    | String          | Yes          | No       | No        | Enables GeoJSON exporter if true                                    | *True*        | *True*                                                    |
+| `ENABLE_PROVIDER_AIRCRAFT_TRACKING`          | Boolean         | Yes          | No       | No        | Enables Aircraft Tracking provider if true                          | *True*        | *True*                                                    |
+| `ENABLE_PROVIDER_GEOTAB`                     | Boolean         | Yes          | No       | No        | Enables Geotab provider if true                                     | *True*        | *True*                                                    |
+| `ENABLE_FEATURE_SENTRY`                      | Boolean         | Yes          | No       | No        | Enables Sentry monitoring if true                                   | *True*        | *True*                                                    |
+| `ENABLED_EXPORTERS`                          | List of Strings | No           | --       | --        | Derived list of enabled exporter names                              | *N/A*         | '['arcgis', 'geojson]'                                    |
+| `ENABLED_PROVIDERS`                          | List of Strings | No           | --       | --        | Derived list of enabled provider names                              | *N/A*         | '['geotab']'                                              |
+| `EXPORTER_ARCGIS_USERNAME`                   | String          | Yes          | Yes [1]  | No        | See relevant exporter configuration                                 | *None*        | 'x'                                                       |
+| `EXPORTER_ARCGIS_PASSWORD`                   | String          | Yes          | Yes [1]  | Yes       | See relevant exporter configuration                                 | *None*        | 'x'                                                       |
+| `EXPORTER_ARCGIS_ITEM_ID`                    | String          | Yes          | Yes [1]  | No        | See relevant exporter configuration                                 | *None*        | 'x'                                                       |
+| `EXPORTER_GEOJSON_OUTPUT_PATH`               | Path            | Yes          | Yes [1]  | No        | See relevant exporter configuration                                 | *None*        | '/data/exports/output.geojson'                            |
+| `LOG_LEVEL`                                  | Number          | Yes          | No       | No        | Application logging level                                           | 30            | 20                                                        |
+| `LOG_LEVEL_NAME`                             | String          | No           | No       | Non       | Application logging level name                                      | 'WARNING'     | 'INFO'                                                    |
+| `PROVIDER_AIRCRAFT_TRACKING_USERNAME`        | String          | Yes          | Yes [1]  | No        | See relevant provider configuration                                 | *None*        | 'x'                                                       |
+| `PROVIDER_AIRCRAFT_TRACKING_PASSWORD`        | String          | Yes          | Yes [1]  | Yes       | See relevant provider configuration                                 | *None*        | 'x'                                                       |
+| `PROVIDER_AIRCRAFT_TRACKING_PASSWORD_SAFE`   | String          | No           | -        | -         | `PROVIDER_AIRCRAFT_TRACKING_PASSWORD` with sensitive value redacted | *N/A*         | 'REDACTED'                                                |
+| `PROVIDER_AIRCRAFT_TRACKING_API_KEY`         | String          | Yes          | Yes [1]  | Yes       | See relevant provider configuration                                 | *None*        | 'x'                                                       |
+| `PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE`    | String          | No           | -        | -         | `PROVIDER_AIRCRAFT_TRACKING_API_KEY` with sensitive value redacted  | *N/A*         | 'REDACTED'                                                |
+| `PROVIDER_GEOTAB_USERNAME`                   | String          | Yes          | Yes [1]  | No        | See relevant provider configuration                                 | *None*        | 'x'                                                       |
+| `PROVIDER_GEOTAB_PASSWORD`                   | String          | Yes          | Yes [1]  | Yes       | See relevant provider configuration                                 | *None*        | 'x'                                                       |
+| `PROVIDER_GEOTAB_PASSWORD_SAFE`              | String          | No           | -        | -         | `PROVIDER_GEOTAB_PASSWORD` with sensitive value redacted            | *N/A*         | 'REDACTED'                                                |
+| `PROVIDER_GEOTAB_DATABASE`                   | String          | Yes          | Yes [1]  | No        | See relevant provider configuration                                 | *None*        | 'x'                                                       |
+| `PROVIDER_GEOTAB_GROUP_NVS_L06_CODE_MAPPING` | Dictionary      | No           | -        | -         | See relevant provider configuration                                 | *N/A*         | -                                                         |
+| `SENTRY_DSN`                                 | String          | No           | -        | -         | Sentry connection string (not considered sensitive)                 | *N/A*         | 'https://123@123.ingest.us.sentry.io/123'                 |
+| `SENTRY_ENVIRONMENT`                         | String          | Yes          | No       | No        | [2]                                                                 | 'development' | 'production'                                              |
+| `SENTRY_MONITOR_SLUG_ATS_RUN`                | String          | No           | -        | -         | Name of the relevant sentry cron monitor for tracking data refresh  | *N/A*         | 'ats-run'                                                 |
+| `VERSION`                                    | String          | No           | -        | -         | Application package version                                         | *N/A*         | '0.3.0'                                                   |
 
-[1] If associated exporter or provider is enabled.
+[1] If associated exporter, provider or feature is enabled.
 
 - see [Exporters](./exporters.md) documentation for relevant exporter configuration options
 - see [Providers](./providers.md) documentation for relevant provider configuration options
 
-### Configurable option types
+[2] Sets Sentry [environment](https://docs.sentry.io/platforms/python/configuration/environments/) name
 
-All configuration options (whether defined as an environment variable or in an `.env` file) are read as
-string values. The type column in the above show shows the data type each option will be parsed as and cast to within
-the [`Config`](../src/assets_tracking_service/config.py) class.
+[3] Sets Python logging level. May be set as either a numeric value or it's label (e.g. 'INFO' instead of 20).
 
-E.g. a boolean option will be read as `'true'`, `'True'`, etc. and parsed as `True` in Python.
+### Config option types
 
-## Unconfigurable options
+All configuration options (whether defined as an environment variable or in an `.env` file) are read as string values.
+The type column in the above shows the data type each option will be parsed as, and cast to, by the
+[`Config`](../src/assets_tracking_service/config.py) class.
 
-| Option                                       | Type            | Summary                                                             | Example                                                   |
-|----------------------------------------------|-----------------|---------------------------------------------------------------------|-----------------------------------------------------------|
-| `db_dsn_safe`                                | String          | `DB_DSN` with sensitive elements redacted                           | 'postgresql://username:REDACTED@$db.example.com/database' |
-| `enabled_exporters`                          | List of Strings | Derived list of enabled exporter names                              | '['arcgis', 'geojson]'                                    |
-| `enabled_providers`                          | List of Strings | Derived list of enabled provider names                              | '['geotab']'                                              |
-| `provider_aircraft_tracking_password_safe`   | String          | `PROVIDER_AIRCRAFT_TRACKING_PASSWORD` with sensitive value redacted | 'REDACTED'                                                |
-| `provider_aircraft_tracking_api_key_safe`    | String          | `PROVIDER_AIRCRAFT_TRACKING_API_KEY` with sensitive value redacted  | 'REDACTED'                                                |
-| `provider_geotab_password_safe`              | String          | `PROVIDER_GEOTAB_PASSWORD` with sensitive value redacted            | 'REDACTED'                                                |
-| `provider_geotab_group_nvs_l06_code_mapping` | Dictionary      | See relevant provider configuration                                 | -                                                         |
-| `version`                                    | String          | Application package version                                         | '0.3.0'                                                   |
-
-## Sentry
-
-Exceptionally, [Sentry](./implementation.md#monitoring) is configured separately to the main Config class. This means:
-
-- Sentry options MUST be set via an environment variable directly (they will not be read from an `.env` file)
-- as Sentry options are not part of the app Config class they will not be validated
-
-Sentry configuration options:
-
-- `ASSETS_TRACKING_SERVICE_ENABLE_FEATURE_SENTRY`:
-  - enables Sentry if `true`, or disables if `false`, default is `true`
-- `ASSETS_TRACKING_SERVICE_SENTRY_ENVIRONMENT`:
-  - sets Sentry [environment](https://docs.sentry.io/platforms/python/configuration/environments/) description
-  - set to 'development' by default and SHOULD be changed in other [Environments](./infrastructure.md#environments)
+E.g. a boolean option of `'true'`, `'True'`, etc. will be parsed as `True` in Python.
 
 ## Config validation
 

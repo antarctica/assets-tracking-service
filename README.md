@@ -30,18 +30,11 @@ fetched from providers every 5 minutes (providers may update less frequently tha
 
 ## Data access
 
-**Note:** Data is currently restricted. See the [Permissions](#permissions) section for more information.
-
 ### Latest asset positions
 
 For the last known position of all assets (optionally filterable by name or platform type):
 
-- [Overview](https://bas.maps.arcgis.com/home/item.html?id=75fda8d96a334d39aa55fa559d1c9e5b)
-- [ArcGIS Feature Service 🔒](https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis/rest/services/agol_test13/FeatureServer)
-- [OGC API - Features 🔒](https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis/rest/services/agol_test13/OGCFeatureServer)
-
-**Note:** These endpoints are provisional, with limited metadata and will be replaced. See
-[MAGIC/assets-tracking-service#44 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/44).
+- [BAS Data Catalogue record](https://data.bas.ac.uk/datasets/ats-latst-positions)
 
 ### Permissions
 
@@ -71,11 +64,14 @@ information, including:
 
 - the [BAS Operations Data Store 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/ops-data-store)
   - for BAS Operations datasets such as depots and instruments
+- the [BAS Embedded Maps Service 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/embedded-maps-service)
+  - for easily showing the latest position of an asset as a map in other applications
 
 Data provided by this project is used in projects including:
 
 - the [BAS Field Operations GIS 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/operations/field-operations-gis-data)
 - the [BAS Public Website](https://www.bas.ac.uk)
+  - via the Embedded Maps Service
 
 This project was previously known as the [Locations Register 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/locations-register)
 and preceded by other implementations. This iteration was initially developed in this
@@ -85,10 +81,10 @@ and preceded by other implementations. This iteration was initially developed in
 
 ### Control CLI
 
-A control CLI is available on the central workstations using the `geoweb` user:
+A control CLI is available on the BAS central workstations:
 
 ```
-$ ssh geoweb@bslws01.nerc-bas.ac.uk
+% ssh geoweb@bslws01.nerc-bas.ac.uk
 $ module load assets-tracking-service
 $ ats-ctl --help
 ```
@@ -98,22 +94,30 @@ See the [CLI Reference](./docs/cli-reference.md) documentation for available com
 **Note:** You need to be on the BAS network to access the workstations. Contact @felnne if you do not have access to
 the `geoweb` user.
 
+### Advanced usage
+
+To load the staging/preview version of the CLI, load the `0.0.0.STAGING` version:
+
+```
+$ module load assets-tracking-service/0.0.0.STAGING
+```
+
+**Note:** The staging version may not be stable and SHOULD NOT be used for routine tasks.
+
 ### Automatic processing
 
-The CLI commands to fetch and export data are automatically ran every 5 minutes to maintain accurate information.
+The `data run` [CLI Command](./docs/cli-reference.md#data-commands) is run via cron to keep data current.
 
-Automatic monitoring will raise alerts with relevant staff if:
-
-- an error occurs when processing data
-  - [Sentry Dashboard 🔒](https://antarctica.sentry.io/issues/?project=4507581411229696)
-- processing has not run for 15 minutes
-  - [Sentry Dashboard 🔒](https://antarctica.sentry.io/crons/assets-tracking-service/ats-run/)
-
-Processing logs for the last 24 hours are available from `/users/geoweb/cron_logs/assets-tracking-service/`.
+Automatic alerts from [Monitoring](./docs/implementation.md#monitoring) tools will be sent if processing fails
+repeatedly. Processing logs for the last 24 hours are available from `/users/geoweb/cron_logs/assets-tracking-service/`.
 
 ## Data and information model
 
 See [Information](./docs/info-model.md) and [Data](./docs/data-model.md) model documentation.
+
+## Configuration
+
+See [Configuration](./docs/config.md) documentation.
 
 ## Implementation
 
@@ -121,7 +125,7 @@ See [Implementation](./docs/implementation.md) documentation.
 
 ## Installation and upgrades
 
-See [Installation and Upgrades](./docs/install-upgrade.md) documentation.
+See [Installation and Upgrades](./docs/setup) documentation.
 
 ## Infrastructure
 
@@ -138,17 +142,8 @@ See [Development](./docs/dev.md) documentation.
 
 ### Release workflow
 
-Create a [release issue](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release)
-and follow the instructions.
-
-GitLab CI/CD will automatically create a GitLab Release based on the tag, including:
-
-- milestone link
-- change log extract
-- package artefact
-- link to README at the relevant tag
-
-GitLab CI/CD will automatically trigger a [Deployment](#deployment) of the new release.
+Create a
+[release issue 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/new?issue[title]=x.x.x%20release&issuable_template=release) and follow its instructions.
 
 ## Deployment
 
@@ -156,10 +151,10 @@ See [Deployment](./docs/deploy.md) documentation.
 
 ## Project maintainer
 
-British Antarctic Survey ([BAS](https://www.bas.ac.uk)) Mapping and Geographic Information Centre
-([MAGIC](https://www.bas.ac.uk/teams/magic)). Contact [magic@bas.ac.uk](mailto:magic@bas.ac.uk).
+Mapping and Geographic Information Centre ([MAGIC](https://www.bas.ac.uk/teams/magic)), British Antarctic Survey
+([BAS](https://www.bas.ac.uk)).
 
-The project lead is [@felnne](https://www.bas.ac.uk/profile/felnne).
+Project lead: [@felnne](https://www.bas.ac.uk/profile/felnne).
 
 ## Data protection
 
