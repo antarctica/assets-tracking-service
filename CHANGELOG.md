@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.4.2] - 2025-02-03
+
 ### Fixed
 
 * Ansible environment name for production deployments
