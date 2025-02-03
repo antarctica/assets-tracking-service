@@ -223,6 +223,7 @@ prerelease:
     - apt-get update && apt-get install -y git
     - scripts/create-release.py prerelease
     - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
+    - uv --version
   script:
     - uv build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
@@ -264,8 +265,7 @@ deploy_stage:
   script:
     - cd $DEPLOY_ANSIBLE_ROOT_PATH
     - ansible workstations -m ping -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV
-    # Disabled until v0.4.x is released
-    #- ansible-playbook -v -b -e env=$DEPLOY_ENV -e group=$DEPLOY_GROUP -e project=$DEPLOY_ANSIBLE_ROOT_PATH -e app_version=$DEPLOY_APP_VERSION --vault-id ~/$DEPLOY_ANSIBLE_VAULT_PATH -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV playbooks/$DEPLOY_GROUP/$DEPLOY_PLAYBOOK
+    - ansible-playbook -v -b -e env=$DEPLOY_ENV -e group=$DEPLOY_GROUP -e project=$DEPLOY_ANSIBLE_ROOT_PATH -e app_version=$DEPLOY_APP_VERSION --vault-id ~/$DEPLOY_ANSIBLE_VAULT_PATH -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV playbooks/$DEPLOY_GROUP/$DEPLOY_PLAYBOOK
   environment:
     name: staging
   rules:
