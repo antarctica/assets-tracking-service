@@ -223,14 +223,15 @@ prerelease:
     - apt-get update && apt-get install -y git
     - scripts/create-release.py prerelease
     - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
+    - uv --version
   script:
     - uv build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   artifacts:
     reports:
       dotenv: build.env
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
 
 deploy_prod:
   stage: 🚀 deploy
