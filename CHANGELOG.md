@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Fixed
+
+* Ansible environment name for production deployments
+  [#121](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/121)
+
 ## [0.4.1] - 2025-02-03
 
 ## [0.4.0] - 2025-02-03
