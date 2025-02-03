@@ -1,6 +1,6 @@
 [project]
 name = "assets-tracking-service"
-version = "0.4.1"
+version = "0.4.2"
 description = "Service to track the location of BAS assets, including ships, aircraft, and vehicles."
 readme = "README.md"
 license = "MIT"
