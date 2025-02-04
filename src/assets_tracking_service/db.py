@@ -46,13 +46,10 @@ class DatabaseClient:
         """
         return self._conn
 
-    def commit(self: Self) -> None:
-        """Commit any pending transactions."""
-        self._conn.commit()
-
-    def rollback(self: Self) -> None:
-        """Rollback any pending transactions."""
-        self._conn.rollback()
+    def close(self) -> None:
+        """Close the database connection."""
+        self._logger.info("Closing DB connection.")
+        self._conn.close()
 
     def execute(self: Self, query: SQL | Composed, params: Sequence | Mapping[str, Any] | None = None) -> None:
         """Execute a given SQL statement."""
@@ -60,7 +57,9 @@ class DatabaseClient:
             with self._conn.cursor() as cur:
                 cur.execute(query=query, params=params)
         except Exception as e:
-            self.rollback()
+            self._logger.exception("Error executing statement")
+            self._conn.rollback()
+            self.close()
             msg = "Error executing statement"
             raise DatabaseError(msg) from e
 
@@ -87,11 +86,9 @@ class DatabaseClient:
             except Exception as e:
                 msg = "Error executing query"
                 raise DatabaseError(msg) from e
-
             if as_dict:
                 columns = [desc[0] for desc in cur.description]
                 return [dict(zip(columns, row)) for row in cur.fetchall()]  # noqa: B905
-
             return cur.fetchall()
 
     def insert_dict(self: Self, schema: str, table_view: str, data: dict) -> None:
@@ -131,9 +128,7 @@ class DatabaseClient:
                 resources_files("assets_tracking_service.resources.db_migrations")
             ) as migrations_path:
                 self.execute_files_in_path(migrations_path / direction)
-                self.commit()
         except DatabaseError as e:
-            self.rollback()
             msg = f"Error migrating DB {direction}"
             raise DatabaseMigrationError(msg) from e
 
@@ -154,4 +149,4 @@ def make_conn(dsn: str) -> Connection:
 
     This method is isolated to allow for easy mocking of the `DatabaseClient` class.
     """
-    return connect(dsn)
+    return connect(dsn, autocommit=True)

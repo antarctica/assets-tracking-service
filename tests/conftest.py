@@ -47,6 +47,15 @@ from tests.pytest_pg_factories import (  # noqa: F401
 postgresql = factories.postgresql(postgresql_factory_name)
 
 
+def _prepare_blank_db(db_client: DatabaseClient) -> None:
+    """Prepare a blank database for running migrations."""
+    with suppress(DatabaseError):
+        db_client.execute(query=SQL("SET timezone TO 'UTC';"))
+        # noinspection PyProtectedMember
+        db_client._conn.commit()
+        db_client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
+
+
 @pytest.fixture()
 def fx_package_version() -> str:
     """Package version."""
@@ -69,14 +78,11 @@ def fx_config() -> Config:
 
 # noinspection PyShadowingNames
 @pytest.fixture()
-def fx_db_client_tmp_db(postgresql: Connection) -> DatabaseClient:
+def fx_db_client_tmp_db(mocker: MockerFixture, postgresql: Connection) -> DatabaseClient:
     """Database client with an empty, disposable, database."""
     client = DatabaseClient(conn=postgresql)
-    with suppress(DatabaseError):
-        client.execute(query=SQL("SET timezone TO 'UTC';"))
-        client.commit()
-        client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
-        client.commit()
+    mocker.patch("assets_tracking_service.db.DatabaseClient.close", return_value=None)
+    _prepare_blank_db(client)
 
     return client
 
@@ -85,7 +91,6 @@ def fx_db_client_tmp_db(postgresql: Connection) -> DatabaseClient:
 def fx_db_client_tmp_db_mig(fx_db_client_tmp_db: DatabaseClient) -> DatabaseClient:
     """Database client with a migrated, disposable, database."""
     fx_db_client_tmp_db.migrate_upgrade()
-    fx_db_client_tmp_db.commit()
     return fx_db_client_tmp_db
 
 
@@ -119,13 +124,10 @@ def fx_cli() -> CliRunner:
 def fx_cli_tmp_db(mocker: MockerFixture, postgresql: Connection) -> CliRunner:
     """CLI testing fixture using a disposable database."""
     client = DatabaseClient(conn=postgresql)
-    with suppress(DatabaseError):
-        client.execute(query=SQL("SET timezone TO 'UTC';"))
-        client.commit()
-        client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
-        client.commit()
-
     mocker.patch("assets_tracking_service.cli.db.make_conn", return_value=postgresql)
+    mocker.patch("assets_tracking_service.db.DatabaseClient.close", return_value=None)
+    _prepare_blank_db(client)
+
     return CliRunner()
 
 
@@ -294,7 +296,7 @@ def fx_assets_client_one(
     fx_assets_client_empty.add(asset=fx_asset_new)
 
     # update asset with the expected id
-    # noinspection PyTypeChecker,PyProtectedMember
+    # noinspection PyTypeChecker,PyProtectedMember,PyUnresolvedReferences
     fx_assets_client_empty._db.execute(
         SQL(
             f"UPDATE public.asset SET id = ulid_to_uuid('{fx_asset_id}') "  # noqa: S608
@@ -320,7 +322,7 @@ def fx_assets_client_many(fx_assets_client_one: AssetsClient) -> AssetsClient:
 
     fx_assets_client_one.add(asset=asset_two)
     # update asset with the expected id
-    # noinspection PyTypeChecker,PyProtectedMember
+    # noinspection PyTypeChecker,PyProtectedMember,PyUnresolvedReferences
     fx_assets_client_one._db.execute(
         f"UPDATE public.asset SET id = ulid_to_uuid('{asset_two_id}') "  # noqa: S608 - can't be exploited by users
         f"WHERE id = (SELECT id FROM public.asset LIMIT 1 OFFSET 1);"
@@ -389,7 +391,7 @@ def fx_position_minimal_2d(
 @pytest.fixture()
 def fx_positions_client_empty(fx_assets_client_one: AssetsClient) -> PositionsClient:
     """Positions client using a disposable, migrated, database."""
-    # noinspection PyProtectedMember
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     return PositionsClient(db_client=fx_assets_client_one._db)
 
 

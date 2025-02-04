@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Fixed
+
+* Fixing DB client not closing connections correctly
+  [#123](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/123)
+
 ## [0.4.2] - 2025-02-03
 
 ### Fixed

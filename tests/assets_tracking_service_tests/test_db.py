@@ -21,14 +21,9 @@ class TestDBClient:
         assert result == "postgres"
 
     @pytest.mark.cov()
-    def test_commit(self: Self, fx_db_client_tmp_db: DatabaseClient):
-        """Commits transaction."""
-        fx_db_client_tmp_db.commit()
-
-    @pytest.mark.cov()
-    def test_rollback(self: Self, fx_db_client_tmp_db: DatabaseClient):
-        """Rolls back transaction."""
-        fx_db_client_tmp_db.rollback()
+    def test_close(self: Self, fx_db_client_tmp_db: DatabaseClient):
+        """Closes connection."""
+        fx_db_client_tmp_db.close()
 
     def test_execute_statement(self: Self, fx_db_client_tmp_db: DatabaseClient):
         """Statement can be executed."""

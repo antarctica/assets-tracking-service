@@ -153,4 +153,3 @@ class PositionsClient:
     def add(self: Self, position: PositionNew) -> None:
         """Persist a new position in the database."""
         self._db.insert_dict(schema=self._schema, table_view=self._table_view, data=position.to_db_dict())
-        self._db.commit()
