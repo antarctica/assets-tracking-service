@@ -268,13 +268,13 @@ class TestDbFuncSetUpdatedAt:
             INSERT INTO public.test (name) VALUES ('foo');
             """)
         )
-        fx_db_client_tmp_db_mig.commit()
+        fx_db_client_tmp_db_mig._conn.commit()
 
         initial_result = fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT updated_at FROM public.test;"))
         initial_value = initial_result[0][0]
 
         fx_db_client_tmp_db_mig.execute(SQL("""UPDATE public.test SET name = 'bar' WHERE id = 1;"""))
-        fx_db_client_tmp_db_mig.commit()
+        fx_db_client_tmp_db_mig._conn.commit()
 
         updated_result = fx_db_client_tmp_db_mig.get_query_result(SQL("SELECT updated_at FROM public.test;"))
         updated_value = updated_result[0][0]

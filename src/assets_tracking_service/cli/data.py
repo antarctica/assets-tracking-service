@@ -32,6 +32,8 @@ def fetch() -> None:
 
     providers.fetch_active_assets()
     providers.fetch_latest_positions()
+
+    db.close()
     rprint(f"{_ok} Command exited normally. Check log for any errors.")
 
 
@@ -43,6 +45,8 @@ def export() -> None:
     exporters = ExportersManager(config=config, db=db, logger=logger)
 
     exporters.export()
+
+    db.close()
     rprint(f"{_ok} Command exited normally. Check log for any errors.")
 
 
@@ -65,4 +69,5 @@ def run() -> None:
         providers.fetch_latest_positions()
         exporters.export()
 
+    db.close()
     rprint(f"{_ok} Command exited normally. Check log for any errors.")

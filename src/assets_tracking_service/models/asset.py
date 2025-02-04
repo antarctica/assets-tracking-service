@@ -92,7 +92,6 @@ class AssetsClient:
     def add(self: Self, asset: AssetNew) -> None:
         """Persist a new Asset in the database."""
         self._db.insert_dict(schema=self._schema, table_view=self._table_view, data=asset.to_db_dict())
-        self._db.commit()
 
     def list_filtered_by_label(self: Self, label: Label) -> list[Asset]:
         """

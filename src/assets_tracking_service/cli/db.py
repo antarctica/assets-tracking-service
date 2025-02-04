@@ -27,7 +27,9 @@ def check_db() -> None:
         logger.error(e, exc_info=True)
         rprint(f"{_no} Error accessing database.")
         typer.echo(e)
-        raise typer.Abort() from e
+        raise typer.Exit(code=1) from e
+    finally:
+        db_client.close()
 
 
 @db_cli.command(name="migrate", help="Setup application database.")
@@ -43,7 +45,10 @@ def migrate_db_up() -> None:
         logger.error(e, exc_info=True)
         rprint(f"{_no} Error migrating database.")
         typer.echo(e)
-        raise typer.Abort() from e
+        raise typer.Exit(code=1) from e
+    finally:
+        pass
+        db_client.close()
 
 
 @db_cli.command(name="rollback", help="Reset application database.")
@@ -65,4 +70,6 @@ def rollback_db_down() -> None:
         logger.error(e, exc_info=True)
         rprint(f"{_no} Error rolling back database.")
         typer.echo(e)
-        raise typer.Abort() from e
+        raise typer.Exit(code=1) from e
+    finally:
+        db_client.close()
