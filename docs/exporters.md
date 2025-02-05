@@ -205,3 +205,37 @@ Required options:
 - `EXPORTER_ARCGIS_USERNAME` -> username of publishing user
 - `EXPORTER_ARCGIS_PASSWORD` -> password of publishing user
 - `EXPORTER_ARCGIS_ITEM_ID` -> ID of the item for the published feature service
+
+### Data Catalogue
+
+The BAS Data Catalogue is a collection of metadata records describing data produced or used by the British Antarctic
+Survey or UK Polar Data Centre. This exporter creates a metadata record to describe the layer created by the
+[ArcGIS](#arcgis) exporter.
+
+This metadata record is encoded in JSON using the ISO 19115 BAS Metadata Library
+[JSON schema](https://metadata-standards.data.bas.ac.uk/standards/iso-19115-19139#json-schemas) and complies with the
+[BAS MAGIC Discovery Profile (v1)](https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1).
+
+This record is updated whenever the [ArcGIS](#arcgis) feature service is updated to reflect any changes to the spatial
+and/or temporal extent of the data. Other changes to the record description and other properties may be made on an
+ad-hoc basis.
+
+Once exported, this record needs to be imported into the BAS Data Catalogue via the relevant
+[Workflow](https://gitlab.data.bas.ac.uk/MAGIC/add-metadata-toolbox/-/blob/main/docs/workflow-updating-records.md)
+outside of this project.
+
+#### Data Catalogue requirements:
+
+Required exporters (MUST be enabled):
+
+- [ArcGIS](#arcgis)
+
+#### Data Catalogue configuration options
+
+Required options:
+
+- `EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`:
+  - path to the file the exporter should create, using the `.json` extension
+  - the application will try to create any missing parent directories to this file if needed
+  - e.g. `/data/exports/record.json`
+- `EXPORTER_DATA_CATALOGUE_RECORD_ID` -> Record identifier of the metadata record

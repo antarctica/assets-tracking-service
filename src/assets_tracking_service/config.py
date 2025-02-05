@@ -131,6 +131,19 @@ class Config:
                 msg = "EXPORTER_ARCGIS_ITEM_ID must be set."
                 raise ConfigurationError(msg) from e
 
+        if self.ENABLE_EXPORTER_DATA_CATALOGUE:
+            if not self.ENABLE_EXPORTER_ARCGIS:
+                msg = "ENABLE_EXPORTER_DATA_CATALOGUE requires ENABLE_EXPORTER_ARCGIS to be True."
+                raise ConfigurationError(msg)
+
+            try:
+                _ = self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+            except EnvError as e:
+                msg = "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH must be set."
+                raise ConfigurationError(msg) from e
+
+            # can't check if EXPORTER_DATA_CATALOGUE_OUTPUT_PATH is a file as it's created by the exporter
+
     class ConfigDumpSafe(TypedDict):
         """Types for `dumps_safe`."""
 
@@ -147,6 +160,7 @@ class Config:
         ENABLED_PROVIDERS: list[str]
         ENABLE_EXPORTER_GEOJSON: bool
         ENABLE_EXPORTER_ARCGIS: bool
+        ENABLE_EXPORTER_DATA_CATALOGUE: bool
         ENABLED_EXPORTERS: list[str]
         PROVIDER_GEOTAB_USERNAME: str
         PROVIDER_GEOTAB_PASSWORD: str
@@ -159,6 +173,8 @@ class Config:
         EXPORTER_ARCGIS_USERNAME: str
         EXPORTER_ARCGIS_PASSWORD: str
         EXPORTER_ARCGIS_ITEM_ID: str
+        EXPORTER_DATA_CATALOGUE_OUTPUT_PATH: str
+        EXPORTER_DATA_CATALOGUE_RECORD_ID: str
 
     def dumps_safe(self: Self) -> ConfigDumpSafe:
         """Dump config for output to the user with sensitive data redacted."""
@@ -177,6 +193,7 @@ class Config:
             "ENABLED_PROVIDERS": self.ENABLED_PROVIDERS,
             "ENABLE_EXPORTER_GEOJSON": self.ENABLE_EXPORTER_GEOJSON,
             "ENABLE_EXPORTER_ARCGIS": self.ENABLE_EXPORTER_ARCGIS,
+            "ENABLE_EXPORTER_DATA_CATALOGUE": self.ENABLE_EXPORTER_DATA_CATALOGUE,
             "ENABLED_EXPORTERS": self.ENABLED_EXPORTERS,
             "PROVIDER_GEOTAB_USERNAME": self.PROVIDER_GEOTAB_USERNAME,
             "PROVIDER_GEOTAB_PASSWORD": self.PROVIDER_GEOTAB_PASSWORD_SAFE,
@@ -189,6 +206,8 @@ class Config:
             "EXPORTER_ARCGIS_USERNAME": self.EXPORTER_ARCGIS_USERNAME,
             "EXPORTER_ARCGIS_PASSWORD": self.EXPORTER_ARCGIS_PASSWORD_SAFE,
             "EXPORTER_ARCGIS_ITEM_ID": self.EXPORTER_ARCGIS_ITEM_ID,
+            "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
+            "EXPORTER_DATA_CATALOGUE_RECORD_ID": self.EXPORTER_DATA_CATALOGUE_RECORD_ID,
         }
 
     @property
@@ -310,6 +329,12 @@ class Config:
             return self.env.bool("ENABLE_EXPORTER_ARCGIS", True)
 
     @property
+    def ENABLE_EXPORTER_DATA_CATALOGUE(self: Self) -> bool:
+        """Controls whether Data Catalogue exporter is used."""
+        with self.env.prefixed(self._app_prefix):
+            return self.env.bool("ENABLE_EXPORTER_DATA_CATALOGUE", True)
+
+    @property
     def ENABLED_EXPORTERS(self: Self) -> list[str]:
         """List of enabled exporters."""
         exporters = []
@@ -319,6 +344,9 @@ class Config:
 
         if self.ENABLE_EXPORTER_GEOJSON:
             exporters.append("geojson")
+
+        if self.ENABLE_EXPORTER_DATA_CATALOGUE:
+            exporters.append("data_catalogue")
 
         return exporters
 
@@ -416,3 +444,15 @@ class Config:
         """Item ID of ArcGIS feature service updated by ArcGIS exporter."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_ARCGIS_"):
             return self.env.str("ITEM_ID")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_OUTPUT_PATH(self: Self) -> Path:
+        """Path to Data Catalogue output file."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env.path("OUTPUT_PATH")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_RECORD_ID(self) -> str:
+        """Record ID of Data Catalogue record updated by the Data Catalogue exporter."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env.str("RECORD_ID")

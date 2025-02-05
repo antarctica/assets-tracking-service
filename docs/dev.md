@@ -286,8 +286,8 @@ In the [`Config`](../src/assets_tracking_service/config.py) class:
 
 - define a new property
 - add property to `ConfigDumpSafe` typed dict
-- add property to `dumps_safe` method
-- if needed, add logic to `validate` method
+- add property to `dumps_safe()` method
+- if needed, add logic to `validate()` method
 
 In the [Configuration](./config.md) documentation:
 
@@ -299,8 +299,8 @@ In the [Configuration](./config.md) documentation:
 In the [test_config.py](../tests/assets_tracking_service_tests/test_config.py) module:
 
 - update the expected response in the `test_dumps_safe` method
-- if validated, update the `test_`
-- update or create tests as needed
+- if validated, update the `test_validate` (valid) method and add new `test_validate_` (invalid) tests
+- update or create other tests as needed
 
 ## Adding database migrations
 
@@ -367,15 +367,17 @@ In the [CLI Reference](./cli-reference.md) documentation:
 
 **[WIP]** This section is a work in progress.
 
-- add config option for enabling/disabling exporter
-- update `enabled_exporters` property to include new exporter
+Add [Config Options](#adding-configuration-options):
+
+- add `ENABLE_EXPORTER_FOO` config option for enabling/disabling exporter
+- update `ENABLED_EXPORTERS` option to include new exporter
 - add exporter specific [config options](#adding-configuration-options) as needed
-- if another exporter is required, update the config validation method to ensure the dependant exporter is enabled
+- if exporter relies on another, ensure dependent exporter enabled in `Config.validate()`
 - create a new module in the [`exporters`](../src/assets_tracking_service/exporters) package
 - create a new class inheriting from the [`BaseExporter`](../src/assets_tracking_service/exporters/base_exporter.py)
 - implement methods required by the base class
 - integrate into the [ExportersManager](../src/assets_tracking_service/exporters/exporters_manager.py) class:
-  - update the `_make_exporters` method
+  - update the `_make_exporters()` method
 - add tests as needed:
   - create a new module in [`exporters`](../tests/assets_tracking_service_tests/exporters) test package
   - [`test_make_each_exporter`](../tests/assets_tracking_service_tests/exporters/test_exporters_manager.py)
