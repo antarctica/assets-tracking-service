@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.4.3] - 2025-02-05
+
 ### Fixed
 
 * Fixing DB client not closing connections correctly
