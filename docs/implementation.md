@@ -137,6 +137,16 @@ Database access is restricted to a role representing the application, which owns
 
 Direct database access by other users, tools and clients is not supported, except via an [Exporter](#exporters).
 
+### Database management
+
+To check current DB sessions:
+
+```sql
+select *
+from pg_catalog.pg_stat_activity
+where datname = 'assets-tracking-service';
+```
+
 ## Logs
 
 Log messages to *warning* level are written to `stderr` by default. The logging level can be changed via the

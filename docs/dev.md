@@ -271,6 +271,14 @@ If using a local Postgres database installed through homebrew (assuming `@17` is
 - manage service: `brew services [command] postgresql@14`
 - view logs: `/usr/local/var/log/postgresql@17.log`
 
+To check current DB sessions:
+
+```sql
+select *
+from pg_catalog.pg_stat_activity
+where datname = 'assets_tracking_dev';
+```
+
 ## Syncing development database
 
 To sync data from the production database to development:
