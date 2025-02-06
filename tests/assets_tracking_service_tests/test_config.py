@@ -144,11 +144,14 @@ class TestConfig:
             "PROVIDER_GEOTAB_USERNAME": "x",
             "ENABLE_EXPORTER_ARCGIS": True,
             "ENABLE_EXPORTER_GEOJSON": True,
-            "ENABLED_EXPORTERS": ["arcgis", "geojson"],
+            "ENABLE_EXPORTER_DATA_CATALOGUE": True,
+            "ENABLED_EXPORTERS": ["arcgis", "geojson", "data_catalogue"],
             "EXPORTER_ARCGIS_USERNAME": "x",
             "EXPORTER_ARCGIS_PASSWORD": redacted_value,
             "EXPORTER_ARCGIS_ITEM_ID": "x",
             "EXPORTER_GEOJSON_OUTPUT_PATH": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
+            "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(fx_config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
+            "EXPORTER_DATA_CATALOGUE_RECORD_ID": "x",
         }
 
         output = fx_config.dumps_safe()
@@ -268,6 +271,9 @@ class TestConfig:
             ("GEOJSON", "true", True),
             ("GEOJSON", "false", False),
             ("GEOJSON", None, True),
+            ("DATA_CATALOGUE", "true", True),
+            ("DATA_CATALOGUE", "false", False),
+            ("DATA_CATALOGUE", None, True),
         ],
     )
     def test_enable_exporter(self: Self, exporter_name: str, input_value: str, expected_value: bool):
@@ -287,13 +293,15 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
                 },
-                ["arcgis", "geojson"],
+                ["arcgis", "geojson", "data_catalogue"],
             ),
             (
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
                 },
                 ["arcgis"],
             ),
@@ -301,6 +309,7 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
                 },
                 ["geojson"],
             ),
@@ -308,6 +317,39 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                },
+                ["data_catalogue"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
+                },
+                ["arcgis", "geojson"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                },
+                ["arcgis", "data_catalogue"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                },
+                ["geojson", "data_catalogue"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
                 },
                 [],
             ),
@@ -335,6 +377,8 @@ class TestConfig:
             ("EXPORTER_ARCGIS_PASSWORD", "x", True),
             ("EXPORTER_ARCGIS_ITEM_ID", "x", False),
             ("EXPORTER_GEOJSON_OUTPUT_PATH", Path("export.geojson"), False),
+            ("EXPORTER_DATA_CATALOGUE_OUTPUT_PATH", Path("record.json"), False),
+            ("EXPORTER_DATA_CATALOGUE_RECORD_ID", "x", False),
         ],
     )
     def test_configurable_property(self: Self, property_name: str, expected: Any, sensitive: bool):
@@ -376,6 +420,7 @@ class TestConfig:
         envs = {
             "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
             "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
         }
         envs_bck = self._set_envs(envs)
 
@@ -465,6 +510,12 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH": None,
                 }
             ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": None,
+                }
+            ),
         ],
     )
     def test_validate_missing_required_option(self: Self, envs: dict):
@@ -484,12 +535,21 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_validate_exporter_disabled_dependency(self: Self):
+    @pytest.mark.parametrize(
+        "envs",
+        [
+            {
+                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
+            },
+            {
+                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
+            },
+        ],
+    )
+    def test_validate_exporter_disabled_dependency(self: Self, envs: dict[str, str]):
         """Validation fails where an exporter that another exporter depends on is disabled."""
-        envs = {
-            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
-        }
         envs_bck = self._set_envs(envs)
 
         config = Config()

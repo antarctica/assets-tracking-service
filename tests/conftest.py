@@ -23,6 +23,7 @@ from assets_tracking_service.cli import app_cli
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient, DatabaseError
 from assets_tracking_service.exporters.arcgis import ArcGISExporter
+from assets_tracking_service.exporters.catalogue import DataCatalogueExporter
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.models.asset import Asset, AssetNew, AssetsClient
@@ -509,6 +510,27 @@ def fx_exporter_arcgis(
     mocker.patch("assets_tracking_service.exporters.arcgis.Item", return_value=None)
 
     return ArcGISExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_exporter_catalogue(
+    mocker: MockerFixture, fx_config: Config, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
+) -> DataCatalogueExporter:
+    """
+    DataCatalogueExporter with mocked config.
+
+    To use a temporary directory for output.
+    """
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path) / "record.json"
+        mock_config = mocker.Mock()
+        type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+        # set prop to a real value otherwise the value will be a MagicMock, which can't be JSON encoded
+        type(mock_config).EXPORTER_DATA_CATALOGUE_RECORD_ID = PropertyMock(
+            return_value=fx_config.EXPORTER_DATA_CATALOGUE_RECORD_ID
+        )
+
+    return DataCatalogueExporter(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
 
 
 @pytest.fixture()
