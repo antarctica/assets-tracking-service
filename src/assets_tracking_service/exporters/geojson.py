@@ -52,7 +52,7 @@ class GeoJsonExporter(Exporter):
         Export data to GeoJSON file.
 
         The configured output path is used unless a specific path is given.
-        If any parents to the directory containing the path given don't exist they will be created.
+        Any missing parent directories to this path will be created.
         """
         path = path or self._path
 
@@ -62,5 +62,5 @@ class GeoJsonExporter(Exporter):
         data = self.data
 
         self._logger.info("Writing data to '%s'", path.resolve())
-        with path.open("w") as geojson_file:
-            geojson_dump(data, geojson_file, indent=2, sort_keys=False)
+        with path.open("w") as f:
+            geojson_dump(data, f, indent=2, sort_keys=False)
