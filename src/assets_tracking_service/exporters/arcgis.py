@@ -27,9 +27,9 @@ class ArcGISInternalServerError(Exception):
 
 class ArcGISExporter(Exporter):
     """
-    Exports data as an ArcGIS Feature Service.
+    Exports data as an ArcGIS feature layer.
 
-    Limited to a single collection of a summary information for assets and their latest position.
+    Creates a hosted feature layer of all assets and their latest position.
     """
 
     def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:

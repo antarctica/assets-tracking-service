@@ -16,7 +16,7 @@ class GeoJsonExporter(Exporter):
     """
     Exports data as GeoJSON.
 
-    Limited to a single collection of a summary information for assets and their latest position.
+    Creates a feature collection of all assets and their latest position.
     """
 
     def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:

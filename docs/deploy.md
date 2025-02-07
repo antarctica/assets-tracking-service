@@ -54,8 +54,6 @@ CI/CD platform configured in [`.gitlab-ci.yml`](../.gitlab-ci.yml).
 
 ## Clean prerelease virtual environments
 
-...
-
 ```
 % ssh geoweb@bslws01.nerc-bas.ac.uk
 $ /data/magic/.conda/envs/python311/bin/python bin/clean-ats-venvs.py
