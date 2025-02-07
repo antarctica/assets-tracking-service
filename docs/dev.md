@@ -321,7 +321,7 @@ This will create an `up` and `down` migration file in the
   - define separate entities (even if related and part of the same change/feature) in separate migrations
 - existing migrations MUST NOT be amended
   - if a column type changes, use an `ALTER` command in a new migration
-- a
+- views should be named with a `v_` prefix
 - include a comment with a related GitLab issue if applicable
 - do not create roles in migrations
   - the app does not superuser privileges when deployed so migrations will fail
