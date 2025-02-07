@@ -191,9 +191,9 @@ an implementation detail and:
 
 ## Views
 
-### `summary_basic`
+### `v_util_basic`
 
-A view returning minimal information on the latest position for each asset (based on `position.time_utc`).
+A view returning minimal information on the latest position for each asset (based on position time).
 
 - selects from `position` joined against `asset` to return asset ID
 - returns position ID, time, raw geometry and dimensions count, velocity and heading
@@ -202,32 +202,27 @@ Intended as a basic, low level, sanity check of the data model.
 
 Not intended for any particular purpose, or to be used as the basis for other views.
 
-### `summary_latest`
+### `v_latest_asset_pos`
 
-A view returning standardised information on the latest position for each asset (based on `position.time_utc`).
+A view returning information on the latest position for each asset (based on position time).
 
 - selects from `position` joined against:
   - `asset` to return asset ID
   - `nvs_l06_lookup` to return asset platform type code/label
 - returns:
-  - position ID
-  - time
+  - position ID, time and 2D geometry
   - lat/lon derived from geometry in DD and DDM formats
   - elevation derived from geometry in metres and feet, if applicable - otherwise `null`
   - velocity in metres/second, kilometres/hour and knots
   - heading in degrees
   - seconds from position time to current_time, time asset was last checked, current_time
 
-Intended as an idealised/theoretical basis for latest position layers (and so is not used directly).
+Intended as the source of latest position layer.
 
-### `summary_export`
+### `v_latest_asset_pos_geojson`
 
-A view modelled on `summary_latest` used as the source of latest position layers.
-
-- includes 2D position geometry for spatial layer
-
-### `summary_geojson`
-
-A view returning results of `summary_export` as a GeoJSON feature collection.
+A view returning results of `v_latest_asset_pos` as a GeoJSON feature collection.
 
 Where each row is a feature with a point geometry and identifier based on the position ID.
+
+Intended as the source of the [GeoJSON](./exporters.md#geojson) exporter.
