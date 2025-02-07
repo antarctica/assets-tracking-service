@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Changed
+
+* Documenting and rationalising database views
+  [#125](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/125)
+
 ## [0.4.3] - 2025-02-05
 
 ### Fixed

@@ -31,10 +31,12 @@ class GeoJsonExporter(Exporter):
         """
         Get data from database as a feature collection.
 
-        Uses the `summary_geojson` view which contains a PostGIS generated feature collection.
+        Uses the `v_latest_asset_pos_geojson` view which contains a PostGIS generated feature collection.
         This is parsed and validated as a FeatureCollection type (wrapper around a dict).
         """
-        result = self._db.get_query_result(SQL("""SELECT geojson_feature_collection::text FROM summary_geojson;"""))
+        result = self._db.get_query_result(
+            SQL("""SELECT geojson_feature_collection::text FROM v_latest_asset_pos_geojson;""")
+        )
         self._logger.debug("Raw GeoJSON data: %s", result[0][0])
 
         if result[0][0] == '{"type" : "FeatureCollection", "features" : null}':

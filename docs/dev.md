@@ -55,29 +55,16 @@ Set configuration in `.env` as per [Configuration](./config.md) documentation.
 
 [5]
 
-From `psql -d postgres`:
-
-```sql
-CREATE USER assets_tracking_owner WITH PASSWORD 'xxx';
-CREATE USER assets_tracking_service_ro WITH PASSWORD 'xxx';
-
-CREATE DATABASE assets_tracking_dev OWNER assets_tracking_owner;
-CREATE DATABASE assets_tracking_test OWNER assets_tracking_owner;
-
-\c assets_tracking_dev
-CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
-
-\c assets_tracking_test
-CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+```
+% psql -d postgres -c "CREATE USER assets_tracking_owner WITH PASSWORD 'xxx';"
+% psql -d postgres -c "CREATE USER assets_tracking_service_ro WITH PASSWORD 'xxx';"
 ```
 
 Where `xxx` are placeholder values.
 
-If needed, you can [Populate](#syncing-development-database) the database from production.
+Then run `scripts/recreate-local-db.py` to create databases and required extensions.
+
+If needed, you can then [Populate](#syncing-development-database) the development database from production.
 
 ## Running control CLI locally
 
@@ -271,13 +258,18 @@ If using a local Postgres database installed through homebrew (assuming `@17` is
 - manage service: `brew services [command] postgresql@14`
 - view logs: `/usr/local/var/log/postgresql@17.log`
 
-To check current DB sessions:
+To check current DB sessions with `psql -d postgres`:
 
 ```sql
 select *
 from pg_catalog.pg_stat_activity
 where datname = 'assets_tracking_dev';
+\q
 ```
+
+To drop and recreate local databases re-run `scripts/recreate-local-db.py`.
+
+Then recreate as per [Local Development Environment](#local-development-environment) steps.
 
 ## Syncing development database
 

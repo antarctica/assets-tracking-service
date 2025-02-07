@@ -1,6 +1,8 @@
+-- https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/119
+
 CREATE TABLE IF NOT EXISTS public.meta_migration
 (
-    pk INTEGER GENERATED ALWAYS AS IDENTITY
+    pk INTEGER
     CONSTRAINT meta_migration_pk PRIMARY KEY,
     migration_id INTEGER NOT NULL,
     migration_label TEXT NOT NULL,
@@ -15,4 +17,6 @@ FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 
 -- record latest migration
-INSERT INTO public.meta_migration (migration_id, migration_label) VALUES (14, '014-migrations-tracking');
+INSERT INTO public.meta_migration (pk, migration_id, migration_label)
+VALUES (1, 14, '014-migrations-tracking')
+ON CONFLICT (pk) DO NOTHING;
