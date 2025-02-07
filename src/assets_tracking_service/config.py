@@ -110,6 +110,8 @@ class Config:
                 msg = "EXPORTER_GEOJSON_OUTPUT_PATH must be set."
                 raise ConfigurationError(msg) from e
 
+            # can't check if EXPORTER_GEOJSON_OUTPUT_PATH is a file as it's created by the exporter
+
         if self.ENABLE_EXPORTER_ARCGIS:
             if not self.ENABLE_EXPORTER_GEOJSON:
                 msg = "ENABLE_EXPORTER_ARCGIS requires ENABLE_EXPORTER_GEOJSON to be True."
@@ -418,7 +420,7 @@ class Config:
 
     @property
     def EXPORTER_GEOJSON_OUTPUT_PATH(self: Self) -> Path:
-        """API key for Aircraft Tracking provider."""
+        """Path to GeoJSON output file."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_GEOJSON_"):
             return self.env.path("OUTPUT_PATH")
 
@@ -441,7 +443,7 @@ class Config:
 
     @property
     def EXPORTER_ARCGIS_ITEM_ID(self: Self) -> str:
-        """Item ID of ArcGIS feature service updated by ArcGIS exporter."""
+        """Item ID of ArcGIS feature service updated by the ArcGIS exporter."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_ARCGIS_"):
             return self.env.str("ITEM_ID")
 

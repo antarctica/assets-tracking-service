@@ -103,8 +103,8 @@ A number of custom functions are used for:
 - validating [Labels](./data-model.md#labels-validation)
 - setting 'updated_at' values
 
-These functions, and entities to implement the application [Data Model](./data-model.md), are defined in
-[Database Migrations](#database-migrations).
+These functions, and entities to implement the application [Data Model](./data-model.md), including
+[Views](./data-model.md#views), are defined in [Database Migrations](#database-migrations).
 
 ### Database client
 
@@ -136,6 +136,16 @@ See the [Developing](./dev.md#adding-database-migrations) documentation for how 
 Database access is restricted to a role representing the application, which owns the database.
 
 Direct database access by other users, tools and clients is not supported, except via an [Exporter](#exporters).
+
+### Database management
+
+To check current DB sessions:
+
+```sql
+select *
+from pg_catalog.pg_stat_activity
+where datname = 'assets-tracking-service';
+```
 
 ## Logs
 
