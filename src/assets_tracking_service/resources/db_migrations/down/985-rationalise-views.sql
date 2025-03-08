@@ -1,10 +1,10 @@
-DROP VIEW IF EXISTS v_latest_asset_pos_geojson;
+DROP VIEW IF EXISTS v_latest_assets_pos_geojson;
 
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'v_latest_asset_pos')
+    IF EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'v_latest_assets_pos')
        AND NOT EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'summary_export') THEN
-        ALTER VIEW public.v_latest_asset_pos RENAME TO summary_export;
+        ALTER VIEW public.v_latest_assets_pos RENAME TO summary_export;
     END IF;
 END $$;
 
@@ -132,7 +132,7 @@ INNER JOIN LATERAL (
 ) AS asset_last_fetched ON TRUE;
 
 -- prevent old views being left behind if migrations are ran again
-DROP VIEW IF EXISTS public.v_latest_asset_pos;
+DROP VIEW IF EXISTS public.v_latest_assets_pos;
 DROP VIEW IF EXISTS public.v_util_basic;
 
 -- record latest migration

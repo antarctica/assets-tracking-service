@@ -145,7 +145,6 @@ class Labels(list[Label]):
         converter.register_unstructure_hook(
             Labels, lambda d: {"version": self.version, "values": [converter.unstructure(label) for label in d]}
         )
-
         return converter.unstructure(self)
 
     def filter_by_scheme(self: Self, scheme: str) -> Label:

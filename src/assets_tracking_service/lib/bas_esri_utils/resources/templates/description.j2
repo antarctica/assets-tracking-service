@@ -1,0 +1,13 @@
+{{ abstract }}
+{% if lineage %}
+<h5>Lineage</h5>
+{{ lineage }}
+{% endif %}
+{% if citation %}
+<h5>Citation</h5>
+{{ citation }}
+{% endif %}
+{% if catalogue_href %}
+<h5>Further Information</h5>
+<p>Full information about this item is available from the <a href="{{ catalogue_href }}">BAS Data Catalogue</a>.</p>
+{% endif %}

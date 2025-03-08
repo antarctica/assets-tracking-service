@@ -1,13 +1,16 @@
 import logging
 from contextlib import suppress
+from copy import deepcopy
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal, TypedDict
-from unittest.mock import PropertyMock
+from unittest.mock import MagicMock, PropertyMock
+from uuid import uuid4
 
 import pytest
+from arcgis.gis import Item
 from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
 from psycopg.sql import SQL
@@ -22,13 +25,16 @@ from ulid import parse as ulid_parse
 from assets_tracking_service.cli import app_cli
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient, DatabaseError
-from assets_tracking_service.exporters.arcgis import ArcGISExporter
-from assets_tracking_service.exporters.catalogue import DataCatalogueExporter
+from assets_tracking_service.exporters.arcgis import ArcGisExporter, ArcGisExporterLayer
+from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record as LibRecord
 from assets_tracking_service.models.asset import Asset, AssetNew, AssetsClient
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
+from assets_tracking_service.models.layer import Layer, LayerNew, LayersClient
 from assets_tracking_service.models.position import Position, PositionNew, PositionsClient
+from assets_tracking_service.models.record import Record, RecordNew, RecordsClient
 from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
 from assets_tracking_service.providers.geotab import GeotabProvider
 from assets_tracking_service.providers.providers_manager import ProvidersManager
@@ -57,6 +63,15 @@ def _prepare_blank_db(db_client: DatabaseClient) -> None:
         db_client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
 
 
+def _create_fake_arcgis_item(item_id: str) -> Item:
+    """Create a fake ArcGIS Item."""
+    modified_at = datetime.now(tz=UTC).timestamp() * 1000
+    item_data = {"owner": "x", "type": "x", "modified": modified_at, "id": item_id}
+
+    mock_gis = MagicMock(auto_spec=True)
+    return Item(mock_gis, item_id, item_data)
+
+
 @pytest.fixture()
 def fx_package_version() -> str:
     """Package version."""
@@ -80,7 +95,11 @@ def fx_config() -> Config:
 # noinspection PyShadowingNames
 @pytest.fixture()
 def fx_db_client_tmp_db(mocker: MockerFixture, postgresql: Connection) -> DatabaseClient:
-    """Database client with an empty, disposable, database."""
+    """
+    Database client with an empty, disposable, database.
+
+    The `db_client.close()` method is mocked as disposable DBs are tied to each connection.
+    """
     client = DatabaseClient(conn=postgresql)
     mocker.patch("assets_tracking_service.db.DatabaseClient.close", return_value=None)
     _prepare_blank_db(client)
@@ -101,6 +120,7 @@ def fx_db_client_tmp_db_pop(
     fx_db_client_tmp_db_mig: DatabaseClient,
     fx_logger: logging.Logger,
     fx_provider_example: ExampleProvider,
+    fx_layer_init: Layer,
 ) -> DatabaseClient:
     """Database client with a populated, disposable, database."""
     mock_config = mocker.Mock()
@@ -111,7 +131,33 @@ def fx_db_client_tmp_db_pop(
     providers.fetch_active_assets()
     providers.fetch_latest_positions()
 
+    # Set system created_at for layer added my migration to controlled value, as field is exposed in Layer model
+    fx_db_client_tmp_db_mig.execute(
+        query=SQL("""UPDATE public.layer SET created_at = %(t)s WHERE pk = 1;"""),
+        params={"t": fx_layer_init.created_at},
+    )
+
     return fx_db_client_tmp_db_mig
+
+
+@pytest.fixture()
+def fx_db_client_tmp_db_pop_exported(
+    fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger, fx_layer_updated: Layer
+) -> DatabaseClient:
+    """Database client with a populated, disposable, database having run exporters."""
+    dt_data = datetime(2020, 8, 8, 8, 8, 8, tzinfo=UTC)
+    dt_meta = datetime(2020, 10, 10, 10, 10, 10, tzinfo=UTC)
+    layers_client = LayersClient(db_client=fx_db_client_tmp_db_pop, logger=fx_logger)
+
+    layers_client.set_item_id(
+        slug=fx_layer_updated.slug,
+        geojson_id=fx_layer_updated.agol_id_geojson,
+        feature_id=fx_layer_updated.agol_id_feature,
+        feature_ogc_id=fx_layer_updated.agol_id_feature_ogc,
+    )
+    layers_client.set_last_refreshed(slug=fx_layer_updated.slug, data_refreshed=dt_data, metadata_refreshed=dt_meta)
+
+    return fx_db_client_tmp_db_pop
 
 
 @pytest.fixture()
@@ -397,6 +443,91 @@ def fx_positions_client_empty(fx_assets_client_one: AssetsClient) -> PositionsCl
 
 
 @pytest.fixture()
+def fx_record_layer_slug() -> str:
+    """Record/Layer slug."""
+    return "ats_latest_assets_position"
+
+
+@pytest.fixture()
+def fx_layer_pre_init(fx_record_layer_slug: str) -> LayerNew:
+    """Layer that has not yet been initialised."""
+    return LayerNew(
+        slug=fx_record_layer_slug,
+        source_view="v_latest_assets_pos_geojson",
+    )
+
+
+@pytest.fixture()
+def fx_layer_init(fx_layer_pre_init: Layer) -> Layer:
+    """Layer that has been initialised but not setup or updated."""
+    # this field would normally be set by the database as a system column
+    created_at = datetime(2014, 4, 24, 14, 30, 0, tzinfo=UTC)
+
+    return Layer(
+        slug=fx_layer_pre_init.slug,
+        source_view=fx_layer_pre_init.source_view,
+        created_at=created_at,
+    )
+
+
+@pytest.fixture()
+def fx_layer_updated(fx_layer_init: Layer) -> Layer:
+    """Layer that has been initialised and updated at least once."""
+    layer_updated = deepcopy(fx_layer_init)
+    layer_updated.agol_id_geojson = "123geojsonV1"
+    layer_updated.agol_id_feature = "234featuresV1"
+    layer_updated.agol_id_feature_ogc = "345ogcV1"
+    layer_updated.data_last_refreshed = datetime(2020, 8, 8, 8, 8, 8, tzinfo=UTC)
+    layer_updated.metadata_last_refreshed = datetime(2020, 10, 10, 10, 10, 10, tzinfo=UTC)
+    return layer_updated
+
+
+@pytest.fixture()
+def fx_layers_client_one(fx_db_client_tmp_db_pop_exported: DatabaseClient, fx_logger: logging.Logger) -> LayersClient:
+    """Layers client setup using a disposable, migrated and exported database containing an updated layer."""
+    return LayersClient(db_client=fx_db_client_tmp_db_pop_exported, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_record_new(fx_record_layer_slug: str) -> RecordNew:
+    """Record."""
+    dt = datetime(2014, 4, 24, 14, 30, 0, tzinfo=UTC)
+    return RecordNew(
+        slug=fx_record_layer_slug,
+        edition="x",
+        title="x",
+        summary="x",
+        publication=dt,
+        released=dt,
+        update_frequency="x",
+        gitlab_issue="https://gitlab.data.bas.ac.uk/x",
+    )
+
+
+@pytest.fixture()
+def fx_record(fx_record_new: RecordNew) -> Record:
+    """Record."""
+    id_ = uuid4()
+    return Record(
+        id=id_,
+        slug=fx_record_new.slug,
+        edition=fx_record_new.edition,
+        title=fx_record_new.title,
+        summary=fx_record_new.summary,
+        publication=fx_record_new.publication,
+        released=fx_record_new.released,
+        update_frequency=fx_record_new.update_frequency,
+        gitlab_issue=fx_record_new.gitlab_issue,
+    )
+
+
+@pytest.fixture()
+def fx_records_client_one(fx_db_client_tmp_db_pop_exported: DatabaseClient, fx_logger: logging.Logger) -> RecordsClient:
+    """Records client setup using a disposable, migrated and exported database containing a record."""  # noqa: D401
+    return RecordsClient(db_client=fx_db_client_tmp_db_pop_exported)
+
+
+@pytest.fixture()
 def fx_provider_example(fx_config: Config, fx_logger: logging.Logger) -> ExampleProvider:
     """ExampleProvider."""
     return ExampleProvider(config=fx_config, logger=fx_logger)
@@ -499,38 +630,101 @@ def fx_exporter_example(
 
 
 @pytest.fixture()
+def fx_exporter_arcgis_layer(
+    mocker: MockerFixture,
+    fx_config: Config,
+    fx_db_client_tmp_db_pop: DatabaseClient,
+    fx_logger: logging.Logger,
+    fx_record_layer_slug: str,
+) -> ArcGisExporterLayer:
+    """
+    ArcGisExporterLayer with mocked clients.
+
+    Mocked to prevent real interactions with external services.
+    """
+    layers_client = LayersClient(db_client=fx_db_client_tmp_db_pop, logger=fx_logger)
+    init_geojson_item = _create_fake_arcgis_item(item_id="123geojsonV0")
+    init_features_item = _create_fake_arcgis_item(item_id="234featuresV0")
+    updated_features_item = _create_fake_arcgis_item(item_id="234featuresV1")
+
+    mock_gis = mocker.MagicMock(auto_spec=True)
+    mocker.patch("assets_tracking_service.exporters.arcgis.GIS", return_value=mock_gis)
+    mock_arcgis_client = mocker.MagicMock(auto_spec=True)
+    mock_arcgis_client.create_item.return_value = init_geojson_item
+    mock_arcgis_client.publish_item.return_value = init_features_item
+    mock_arcgis_client.overwrite_service_features.return_value = updated_features_item
+    mock_arcgis_client.update_item.return_value = updated_features_item
+    mocker.patch("assets_tracking_service.exporters.arcgis.ArcGisClient", return_value=mock_arcgis_client)
+
+    return ArcGisExporterLayer(
+        config=fx_config,
+        db=fx_db_client_tmp_db_pop,
+        logger=fx_logger,
+        arcgis=mock_gis,
+        layers=layers_client,
+        layer_slug=fx_record_layer_slug,
+    )
+
+
+@pytest.fixture()
+def fx_exporter_arcgis_layer_updated(
+    fx_exporter_arcgis_layer: ArcGisExporterLayer, fx_layer_updated: Layer
+) -> ArcGisExporterLayer:
+    """ArcGisExporterLayer with an updated/setup layer."""
+    exporter_layer = fx_exporter_arcgis_layer
+    exporter_layer._layer = fx_layer_updated
+
+    return exporter_layer
+
+
+@pytest.fixture()
 def fx_exporter_arcgis(
-    mocker: MockerFixture, fx_config: Config, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
-) -> ArcGISExporter:
+    mocker: MockerFixture,
+    fx_config: Config,
+    fx_db_client_tmp_db_pop: DatabaseClient,
+    fx_logger: logging.Logger,
+    fx_exporter_arcgis_layer: ArcGisExporterLayer,
+) -> ArcGisExporter:
     """ArcGISExporter with mocked dependencies."""
     mocker.patch("assets_tracking_service.exporters.arcgis.GIS", return_value=mocker.MagicMock(auto_spec=True))
-    mocker.patch(
-        "assets_tracking_service.exporters.arcgis.FeatureLayerCollection", return_value=mocker.MagicMock(auto_spec=True)
-    )
-    mocker.patch("assets_tracking_service.exporters.arcgis.Item", return_value=None)
+    mocker.patch("assets_tracking_service.exporters.arcgis.ArcGisExporterLayer", return_value=fx_exporter_arcgis_layer)
 
-    return ArcGISExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+    return ArcGisExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_exporter_collection_record(
+    fx_config: Config,
+    fx_db_client_tmp_db_pop_exported: DatabaseClient,
+    fx_logger: logging.Logger,
+    fx_layer_updated: Layer,
+) -> CollectionRecord:
+    """CollectionRecord."""
+    return CollectionRecord(config=fx_config, db=fx_db_client_tmp_db_pop_exported, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_exporter_layer_record(
+    fx_config: Config,
+    fx_db_client_tmp_db_pop_exported: DatabaseClient,
+    fx_logger: logging.Logger,
+    fx_record_layer_slug: str,
+    fx_layer_updated: Layer,
+) -> LayerRecord:
+    """LayerRecord."""
+    return LayerRecord(
+        config=fx_config, db=fx_db_client_tmp_db_pop_exported, logger=fx_logger, layer_slug=fx_record_layer_slug
+    )
 
 
 @pytest.fixture()
 def fx_exporter_catalogue(
-    mocker: MockerFixture, fx_config: Config, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
+    fx_config: Config,
+    fx_db_client_tmp_db_pop: DatabaseClient,
+    fx_logger: logging.Logger,
 ) -> DataCatalogueExporter:
-    """
-    DataCatalogueExporter with mocked config.
-
-    To use a temporary directory for output.
-    """
-    with TemporaryDirectory() as tmp_path:
-        output_path = Path(tmp_path) / "record.json"
-        mock_config = mocker.Mock()
-        type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
-        # set prop to a real value otherwise the value will be a MagicMock, which can't be JSON encoded
-        type(mock_config).EXPORTER_DATA_CATALOGUE_RECORD_ID = PropertyMock(
-            return_value=fx_config.EXPORTER_DATA_CATALOGUE_RECORD_ID
-        )
-
-    return DataCatalogueExporter(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+    """DataCatalogueExporter."""
+    return DataCatalogueExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
 
 
 @pytest.fixture()
@@ -551,3 +745,59 @@ def fx_exporters_manager_eg_exporter(
     """ExportersManager with ExampleExporter as configured exporter."""
     fx_exporters_manager_no_exporters._providers = [fx_exporter_example]
     return fx_exporters_manager_no_exporters
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_iso() -> dict:
+    """
+    Minimal record configuration (ISO).
+
+    Minimal record that will validate against the BAS Metadata Library ISO 19115:2003 / 19115-2:2009 v4 schema.
+
+    Types must be safe to encode as JSON.
+    """
+    return {
+        "$schema": "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json",
+        "hierarchy_level": "dataset",
+        "metadata": {
+            "contacts": [{"organisation": {"name": "x"}, "role": ["pointOfContact"]}],
+            "date_stamp": "2014-06-30",
+        },
+        "identification": {
+            "title": {"value": "x"},
+            "dates": {"creation": "2014-06-30"},
+            "abstract": "x",
+        },
+    }
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_magic_preset() -> dict:
+    """
+    Minimal record configuration (MAGIC Preset).
+
+    Minimal record that can create a valid RecordMagicDiscoveryV1 instance. Does not include properties that the
+    preset will set (such as identifiers, contacts, domain consistencies).
+
+    Types must be safe to encode as JSON.
+    """
+    return {
+        "$schema": "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json",
+        "file_identifier": "x",
+        "hierarchy_level": "dataset",
+        "metadata": {
+            "contacts": [{"organisation": {"name": "x"}, "role": ["pointOfContact"]}],
+            "date_stamp": "2014-06-30",
+        },
+        "identification": {
+            "title": {"value": "x"},
+            "dates": {"creation": "2014-06-30"},
+            "abstract": "x",
+        },
+    }
+
+
+@pytest.fixture()
+def fx_lib_record_minimal_iso(fx_lib_record_config_minimal_iso: dict) -> LibRecord:
+    """Minimal record instance (ISO)."""
+    return LibRecord.loads(fx_lib_record_config_minimal_iso)

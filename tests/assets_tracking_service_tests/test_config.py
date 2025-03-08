@@ -148,10 +148,11 @@ class TestConfig:
             "ENABLED_EXPORTERS": ["arcgis", "geojson", "data_catalogue"],
             "EXPORTER_ARCGIS_USERNAME": "x",
             "EXPORTER_ARCGIS_PASSWORD": redacted_value,
-            "EXPORTER_ARCGIS_ITEM_ID": "x",
+            "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": "https://example.com",
+            "EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": "https://example.com/arcgis",
             "EXPORTER_GEOJSON_OUTPUT_PATH": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(fx_config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
-            "EXPORTER_DATA_CATALOGUE_RECORD_ID": "x",
+            "EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID": "125d6ae8-0b9a-4c89-88e2-f3ec59723e52",
         }
 
         output = fx_config.dumps_safe()
@@ -190,6 +191,18 @@ class TestConfig:
     def test_validate_invalid_db_dsn(self: Self):
         """Validation fails where DB DSN is invalid."""
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://"}
+        envs_bck = self._set_envs(envs)
+
+        config = Config(read_env=False)
+
+        with pytest.raises(ConfigurationError):
+            config.validate()
+
+        self._unset_envs(envs, envs_bck)
+
+    def test_validate_invalid_catalogue_path(self):
+        """Validation fails where catalogue path is invalid."""
+        envs = {"ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(Path(__file__).resolve())}
         envs_bck = self._set_envs(envs)
 
         config = Config(read_env=False)
@@ -375,10 +388,10 @@ class TestConfig:
             ("PROVIDER_GEOTAB_DATABASE", "x", False),
             ("EXPORTER_ARCGIS_USERNAME", "x", False),
             ("EXPORTER_ARCGIS_PASSWORD", "x", True),
-            ("EXPORTER_ARCGIS_ITEM_ID", "x", False),
+            ("EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL", "https://example.com", False),
+            ("EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER", "https://example.com/arcgis", False),
             ("EXPORTER_GEOJSON_OUTPUT_PATH", Path("export.geojson"), False),
-            ("EXPORTER_DATA_CATALOGUE_OUTPUT_PATH", Path("record.json"), False),
-            ("EXPORTER_DATA_CATALOGUE_RECORD_ID", "x", False),
+            ("EXPORTER_DATA_CATALOGUE_OUTPUT_PATH", Path("records"), False),
         ],
     )
     def test_configurable_property(self: Self, property_name: str, expected: Any, sensitive: bool):
@@ -485,7 +498,8 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": None,
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": "https://example.com",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": "https://example.com/arcgis",
                 }
             ),
             (
@@ -493,7 +507,8 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": None,
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": "https://example.com",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": "https://example.com/arcgis",
                 }
             ),
             (
@@ -501,7 +516,17 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": "https://example.com/arcgis",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": "https://example.com",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": None,
                 }
             ),
             (
@@ -539,12 +564,8 @@ class TestConfig:
         "envs",
         [
             {
+                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
                 "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
-            },
-            {
-                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
-                "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
             },
         ],
     )

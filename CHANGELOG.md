@@ -9,6 +9,16 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Removed [BREAKING!]
+
+* `EXPORTER_DATA_CATALOGUE_RECORD_ID` and `EXPORTER_ARCGIS_ITEM_ID` config options
+  [#38](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/38)
+
+### Added
+
+* Data Catalogue exporter
+  [#38](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/38)
+
 ### Changed
 
 * Documenting and rationalising database views

@@ -49,6 +49,7 @@ class Config:
         if read_env:
             self.env.read_env()
 
+    # noinspection PyTypeChecker
     def validate(self: Self) -> None:  # noqa: C901
         """
         Validate configuration.
@@ -113,8 +114,8 @@ class Config:
             # can't check if EXPORTER_GEOJSON_OUTPUT_PATH is a file as it's created by the exporter
 
         if self.ENABLE_EXPORTER_ARCGIS:
-            if not self.ENABLE_EXPORTER_GEOJSON:
-                msg = "ENABLE_EXPORTER_ARCGIS requires ENABLE_EXPORTER_GEOJSON to be True."
+            if not self.ENABLE_EXPORTER_DATA_CATALOGUE:
+                msg = "ENABLE_EXPORTER_ARCGIS requires ENABLE_EXPORTER_DATA_CATALOGUE to be True."
                 raise ConfigurationError(msg)
 
             try:
@@ -128,23 +129,29 @@ class Config:
                 msg = "EXPORTER_ARCGIS_PASSWORD must be set."
                 raise ConfigurationError(msg) from e
             try:
-                _ = self.EXPORTER_ARCGIS_ITEM_ID
+                _ = self.EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL
             except EnvError as e:
-                msg = "EXPORTER_ARCGIS_ITEM_ID must be set."
+                msg = "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL must be set."
+                raise ConfigurationError(msg) from e
+            try:
+                _ = self.EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER
+            except EnvError as e:
+                msg = "EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER must be set."
                 raise ConfigurationError(msg) from e
 
         if self.ENABLE_EXPORTER_DATA_CATALOGUE:
-            if not self.ENABLE_EXPORTER_ARCGIS:
-                msg = "ENABLE_EXPORTER_DATA_CATALOGUE requires ENABLE_EXPORTER_ARCGIS to be True."
-                raise ConfigurationError(msg)
-
             try:
                 _ = self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
             except EnvError as e:
                 msg = "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH must be set."
                 raise ConfigurationError(msg) from e
 
-            # can't check if EXPORTER_DATA_CATALOGUE_OUTPUT_PATH is a file as it's created by the exporter
+            if (
+                Path(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH).exists()
+                and not Path(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH).is_dir()
+            ):
+                msg = "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH must be a directory."
+                raise ConfigurationError(msg)
 
     class ConfigDumpSafe(TypedDict):
         """Types for `dumps_safe`."""
@@ -174,12 +181,18 @@ class Config:
         EXPORTER_GEOJSON_OUTPUT_PATH: str
         EXPORTER_ARCGIS_USERNAME: str
         EXPORTER_ARCGIS_PASSWORD: str
-        EXPORTER_ARCGIS_ITEM_ID: str
+        EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL: str
+        EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER: str
         EXPORTER_DATA_CATALOGUE_OUTPUT_PATH: str
-        EXPORTER_DATA_CATALOGUE_RECORD_ID: str
+        EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID: str
 
+    # noinspection PyUnresolvedReferences
     def dumps_safe(self: Self) -> ConfigDumpSafe:
-        """Dump config for output to the user with sensitive data redacted."""
+        """
+        Dump config for output to the user with sensitive data redacted.
+
+        Note: PyCharm incorrectly infers the type of Path based properties and so inspection is disabled.
+        """
         # noinspection PyTestUnpassedFixture
         return {
             "VERSION": self.VERSION,
@@ -207,9 +220,10 @@ class Config:
             "EXPORTER_GEOJSON_OUTPUT_PATH": str(self.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
             "EXPORTER_ARCGIS_USERNAME": self.EXPORTER_ARCGIS_USERNAME,
             "EXPORTER_ARCGIS_PASSWORD": self.EXPORTER_ARCGIS_PASSWORD_SAFE,
-            "EXPORTER_ARCGIS_ITEM_ID": self.EXPORTER_ARCGIS_ITEM_ID,
+            "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": self.EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL,
+            "EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": self.EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER,
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
-            "EXPORTER_DATA_CATALOGUE_RECORD_ID": self.EXPORTER_DATA_CATALOGUE_RECORD_ID,
+            "EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID": self.EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID,
         }
 
     @property
@@ -442,10 +456,25 @@ class Config:
         return self._safe_value
 
     @property
-    def EXPORTER_ARCGIS_ITEM_ID(self: Self) -> str:
-        """Item ID of ArcGIS feature service updated by the ArcGIS exporter."""
+    def EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL(self: Self) -> str:
+        """
+        Base endpoint for ArcGIS items.
+
+        E.g. 'https://bas.maps.arcgis.com' for 'https://bas.maps.arcgis.com/home/item.html?id=...'.
+        """
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_ARCGIS_"):
-            return self.env.str("ITEM_ID")
+            return self.env.str("BASE_ENDPOINT_PORTAL")
+
+    @property
+    def EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER(self: Self) -> str:
+        """
+        Base endpoint for ArcGIS hosted services.
+
+        E.g. 'https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis'
+        for 'https://services7.arcgis.com/tPxy1hrFDhJfZ0Mf/arcgis/rest/services/.../FeatureServer'.
+        """
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_ARCGIS_"):
+            return self.env.str("BASE_ENDPOINT_SERVER")
 
     @property
     def EXPORTER_DATA_CATALOGUE_OUTPUT_PATH(self: Self) -> Path:
@@ -454,7 +483,6 @@ class Config:
             return self.env.path("OUTPUT_PATH")
 
     @property
-    def EXPORTER_DATA_CATALOGUE_RECORD_ID(self) -> str:
-        """Record ID of Data Catalogue record updated by the Data Catalogue exporter."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env.str("RECORD_ID")
+    def EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID(self) -> str:
+        """Record ID for the collection grouping Assets Tracking Service resources."""
+        return "125d6ae8-0b9a-4c89-88e2-f3ec59723e52"

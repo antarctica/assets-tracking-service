@@ -136,7 +136,7 @@ class TestPosition:
         fx_position_geom_3d: Point,
         fx_position_minimal: Position,
     ):
-        """Creates a Poppet."""
+        """Creates a Position."""
         position = Position(
             id=fx_position_id, asset_id=fx_asset.id, time=fx_position_time, geom=fx_position_geom_3d, labels=Labels([])
         )

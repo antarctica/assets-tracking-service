@@ -63,7 +63,7 @@ class TestExportersManager:
     ):
         """Exports."""
         mocker.patch(
-            "assets_tracking_service.exporters.exporters_manager.ArcGISExporter",
+            "assets_tracking_service.exporters.exporters_manager.ArcGisExporter",
             return_value=mocker.MagicMock(auto_spec=True),
         )
         mocker.patch(

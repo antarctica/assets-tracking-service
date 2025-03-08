@@ -20,11 +20,11 @@ ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_USERNAME="op://Infrastructure
 ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_PASSWORD="op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/password"
 ASSETS_TRACKING_SERVICE_PROVIDER_AIRCRAFT_TRACKING_API_KEY="op://Infrastructure/vgyikhtrssx4h23vordfqduvuy/API/API Key"
 
-ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH="/path/to/file.geojson"  # set to local path
+ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH="./exports/file.geojson"  # set to local file
 
-ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH="/path/to/file.json"  # set to local path
-ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_RECORD_ID="op://Infrastructure/Assets Tracking Service - Metadata Records/production summary dataset ID"  # not sensitive
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH="./exports/records"  # set to local dir
 
 ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME="op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/username"
 ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD="op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/password"
-ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_ITEM_ID="op://Infrastructure/Assets Tracking Service - ArcGIS Layers/production summary export layer ID"  # not sensitive
+ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL="op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/Endpoints/Portal base endpoint"
+ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER="op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/Endpoints/Server base endpoint"

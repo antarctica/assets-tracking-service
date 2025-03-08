@@ -58,9 +58,9 @@ are long-lived and run centrally (on the BAS workstations, managed by BAS IT as 
   - see [MAGIC/assets-tracking-service#1 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/1)
     for initial setup
 
-## IT Ansible
+## GitLab
 
-- [Aircraft Tracking provider access token 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=ffy5l25mjdv577qj6izuk6lo4m&i=rowyv5ddnj3asg7sffqoesuxja&h=magic.1password.eu)
+- [Aircraft Tracking provider GitLab access token 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=ffy5l25mjdv577qj6izuk6lo4m&i=rowyv5ddnj3asg7sffqoesuxja&h=magic.1password.eu)
   - to allow [IT Ansible 🛡️](https://gitlab.data.bas.ac.uk/station-data-management/ansible/) to install provider package
 
 ## Providers
@@ -73,6 +73,8 @@ are long-lived and run centrally (on the BAS workstations, managed by BAS IT as 
 
 ## Exporters
 
-- [ArcGIS 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=ffy5l25mjdv577qj6izuk6lo4m&i=6xrlrpt5iteml2lk5ycrn3gucq&h=magic.1password.eu)
-  - for [ArcGIS](./exporters.md#arcgis) provider
-  - see [MAGIC/esri#84 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/esri/-/issues/84) for initial setup
+- [ArcGIS](./exporters.md#arcgis) provider
+  - [Production 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=ihfmcn6chaxfplfxv3xm3ge6pe&h=magic.1password.eu)
+    - see [MAGIC/esri#84 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/esri/-/issues/84) for initial setup
+  - [Staging 🔒](https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=vcadxkix3qwguf4trgspkcdxr4&h=magic.1password.eu)
+    - see [MAGIC/esri#127 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/127) for initial setup

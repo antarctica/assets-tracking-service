@@ -81,7 +81,7 @@ class Asset(AssetNew):
 
 
 class AssetsClient:
-    """Client for managing Asset objects."""
+    """Client for managing Assets."""
 
     _schema = "public"
     _table_view = "asset"

@@ -141,7 +141,7 @@ class Position(PositionNew):
 
 
 class PositionsClient:
-    """Client for managing Position objects."""
+    """Client for managing Positions."""
 
     _schema = "public"
     _table_view = "position"
