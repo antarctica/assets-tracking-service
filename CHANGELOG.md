@@ -27,6 +27,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#125](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/125)
 * `db migrate` command includes whether latest migration has been applied
   [#120](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/120)
+* Upgrading to UV 0.6.x
+  [#131](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/131)
 
 ### Removed
 
