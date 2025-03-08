@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Self, TypeVar
+from typing import TypeVar
 
 import cattrs
 from psycopg.sql import SQL
@@ -23,7 +23,7 @@ class AssetNew:
 
     labels: Labels
 
-    def __post_init__(self: Self) -> None:
+    def __post_init__(self) -> None:
         """Validate fields."""
         if not self.labels:
             msg = "Invalid labels: It must not be empty."
@@ -38,7 +38,7 @@ class AssetNew:
             msg = "Invalid labels: It must include at least and at most one skos:prefLabel item."
             raise ValueError(msg)
 
-    def to_db_dict(self: Self) -> dict:
+    def to_db_dict(self) -> dict:
         """Convert to a dictionary suitable for database insertion."""
         converter = cattrs.Converter()
         converter.register_unstructure_hook(Labels, lambda d: Jsonb(self.labels.unstructure()))
@@ -58,7 +58,7 @@ class Asset(AssetNew):
 
     id: ULID
 
-    def to_db_dict(self: Self) -> dict:
+    def to_db_dict(self) -> dict:
         """Convert to a dictionary suitable for database insertion."""
         data = super().to_db_dict()
         del data["id"]
@@ -75,7 +75,7 @@ class Asset(AssetNew):
         return converter.structure(data, cls)
 
     @property
-    def pref_label_value(self: Self) -> str:
+    def pref_label_value(self) -> str:
         """Asset 'name' (skos:prefLabel)."""
         return self.labels.filter_by_scheme("skos:prefLabel").value
 
@@ -86,14 +86,14 @@ class AssetsClient:
     _schema = "public"
     _table_view = "asset"
 
-    def __init__(self: Self, db_client: DatabaseClient) -> None:
+    def __init__(self, db_client: DatabaseClient) -> None:
         self._db = db_client
 
-    def add(self: Self, asset: AssetNew) -> None:
+    def add(self, asset: AssetNew) -> None:
         """Persist a new Asset in the database."""
         self._db.insert_dict(schema=self._schema, table_view=self._table_view, data=asset.to_db_dict())
 
-    def list_filtered_by_label(self: Self, label: Label) -> list[Asset]:
+    def list_filtered_by_label(self, label: Label) -> list[Asset]:
         """
         Filter Assets labels by a Label.
 
@@ -124,7 +124,7 @@ class AssetsClient:
         )
         return [Asset.from_db_dict(row) for row in results]
 
-    def list(self: Self) -> list[Asset]:
+    def list(self) -> list[Asset]:
         """Retrieve all Assets from the database."""
         results = self._db.get_query_result(
             query=SQL("""

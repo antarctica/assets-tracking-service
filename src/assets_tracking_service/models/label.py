@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Literal, Self, TypedDict, TypeVar, Union
+from typing import Literal, TypedDict, TypeVar, Union
 
 import cattrs
 
@@ -35,7 +35,7 @@ class Label:
     creation: int = field(default_factory=lambda: int(datetime.now(UTC).timestamp()))
     expiration: int | None = None
 
-    def __post_init__(self: Self) -> None:
+    def __post_init__(self) -> None:
         """Validate fields."""
         if not isinstance(self.rel, LabelRelation):
             msg = f"Invalid label relation: [{self.rel}]. It must be a LabelRelation enum member."
@@ -65,12 +65,12 @@ class Label:
                 raise ValueError(msg) from e
 
     @property
-    def created(self: Self) -> datetime:
+    def created(self) -> datetime:
         """Label creation."""
         return datetime.fromtimestamp(self.creation, tz=UTC)
 
     @property
-    def expired(self: Self) -> datetime | None:
+    def expired(self) -> datetime | None:
         """Label expiration."""
         if self.expiration is None:
             return None
@@ -78,7 +78,7 @@ class Label:
         return datetime.fromtimestamp(self.expiration, tz=UTC)
 
     @property
-    def is_expired(self: Self) -> bool:
+    def is_expired(self) -> bool:
         """Has label expired?"""  # noqa: D400
         if self.expired is None:
             return False
@@ -91,21 +91,21 @@ class Labels(list[Label]):
 
     version = "1"
 
-    def __repr__(self: Self) -> str:
+    def __repr__(self) -> str:
         """String representation."""  # noqa: D401
         return f"Labels[v1]({super().__repr__()})"
 
-    def __eq__(self: Self, other: "Labels") -> bool:
+    def __eq__(self, other: "Labels") -> bool:
         """Equality check."""
         return set(self) == set(other)
 
     @property
-    def active(self: Self) -> list[Label]:
+    def active(self) -> list[Label]:
         """Non-expired labels."""
         return [label for label in self if not label.expired]
 
     @property
-    def expired(self: Self) -> list[Label]:
+    def expired(self) -> list[Label]:
         """Expired labels."""
         return [label for label in self if label.expired]
 
@@ -139,7 +139,7 @@ class Labels(list[Label]):
         _labels = converter.structure(data, Labels)
         return cls(_labels)
 
-    def unstructure(self: Self) -> LabelsPlain:
+    def unstructure(self) -> LabelsPlain:
         """Convert to plain objects."""
         converter = cattrs.Converter()
         converter.register_unstructure_hook(
@@ -147,7 +147,7 @@ class Labels(list[Label]):
         )
         return converter.unstructure(self)
 
-    def filter_by_scheme(self: Self, scheme: str) -> Label:
+    def filter_by_scheme(self, scheme: str) -> Label:
         """Filter labels by scheme."""
         for label in self:
             if label.scheme == scheme:

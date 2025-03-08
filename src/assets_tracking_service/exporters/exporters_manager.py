@@ -1,5 +1,4 @@
 import logging
-from typing import Self
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
@@ -12,14 +11,14 @@ from assets_tracking_service.exporters.geojson import GeoJsonExporter
 class ExportersManager:
     """Coordinates exporting data to a variety of services and file formats."""
 
-    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
 
         self._exporters: list[Exporter] = self._make_exporters(self._config.ENABLED_EXPORTERS)
 
-    def _make_exporters(self: Self, exporter_names: list[str]) -> list[Exporter]:
+    def _make_exporters(self, exporter_names: list[str]) -> list[Exporter]:
         """Create instances for enabled exporters."""
         self._logger.info("Creating exporters...")
         exporters = []
@@ -42,7 +41,7 @@ class ExportersManager:
         self._logger.info("Exporters created.")
         return exporters
 
-    def export(self: Self) -> None:
+    def export(self) -> None:
         """Run enabled exporters."""
         self._logger.info("Exporting data...")
 

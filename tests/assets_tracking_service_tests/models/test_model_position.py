@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Self
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -16,7 +15,7 @@ from assets_tracking_service.models.position import Position, PositionNew, Posit
 class TestPositionNew:
     """Test data class in initial state."""
 
-    def test_init(self: Self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
+    def test_init(self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
         """Creates a PositionNew."""
         position = PositionNew(asset_id=fx_asset.id, time=fx_position_time, geom=fx_position_geom_3d, labels=Labels([]))
 
@@ -25,42 +24,42 @@ class TestPositionNew:
         assert position.geom == fx_position_geom_3d
         assert len(position.labels) == 0
 
-    def test_no_timezone(self: Self, fx_asset: Asset, fx_position_geom_3d: Point):
+    def test_no_timezone(self, fx_asset: Asset, fx_position_geom_3d: Point):
         """Invalid timezone triggers error."""
         time = datetime.now()  # noqa: DTZ005
 
         with pytest.raises(ValueError, match=r"Invalid timezone: \[None\]. It must be UTC."):
             PositionNew(asset_id=fx_asset.id, time=time, geom=fx_position_geom_3d, labels=Labels([]))
 
-    def test_invalid_timezone(self: Self, fx_asset: Asset, fx_position_geom_3d: Point):
+    def test_invalid_timezone(self, fx_asset: Asset, fx_position_geom_3d: Point):
         """Invalid timezone triggers error."""
         time = datetime.now(tz=ZoneInfo("America/Lima"))
 
         with pytest.raises(ValueError, match=r"Invalid timezone: \[America/Lima\]. It must be UTC."):
             PositionNew(asset_id=fx_asset.id, time=time, geom=fx_position_geom_3d, labels=Labels([]))
 
-    def test_invalid_position_lon(self: Self, fx_asset: Asset, fx_position_time: datetime):
+    def test_invalid_position_lon(self, fx_asset: Asset, fx_position_time: datetime):
         """Invalid longitude triggers error."""
         geom = Point(200, 0)
 
         with pytest.raises(ValueError, match=r"Invalid longitude value: \[200.0\]. It must be between -180 and 180."):
             PositionNew(asset_id=fx_asset.id, time=fx_position_time, geom=geom, labels=Labels([]))
 
-    def test_invalid_position_lat(self: Self, fx_asset: Asset, fx_position_time: datetime):
+    def test_invalid_position_lat(self, fx_asset: Asset, fx_position_time: datetime):
         """Invalid latitude triggers error."""
         geom = Point(0, 100)
 
         with pytest.raises(ValueError, match=r"Invalid latitude value: \[100.0\]. It must be between -90 and 90."):
             PositionNew(asset_id=fx_asset.id, time=fx_position_time, geom=geom, labels=Labels([]))
 
-    def test_invalid_velocity(self: Self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
+    def test_invalid_velocity(self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
         """Invalid velocity triggers error."""
         with pytest.raises(ValueError, match=r"Invalid velocity value"):
             PositionNew(
                 asset_id=fx_asset.id, time=fx_position_time, geom=fx_position_geom_3d, velocity=-1, labels=Labels([])
             )
 
-    def test_invalid_heading(self: Self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
+    def test_invalid_heading(self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
         """Invalid heading triggers error."""
         with pytest.raises(ValueError, match=r"Invalid heading value"):
             PositionNew(
@@ -72,21 +71,21 @@ class TestPositionNew:
                 asset_id=fx_asset.id, time=fx_position_time, geom=fx_position_geom_3d, heading=361, labels=Labels([])
             )
 
-    def test_invalid_labels(self: Self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
+    def test_invalid_labels(self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
         """Non-Labels object triggers error."""
         with pytest.raises(TypeError, match="Invalid labels: It must be a Labels object."):
             # noinspection PyTypeChecker
             PositionNew(asset_id=fx_asset.id, time=fx_position_time, geom=fx_position_geom_3d, labels="invalid")
 
-    def test_geom_dimensions_2d(self: Self, fx_position_new_minimal_2d: PositionNew):
+    def test_geom_dimensions_2d(self, fx_position_new_minimal_2d: PositionNew):
         """Position with 2D geometry."""
         assert fx_position_new_minimal_2d.geom_dimensions == 2
 
-    def test_geom_dimensions_3d(self: Self, fx_position_new_minimal: PositionNew):
+    def test_geom_dimensions_3d(self, fx_position_new_minimal: PositionNew):
         """Position with 3D geometry."""
         assert fx_position_new_minimal.geom_dimensions == 3
 
-    def test_to_db_dict_minimal_3d(self: Self, fx_position_new_minimal: PositionNew):
+    def test_to_db_dict_minimal_3d(self, fx_position_new_minimal: PositionNew):
         """Converts Position with 3D geometry to a database dict."""
         expected = {
             "asset_id": UUID(bytes=fx_position_new_minimal.asset_id.bytes),
@@ -105,7 +104,7 @@ class TestPositionNew:
         assert result == expected
         assert labels.obj == expected_labels
 
-    def test_to_db_dict_minimal_2d(self: Self, fx_position_new_minimal_2d: PositionNew):
+    def test_to_db_dict_minimal_2d(self, fx_position_new_minimal_2d: PositionNew):
         """Converts Position with 2D geometry to a database dict."""
         expected = {
             "asset_id": UUID(bytes=fx_position_new_minimal_2d.asset_id.bytes),
@@ -129,7 +128,7 @@ class TestPosition:
     """Test data class in existing state."""
 
     def test_init(
-        self: Self,
+        self,
         fx_position_id: ULID,
         fx_asset: Asset,
         fx_position_time: datetime,
@@ -143,7 +142,7 @@ class TestPosition:
 
         assert position == fx_position_minimal
 
-    def test_repr(self: Self, fx_position_minimal: Position):
+    def test_repr(self, fx_position_minimal: Position):
         """String representation of a Position."""
         # noinspection SpellCheckingInspection
         assert (
@@ -152,7 +151,7 @@ class TestPosition:
         )
 
     def test_from_db_dict_3d(
-        self: Self,
+        self,
         fx_position_id: ULID,
         fx_asset: Asset,
         fx_position_time: datetime,
@@ -176,7 +175,7 @@ class TestPosition:
         assert position == fx_position_minimal
 
     def test_from_db_dict_2d(
-        self: Self,
+        self,
         fx_position_id: ULID,
         fx_asset: Asset,
         fx_position_time: datetime,
@@ -216,7 +215,7 @@ class TestPositionsClientIntegration:
     """Integration tests for a data/resource client."""
 
     def test_positions_client_add(
-        self: Self, fx_positions_client_empty: PositionsClient, fx_position_new_minimal: PositionNew
+        self, fx_positions_client_empty: PositionsClient, fx_position_new_minimal: PositionNew
     ):
         """Test storing a Position."""
         fx_positions_client_empty.add(position=fx_position_new_minimal)

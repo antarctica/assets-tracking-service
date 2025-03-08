@@ -1,6 +1,5 @@
 import logging
 from datetime import UTC, datetime
-from typing import Self
 from unittest.mock import PropertyMock
 
 import pytest
@@ -21,7 +20,7 @@ class TestProvidersManager:
     """Providers manager tests."""
 
     def test_init(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,
@@ -37,7 +36,7 @@ class TestProvidersManager:
         assert len(manager._providers) > 0
 
     def test_init_no_providers(
-        self: Self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
+        self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
     ):
         """Initialises with no providers."""
         mock_config = mocker.Mock()
@@ -48,7 +47,7 @@ class TestProvidersManager:
 
     @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"]])
     def test_make_each_provider(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_db_client_tmp_db_mig: DatabaseClient,
         fx_logger: logging.Logger,
@@ -68,7 +67,7 @@ class TestProvidersManager:
 
     @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"]])
     def test_make_providers_error(
-        self: Self,
+        self,
         caplog: pytest.LogCaptureFixture,
         mocker: MockerFixture,
         fx_db_client_tmp_db_mig: DatabaseClient,
@@ -92,7 +91,7 @@ class TestProvidersManager:
         assert len(manager._providers) == 0
         assert f"{provider_title} provider will be skipped." in caplog.text
 
-    def test_filter_entities(self: Self, fx_providers_manager_no_providers: ProvidersManager, fx_asset_new: AssetNew):
+    def test_filter_entities(self, fx_providers_manager_no_providers: ProvidersManager, fx_asset_new: AssetNew):
         """Filters entities."""
         db_rows = [{"dist_label_value": "1"}, {"dist_label_value": "2"}]
         fetched_entities = {"2": fx_asset_new, "3": fx_asset_new}
@@ -106,7 +105,7 @@ class TestProvidersManager:
         )
 
     def test_fetch_active_assets(
-        self: Self,
+        self,
         freezer: FrozenDateTimeFactory,
         caplog: pytest.LogCaptureFixture,
         fx_providers_manager_no_providers: ProvidersManager,
@@ -127,7 +126,7 @@ class TestProvidersManager:
         assert assets[0].labels.filter_by_scheme("ats:last_fetched").value == 1339338620
 
     def test_fetch_latest_positions(
-        self: Self,
+        self,
         caplog: pytest.LogCaptureFixture,
         fx_providers_manager_eg_provider: ProvidersManager,
     ):

@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Self
 
 from geojson import FeatureCollection
 from geojson import dump as geojson_dump
@@ -19,7 +18,7 @@ class GeoJsonExporter(Exporter):
     Creates a feature collection of all assets and their latest position.
     """
 
-    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
@@ -27,7 +26,7 @@ class GeoJsonExporter(Exporter):
         self._path = config.EXPORTER_GEOJSON_OUTPUT_PATH
 
     @property
-    def data(self: Self) -> FeatureCollection:
+    def data(self) -> FeatureCollection:
         """
         Get data from database as a feature collection.
 
@@ -47,7 +46,7 @@ class GeoJsonExporter(Exporter):
 
         return fc
 
-    def export(self: Self, path: Path | None = None) -> None:
+    def export(self, path: Path | None = None) -> None:
         """
         Export data to GeoJSON file.
 

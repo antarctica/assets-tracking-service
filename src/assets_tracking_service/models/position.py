@@ -1,7 +1,7 @@
 from copy import copy
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Literal, Self, TypeVar
+from typing import Literal, TypeVar
 from uuid import UUID
 
 import cattrs
@@ -34,11 +34,11 @@ class PositionNew:
     labels: Labels
 
     @property
-    def geom_dimensions(self: Self) -> Literal[2, 3]:
+    def geom_dimensions(self) -> Literal[2, 3]:
         """Return the number of dimensions in the geometry."""
         return 3 if self.geom.has_z else 2
 
-    def __post_init__(self: Self) -> None:
+    def __post_init__(self) -> None:
         """Validate fields."""
         if self.time.tzinfo is None or self.time.tzinfo != UTC:
             msg = f"Invalid timezone: [{self.time.tzinfo}]. It must be UTC."
@@ -64,7 +64,7 @@ class PositionNew:
             msg = "Invalid labels: It must be a Labels object."
             raise TypeError(msg)
 
-    def to_db_dict(self: Self) -> dict:
+    def to_db_dict(self) -> dict:
         """Convert to a dictionary suitable for database insertion."""
         geom_dimensions = copy(self.geom_dimensions)
 
@@ -135,7 +135,7 @@ class Position(PositionNew):
 
         return position
 
-    def __repr__(self: Self) -> str:
+    def __repr__(self) -> str:
         """String representation."""  # noqa: D401
         return f"Position(id={self.id!r}, time={self.time!r}), geom={self.geom!r}"
 
@@ -146,10 +146,10 @@ class PositionsClient:
     _schema = "public"
     _table_view = "position"
 
-    def __init__(self: Self, db_client: DatabaseClient) -> None:
+    def __init__(self, db_client: DatabaseClient) -> None:
         """Create client using injected database client."""
         self._db = db_client
 
-    def add(self: Self, position: PositionNew) -> None:
+    def add(self, position: PositionNew) -> None:
         """Persist a new position in the database."""
         self._db.insert_dict(schema=self._schema, table_view=self._table_view, data=position.to_db_dict())

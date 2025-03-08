@@ -1,5 +1,4 @@
 import logging
-from typing import Self
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
@@ -10,9 +9,9 @@ class ExampleExporter(Exporter):
     """Minimal Exporter for testing."""
 
     # noinspection PyUnusedLocal
-    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         pass
 
-    def export(self: Self):
+    def export(self):
         """Export data."""
         pass

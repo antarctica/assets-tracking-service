@@ -1,6 +1,5 @@
 import logging
 from datetime import UTC, datetime
-from typing import Self
 
 from psycopg.sql import SQL
 from psycopg.types.json import Jsonb
@@ -18,7 +17,7 @@ from assets_tracking_service.providers.geotab import GeotabProvider
 class ProvidersManager:
     """Create instances for enabled providers."""
 
-    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
@@ -27,7 +26,7 @@ class ProvidersManager:
         self._positions = PositionsClient(db_client=self._db)
         self._providers: list[Provider] = self._make_providers(self._config.ENABLED_PROVIDERS)
 
-    def _make_providers(self: Self, provider_names: list[str]) -> list[Provider]:
+    def _make_providers(self, provider_names: list[str]) -> list[Provider]:
         """Create instances for enabled providers."""
         self._logger.info("Creating providers...")
         providers = []
@@ -54,7 +53,7 @@ class ProvidersManager:
         return providers
 
     def _filter_entities(
-        self: Self, db_values: list[dict[str, str]], indexed_fetched_entities: dict[str, AssetNew | PositionNew]
+        self, db_values: list[dict[str, str]], indexed_fetched_entities: dict[str, AssetNew | PositionNew]
     ) -> list[AssetNew | PositionNew]:
         """
         Find new assets from collection returned by a provider.
@@ -74,7 +73,7 @@ class ProvidersManager:
 
         return _new_entities
 
-    def fetch_active_assets(self: Self) -> None:
+    def fetch_active_assets(self) -> None:
         """
         Fetch and persist active assets from providers.
 
@@ -156,7 +155,7 @@ class ProvidersManager:
 
         self._logger.info("Fetched active assets from providers.")
 
-    def fetch_latest_positions(self: Self) -> None:
+    def fetch_latest_positions(self) -> None:
         """
         Fetch and persist latest positions from providers.
 

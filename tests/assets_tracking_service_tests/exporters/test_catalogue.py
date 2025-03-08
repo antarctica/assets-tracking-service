@@ -2,7 +2,6 @@ import logging
 from json import load as json_load
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Self
 from unittest.mock import PropertyMock
 
 import pytest
@@ -17,7 +16,7 @@ class TestCollectionRecord:
     """Test CollectionRecord class."""
 
     def test_init(
-        self: Self,
+        self,
         fx_config: Config,
         fx_db_client_tmp_db_pop_exported: DatabaseClient,
         fx_logger: logging.Logger,
@@ -27,7 +26,7 @@ class TestCollectionRecord:
         result = CollectionRecord(config=fx_config, db=fx_db_client_tmp_db_pop_exported, logger=fx_logger)
         assert isinstance(result, CollectionRecord)
 
-    def test_valid(self: Self, fx_exporter_collection_record: CollectionRecord):
+    def test_valid(self, fx_exporter_collection_record: CollectionRecord):
         """Generates valid metadata record."""
         fx_exporter_collection_record.validate()
 
@@ -42,7 +41,7 @@ class TestLayerRecord:
     """Test LayerRecord class."""
 
     def test_init(
-        self: Self,
+        self,
         fx_config: Config,
         fx_db_client_tmp_db_pop_exported: DatabaseClient,
         fx_logger: logging.Logger,
@@ -55,7 +54,7 @@ class TestLayerRecord:
 
         assert isinstance(result, LayerRecord)
 
-    def test_valid(self: Self, fx_exporter_layer_record: LayerRecord):
+    def test_valid(self, fx_exporter_layer_record: LayerRecord):
         """Generates valid metadata record."""
         fx_exporter_layer_record.validate()
 
@@ -69,11 +68,11 @@ class TestLayerRecord:
 class TestExporterDataCatalogue:
     """Data Catalogue exporter tests."""
 
-    def test_init(self: Self, fx_config: Config, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger):
+    def test_init(self, fx_config: Config, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger):
         """Initialises."""
         DataCatalogueExporter(config=fx_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
-    def test_get_records(self: Self, fx_exporter_catalogue: DataCatalogueExporter):
+    def test_get_records(self, fx_exporter_catalogue: DataCatalogueExporter):
         """Generates records."""
         result = fx_exporter_catalogue._get_records()
 
@@ -82,7 +81,7 @@ class TestExporterDataCatalogue:
         assert all(isinstance(record, LayerRecord | CollectionRecord) for record in result)
 
     def test_export(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_db_client_tmp_db_pop: DatabaseClient,
         fx_logger: logging.Logger,

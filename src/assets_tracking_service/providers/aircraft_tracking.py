@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Generator
 from datetime import UTC, datetime
-from typing import Self
 
 from assets_tracking_service_aircraft_provider.providers.aircraft_tracking import (
     AircraftTrackerProvider as AircraftTrackerClient,
@@ -26,7 +25,7 @@ class AircraftTrackingProvider(Provider):
     distinguishing_asset_label_scheme = f"{prefix}:aircraft_id"
     distinguishing_position_label_scheme = f"{prefix}:position_id"
 
-    def __init__(self: Self, config: Config, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, logger: logging.Logger) -> None:
         self._units = UnitsConverter()
         self._logger = logger
 
@@ -42,7 +41,7 @@ class AircraftTrackingProvider(Provider):
         )
         self._logger.debug("Aircraft Tracking SDK client created.")
 
-    def _fetch_aircraft(self: Self) -> list[dict[str, str]]:
+    def _fetch_aircraft(self) -> list[dict[str, str]]:
         """
         Fetch aircraft from provider.
 
@@ -79,7 +78,7 @@ class AircraftTrackingProvider(Provider):
 
         return _aircraft
 
-    def _fetch_latest_positions(self: Self) -> list[dict[str, str | int | float]]:
+    def _fetch_latest_positions(self) -> list[dict[str, str | int | float]]:
         """
         Fetch aircraft positions from provider.
 
@@ -119,7 +118,7 @@ class AircraftTrackingProvider(Provider):
 
         return _positions
 
-    def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
+    def fetch_active_assets(self) -> Generator[AssetNew, None, None]:
         """
         Acquire aircraft as assets.
 
@@ -159,7 +158,7 @@ class AircraftTrackingProvider(Provider):
 
             yield AssetNew(labels=labels)
 
-    def fetch_latest_positions(self: Self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+    def fetch_latest_positions(self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
         """
         Acquire aircraft positions as asset positions.
 

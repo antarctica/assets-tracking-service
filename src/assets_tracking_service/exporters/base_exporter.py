@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Self
 
 
 class Exporter(ABC):
@@ -11,7 +10,7 @@ class Exporter(ABC):
     """
 
     @abstractmethod
-    def export(self: Self) -> None:
+    def export(self) -> None:
         """
         Public entrypoint for exporters.
 

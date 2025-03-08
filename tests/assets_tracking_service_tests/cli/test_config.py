@@ -1,5 +1,3 @@
-from typing import Self
-
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
@@ -10,7 +8,7 @@ from assets_tracking_service.config import Config, ConfigurationError
 class TestCliConfig:
     """Config CLI commands."""
 
-    def test_cli_config_show(self: Self, fx_config: Config, fx_cli: CliRunner) -> None:
+    def test_cli_config_show(self, fx_config: Config, fx_cli: CliRunner) -> None:
         """Shows app configuration."""
         config = Config()
 
@@ -20,14 +18,14 @@ class TestCliConfig:
         # 'tes\nt' workaround from https://github.com/pallets/click/issues/1997
         assert config.DB_DSN_SAFE in result.output.replace("tes\nt", "test")
 
-    def test_cli_config_check(self: Self, fx_config: Config, fx_cli: CliRunner) -> None:
+    def test_cli_config_check(self, fx_config: Config, fx_cli: CliRunner) -> None:
         """App configuration validates."""
         result = fx_cli.invoke(app=cli, args=["config", "check"])
 
         assert result.exit_code == 0
         assert "Configuration ok" in result.output
 
-    def test_cli_config_check_error(self: Self, mocker: MockerFixture, fx_config: Config, fx_cli: CliRunner) -> None:
+    def test_cli_config_check_error(self, mocker: MockerFixture, fx_config: Config, fx_cli: CliRunner) -> None:
         """Invalid App configuration gives error."""
         mock_config = mocker.MagicMock(auto_spec=True)
         mock_config.validate.side_effect = ConfigurationError
