@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Self
+from unittest.mock import PropertyMock
 
 import pytest
 from psycopg import Connection
@@ -232,6 +233,46 @@ class TestDBClient:
         fx_db_client_tmp_db_mig.migrate_upgrade()
 
         assert "Upgrading database to head revision..." in caplog.text
+
+    def test_head_available_migration(self: Self, fx_db_client_tmp_db: DatabaseClient):
+        """Latest available migrations in the app package can be reported."""
+        result = fx_db_client_tmp_db._head_available_migration
+
+        assert isinstance(result, int)
+        assert result > 1
+
+    def test_head_applied_migration(self: Self, fx_db_client_tmp_db_mig: DatabaseClient):
+        """Migrated database returns migration last applied."""
+        result = fx_db_client_tmp_db_mig._head_applied_migration
+
+        assert isinstance(result, int)
+        assert result > 1
+
+    def test_head_applied_migration_error(self: Self, fx_db_client_tmp_db: DatabaseClient):
+        """Problem determining database migration returns None."""
+        result = fx_db_client_tmp_db._head_applied_migration
+
+        assert result is None
+
+    def test_migrate_status(self: Self, fx_db_client_tmp_db_mig: DatabaseClient):
+        """Fully migrated database returns True."""
+        result = fx_db_client_tmp_db_mig.get_migrate_status()
+        assert result is True
+
+    def test_migrate_status_behind(self: Self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient):
+        """Database with outstanding migrations returns False."""
+        mocker.patch.object(
+            type(fx_db_client_tmp_db_mig), "_head_available_migration", new_callable=PropertyMock, return_value=999
+        )
+
+        result = fx_db_client_tmp_db_mig.get_migrate_status()
+
+        assert result is False
+
+    def test_migrate_status_unknown(self: Self, fx_db_client_tmp_db: DatabaseClient):
+        """Problem determining if all migrations are applied returns None."""
+        result = fx_db_client_tmp_db.get_migrate_status()
+        assert result is None
 
 
 class TestMakeConn:

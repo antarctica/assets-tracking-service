@@ -9,6 +9,7 @@ from assets_tracking_service.db import DatabaseClient, DatabaseError, DatabaseMi
 
 _ok = "[green]Ok.[/green]"
 _no = "[red]No.[/red]"
+_wn = "[yellow]Warning![/yellow]"
 
 logger = logging.getLogger("app")
 db_cli = typer.Typer()
@@ -20,9 +21,19 @@ def check_db() -> None:
     config = Config()
     db_client = DatabaseClient(conn=make_conn(config.DB_DSN))
 
+    rprint(f"Checking database: '{config.DB_DSN_SAFE}' ...")
+
     try:
         db_client.execute(SQL("SELECT 1;"))
         rprint(f"{_ok} Database ok.")
+
+        status = db_client.get_migrate_status()
+        if status:
+            rprint(f"{_ok} Database migrated.")
+        elif status is False:
+            rprint(f"{_wn} Database not fully migrated.")
+        else:
+            rprint(f"{_wn} Database migration status unknown.")
     except DatabaseError as e:
         logger.error(e, exc_info=True)
         rprint(f"{_no} Error accessing database.")
@@ -54,13 +65,15 @@ def migrate_db_up() -> None:
 @db_cli.command(name="rollback", help="Reset application database.")
 def rollback_db_down() -> None:
     """Rollback DB migrations."""
+    config = Config()
+    rprint(f"Configured database: '{config.DB_DSN_SAFE}'")
+
     # prompt user to continue
-    rprint("[yellow]WARNING![/yellow] This will remove all data from database!")
+    rprint(f"{_wn} This will remove all data from database!")
     if not typer.confirm("Continue?"):
         rprint(f"{_no} Aborted.")
         raise typer.Exit(code=0)
 
-    config = Config()
     db_client = DatabaseClient(conn=make_conn(config.DB_DSN))
 
     try:
