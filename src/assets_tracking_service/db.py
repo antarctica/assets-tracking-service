@@ -92,27 +92,35 @@ class DatabaseClient:
             return cur.fetchall()
 
     def insert_dict(self: Self, schema: str, table_view: str, data: dict) -> None:
-        """Insert data into table or view from a dict."""
+        """
+        Insert data into table or view from a dict.
+
+        This method is mainly to avoid PyCharm's incorrect error highlighting when using SQL composition.
+        """
         # PyCharm does not understand SQL placeholders and incorrectly marks this as an error.
         # noinspection PyTypeChecker
-        query = SQL("INSERT INTO {}.{} ({}) VALUES ({});").format(
-            Identifier(schema),
-            Identifier(table_view),
-            SQL(",").join(Identifier(key) for key in data),
-            SQL(",").join(SQL("%s") for _ in data),
+        query = SQL("INSERT INTO {schema}.{table_view} ({fields}) VALUES ({values});").format(
+            schema=Identifier(schema),
+            table_view=Identifier(table_view),
+            fields=SQL(",").join(Identifier(key) for key in data),
+            values=SQL(",").join(SQL("%s") for _ in data),
         )
 
         self.execute(query, list(data.values()))
 
     def update_dict(self: Self, schema: str, table_view: str, data: dict, where: Composed) -> None:
-        """Update data in a table or view from a dict."""
+        """
+        Update data in a table or view from a dict.
+
+        This method is mainly to avoid PyCharm's incorrect error highlighting when using SQL composition.
+        """
         # PyCharm does not understand SQL placeholders and incorrectly marks this as an error.
         # noinspection PyTypeChecker
-        query = SQL("UPDATE {}.{} SET {} WHERE {};").format(
-            Identifier(schema),
-            Identifier(table_view),
-            SQL(",").join(SQL("{} = %s").format(Identifier(key)) for key in data),
-            where,
+        query = SQL("UPDATE {schema}.{table_view} SET {data} WHERE {where};").format(
+            schema=Identifier(schema),
+            table_view=Identifier(table_view),
+            data=SQL(",").join(SQL("{} = %s").format(Identifier(key)) for key in data),
+            where=where,
         )
 
         self.execute(query, list(data.values()))
@@ -141,6 +149,50 @@ class DatabaseClient:
         """Downgrade database to base migration."""
         self._logger.info("Downgrading database to base revision...")
         self._migrate("down")
+
+    @property
+    def _head_available_migration(self: Self) -> int:
+        """
+        Index of the latest migration that could have been applied.
+
+        Returned as an integer to allow for comparison. E.g. If the latest migration is `012-foo.sql`, 12.
+        """
+        with resources_as_file(resources_files("assets_tracking_service.resources.db_migrations")) as migrations_path:
+            head_file = sorted(migrations_path.glob("up/*.sql"))[-1]
+            return int(head_file.stem.split("-")[0])
+
+    @property
+    def _head_applied_migration(self: Self) -> int | None:
+        """
+        Index of the latest migration that has been applied to the database.
+
+        As reported by the migrations table. Returned as an integer to allow for comparison.
+
+        Returns `None` if any error occurs getting the current migration (because the migrations table is not present
+        for example, or the database was migrated before migration tracking was introduced in migration 14).
+        """
+        try:
+            result = self.get_query_result(
+                query=SQL("""SELECT migration_id FROM public.meta_migration WHERE pk = 1;""")
+            )
+            return result[0][0]
+        except DatabaseError:
+            self._logger.warning("Error getting current migration")
+            return None
+
+    def get_migrate_status(self: Self) -> bool | None:
+        """
+        Check if the database is at the head migration.
+
+        Returns `True` if the database is at the head migration.
+        Returns `False` if the database is not at the head migration.
+        Returns `None` if the migration last applied to the database can't be determined.
+        """
+        applied_migration = self._head_applied_migration
+        if applied_migration is None:
+            return None
+
+        return applied_migration == self._head_available_migration
 
 
 def make_conn(dsn: str) -> Connection:

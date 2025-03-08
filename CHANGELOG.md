@@ -18,11 +18,15 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * Data Catalogue exporter
   [#38](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/38)
+* method for checking if latest migration has been applied
+  [#103](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/103)
 
 ### Changed
 
 * Documenting and rationalising database views
   [#125](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/125)
+* `db migrate` command includes whether latest migration has been applied
+  [#120](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/120)
 
 ## [0.4.3] - 2025-02-05
 

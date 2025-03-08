@@ -4,18 +4,42 @@ from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
 from assets_tracking_service.cli import app_cli as cli
+from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseError, DatabaseMigrationError
 
 
 class TestCliDb:
     """DB CLI commands."""
 
-    def test_cli_db_check(self: Self, fx_cli: CliRunner) -> None:
+    def test_cli_db_check(self: Self, fx_cli_tmp_db_mig: CliRunner, fx_config: Config) -> None:
         """App DB accessible."""
+        result = fx_cli_tmp_db_mig.invoke(app=cli, args=["db", "check"])
+
+        assert result.exit_code == 0
+        assert "Database ok" in result.output
+        # 'tes\nt' workaround from https://github.com/pallets/click/issues/1997
+        assert fx_config.DB_DSN_SAFE in result.output.replace("tes\nt", "test")
+        assert "Database migrated" in result.output
+
+    def test_cli_db_check_migrations_behind(self: Self, mocker: MockerFixture, fx_cli: CliRunner) -> None:
+        """App DB accessible but migrations are behind."""
+        mock_db_client = mocker.MagicMock(auto_spec=True)
+        mock_db_client.get_migrate_status.return_value = False
+        mocker.patch("assets_tracking_service.cli.db.DatabaseClient", return_value=mock_db_client)
+
         result = fx_cli.invoke(app=cli, args=["db", "check"])
 
         assert result.exit_code == 0
         assert "Database ok" in result.output
+        assert "Database not fully migrated" in result.output
+
+    def test_cli_db_check_unknown_migration(self: Self, fx_cli_tmp_db: CliRunner) -> None:
+        """App DB accessible but migration status unknown."""
+        result = fx_cli_tmp_db.invoke(app=cli, args=["db", "check"])
+
+        assert result.exit_code == 0
+        assert "Database ok" in result.output
+        assert "Database migration status unknown" in result.output
 
     def test_cli_db_check_error(self: Self, mocker: MockerFixture, fx_cli: CliRunner) -> None:
         """Issue accessing app DB gives error."""
@@ -46,11 +70,13 @@ class TestCliDb:
         assert result.exit_code == 1
         assert "Error migrating database" in result.output
 
-    def test_cli_db_rollback(self: Self, fx_cli_tmp_db_mig: CliRunner) -> None:
+    def test_cli_db_rollback(self: Self, fx_cli_tmp_db_mig: CliRunner, fx_config: Config) -> None:
         """App DB rollback."""
         result = fx_cli_tmp_db_mig.invoke(app=cli, args=["db", "rollback"], input="y\n")
 
         assert result.exit_code == 0
+        # 'tes\nt' workaround from https://github.com/pallets/click/issues/1997
+        assert fx_config.DB_DSN_SAFE in result.output.replace("tes\nt", "test")
         assert "DB rolled back" in result.output
 
     def test_cli_db_rollback_cancelled(self: Self, fx_cli_tmp_db_mig: CliRunner) -> None:
