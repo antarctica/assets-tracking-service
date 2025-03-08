@@ -2,7 +2,6 @@ import logging
 from datetime import UTC, date, datetime
 from json import dump as json_dump
 from pathlib import Path
-from typing import Self
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
@@ -184,7 +183,7 @@ class LayerRecord(RecordMagicDiscoveryV1):
 class DataCatalogueExporter(Exporter):
     """Exports metadata records for the BAS Data Catalogue."""
 
-    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db

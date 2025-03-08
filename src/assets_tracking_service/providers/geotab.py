@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Generator
 from datetime import datetime
-from typing import Self
 
 # noinspection PyPep8Naming
 from mygeotab import API as Geotab  # noqa: N811
@@ -26,7 +25,7 @@ class GeotabProvider(Provider):
     distinguishing_asset_label_scheme = f"{prefix}:device_id"
     distinguishing_position_label_scheme = f"{prefix}:log_record_id"
 
-    def __init__(self: Self, config: Config, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, logger: logging.Logger) -> None:
         self._units = UnitsConverter()
         self._logger = logger
 
@@ -49,7 +48,7 @@ class GeotabProvider(Provider):
             msg = "Failed to initialise Geotab Provider."
             raise RuntimeError(msg) from e
 
-    def _fetch_devices(self: Self) -> list[dict[str, str]]:
+    def _fetch_devices(self) -> list[dict[str, str]]:
         """
         Fetch devices from provider.
 
@@ -84,7 +83,7 @@ class GeotabProvider(Provider):
 
         return _devices
 
-    def _fetch_device_statuses(self: Self) -> list[dict[str, str | float | datetime]]:
+    def _fetch_device_statuses(self) -> list[dict[str, str | float | datetime]]:
         """
         Fetch the status for all devices from provider.
 
@@ -126,7 +125,7 @@ class GeotabProvider(Provider):
 
         return _device_statues
 
-    def _fetch_log_record(self: Self, time: datetime, device_id: str) -> dict:
+    def _fetch_log_record(self, time: datetime, device_id: str) -> dict:
         """
         Fetch a log record for a device at a specific time.
 
@@ -163,7 +162,7 @@ class GeotabProvider(Provider):
         )
         return results[0]
 
-    def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
+    def fetch_active_assets(self) -> Generator[AssetNew, None, None]:
         """
         Acquire devices as assets.
 
@@ -219,7 +218,7 @@ class GeotabProvider(Provider):
 
             yield AssetNew(labels=labels)
 
-    def fetch_latest_positions(self: Self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+    def fetch_latest_positions(self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
         """
         Acquire device statuses as asset positions.
 

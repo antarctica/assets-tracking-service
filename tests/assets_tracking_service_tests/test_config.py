@@ -1,7 +1,7 @@
 import os
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 import dsnparse
 import pytest
@@ -13,7 +13,7 @@ class TestEditableDsn:
     """Test custom dsnparse.ParseResult class."""
 
     @pytest.mark.cov()
-    def test_database(self: Self):
+    def test_database(self):
         """Can get database property."""
         db = "assets_tracking_test"
         dsn = f"postgresql://test:password@localhost:5432/{db}"
@@ -22,7 +22,7 @@ class TestEditableDsn:
         assert dsn_parsed.database == db
 
     @pytest.mark.cov()
-    def test_secret(self: Self):
+    def test_secret(self):
         """Can get secret property."""
         password = "password"  # noqa: S105
         dsn = f"postgresql://test:{password}@localhost:5432/assets_tracking_test"
@@ -63,7 +63,7 @@ class TestConfig:
             if env in envs_bck:
                 os.environ[env] = str(envs_bck[env])
 
-    def test_db_dsn(self: Self):
+    def test_db_dsn(self):
         """
         Gets DB DSN from environment.
 
@@ -75,7 +75,7 @@ class TestConfig:
 
         config.validate()
 
-    def test_db_dsn_explicit(self: Self):
+    def test_db_dsn_explicit(self):
         """Gets DB DSN when set explicitly as part of test."""
         dsn = "postgresql://test:password@localhost:5432/assets_tracking_dev"
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": dsn, "ASSETS_TRACKING_SERVICE_DB_DATABASE": None}
@@ -86,7 +86,7 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_db_dsn_app_db(self: Self):
+    def test_db_dsn_app_db(self):
         """Gets DB DSN with overridden database name."""
         dsn = "postgresql://test:password@localhost:5432/assets-tracking-foo"
         name = "assets-tracking-bar"
@@ -99,7 +99,7 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_db_safe(self: Self):
+    def test_db_safe(self):
         """Gets DB DSN with password redacted."""
         password = "password"  # noqa: S105
         dsn = f"postgresql://test:{password}@localhost:5432/assets_tracking_test"
@@ -114,12 +114,12 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_version(self: Self):
+    def test_version(self):
         """Version is read from package metadata."""
         config = Config()
         assert version("assets-tracking-service") == config.VERSION
 
-    def test_dumps_safe(self: Self, fx_package_version: str, fx_config: Config):
+    def test_dumps_safe(self, fx_package_version: str, fx_config: Config):
         """Config can be exported to a dict with sensitive values redacted."""
         redacted_value = "[**REDACTED**]"
 
@@ -160,11 +160,11 @@ class TestConfig:
         assert redacted_value in output["DB_DSN"]
         assert "export.geojson" in output["EXPORTER_GEOJSON_OUTPUT_PATH"]
 
-    def test_validate(self: Self, fx_config: Config):
+    def test_validate(self, fx_config: Config):
         """Valid configuration is ok."""
         fx_config.validate()
 
-    def test_validate_invalid_logging_level(self: Self):
+    def test_validate_invalid_logging_level(self):
         """Validation fails where logging level is invalid."""
         envs = {"ASSETS_TRACKING_SERVICE_LOG_LEVEL": "INVALID"}
         envs_bck = self._set_envs(envs)
@@ -176,7 +176,7 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_validate_missing_db_dsn(self: Self):
+    def test_validate_missing_db_dsn(self):
         """Validation fails where DB DSN is missing."""
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": None}
         envs_bck = self._set_envs(envs)
@@ -188,7 +188,7 @@ class TestConfig:
 
         self._unset_envs(envs, envs_bck)
 
-    def test_validate_invalid_db_dsn(self: Self):
+    def test_validate_invalid_db_dsn(self):
         """Validation fails where DB DSN is invalid."""
         envs = {"ASSETS_TRACKING_SERVICE_DB_DSN": "postgresql://"}
         envs_bck = self._set_envs(envs)
@@ -223,7 +223,7 @@ class TestConfig:
             ("GEOTAB", None, True),
         ],
     )
-    def test_enable_provider(self: Self, provider_name: str, input_value: str, expected_value: bool):
+    def test_enable_provider(self, provider_name: str, input_value: str, expected_value: bool):
         """Providers are correctly enabled by default and with explicit values."""
         envs = {f"ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_{provider_name}": input_value}
         envs_bck = self._set_envs(envs)
@@ -266,7 +266,7 @@ class TestConfig:
             ),
         ],
     )
-    def test_enabled_providers(self: Self, envs: dict[str, str], expected: list[str]):
+    def test_enabled_providers(self, envs: dict[str, str], expected: list[str]):
         """Enabled providers derived property is correctly constructed."""
         envs_bck = self._set_envs(envs)
 
@@ -289,7 +289,7 @@ class TestConfig:
             ("DATA_CATALOGUE", None, True),
         ],
     )
-    def test_enable_exporter(self: Self, exporter_name: str, input_value: str, expected_value: bool):
+    def test_enable_exporter(self, exporter_name: str, input_value: str, expected_value: bool):
         """Exporters are correctly enabled by default and with explicit values."""
         envs = {f"ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_{exporter_name}": input_value}
         envs_bck = self._set_envs(envs)
@@ -368,7 +368,7 @@ class TestConfig:
             ),
         ],
     )
-    def test_enabled_exporters(self: Self, envs: dict[str, str], expected: list[str]):
+    def test_enabled_exporters(self, envs: dict[str, str], expected: list[str]):
         """Enabled exporters derived property is correctly constructed."""
         envs_bck = self._set_envs(envs)
 
@@ -394,7 +394,7 @@ class TestConfig:
             ("EXPORTER_DATA_CATALOGUE_OUTPUT_PATH", Path("records"), False),
         ],
     )
-    def test_configurable_property(self: Self, property_name: str, expected: Any, sensitive: bool):
+    def test_configurable_property(self, property_name: str, expected: Any, sensitive: bool):
         """Configurable properties can be accessed."""
         envs = {f"ASSETS_TRACKING_SERVICE_{property_name}": str(expected)}
         envs_bck = self._set_envs(envs)
@@ -408,13 +408,13 @@ class TestConfig:
         self._unset_envs(envs, envs_bck)
 
     @pytest.mark.cov()
-    def test_provider_geotab_group_nvs_l06_code_mapping(self: Self):
+    def test_provider_geotab_group_nvs_l06_code_mapping(self):
         """For completeness."""
         config = Config()
         assert isinstance(config.PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING, dict)
 
     @pytest.mark.cov()
-    def test_validate_providers_disabled(self: Self):
+    def test_validate_providers_disabled(self):
         """Needed to satisfy coverage that config is valid when all providers can be disabled."""
         envs = {
             "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
@@ -428,7 +428,7 @@ class TestConfig:
         self._unset_envs(envs, envs_bck)
 
     @pytest.mark.cov()
-    def test_validate_exporters_disabled(self: Self):
+    def test_validate_exporters_disabled(self):
         """Needed to satisfy coverage that config is valid when all exporters can be disabled."""
         envs = {
             "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
@@ -543,7 +543,7 @@ class TestConfig:
             ),
         ],
     )
-    def test_validate_missing_required_option(self: Self, envs: dict):
+    def test_validate_missing_required_option(self, envs: dict):
         """
         Validation fails where a required provider or exporter config option is missing.
 
@@ -569,7 +569,7 @@ class TestConfig:
             },
         ],
     )
-    def test_validate_exporter_disabled_dependency(self: Self, envs: dict[str, str]):
+    def test_validate_exporter_disabled_dependency(self, envs: dict[str, str]):
         """Validation fails where an exporter that another exporter depends on is disabled."""
         envs_bck = self._set_envs(envs)
 

@@ -1,7 +1,7 @@
 import logging
 from importlib.metadata import version
 from pathlib import Path
-from typing import Self, TypedDict
+from typing import TypedDict
 
 import dsnparse
 from environs import Env, EnvError, EnvValidationError
@@ -11,21 +11,21 @@ class EditableDsn(dsnparse.ParseResult):
     """dsnparse result class to allow database (path) and password (secret) to be updated."""
 
     @property
-    def database(self: Self) -> str:
+    def database(self) -> str:
         """Database name."""
         return super().database
 
     @database.setter
-    def database(self: Self, value: str) -> None:
+    def database(self, value: str) -> None:
         self.fields["path"] = f"/{value}"
 
     @property
-    def secret(self: Self) -> str:
+    def secret(self) -> str:
         """Database password."""
         return super().secret
 
     @secret.setter
-    def secret(self: Self, value: str) -> None:
+    def secret(self, value: str) -> None:
         self.fields["password"] = value
 
 
@@ -39,7 +39,7 @@ class ConfigurationError(Exception):
 class Config:
     """Application configuration."""
 
-    def __init__(self: Self, read_env: bool = True) -> None:
+    def __init__(self, read_env: bool = True) -> None:
         """Create Config instance and load options from possible .env file."""
         self._app_prefix = "ASSETS_TRACKING_SERVICE_"
         self._app_package = "assets-tracking-service"
@@ -49,8 +49,7 @@ class Config:
         if read_env:
             self.env.read_env()
 
-    # noinspection PyTypeChecker
-    def validate(self: Self) -> None:  # noqa: C901
+    def validate(self) -> None:  # noqa: C901
         """
         Validate configuration.
 
@@ -186,14 +185,8 @@ class Config:
         EXPORTER_DATA_CATALOGUE_OUTPUT_PATH: str
         EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID: str
 
-    # noinspection PyUnresolvedReferences
-    def dumps_safe(self: Self) -> ConfigDumpSafe:
-        """
-        Dump config for output to the user with sensitive data redacted.
-
-        Note: PyCharm incorrectly infers the type of Path based properties and so inspection is disabled.
-        """
-        # noinspection PyTestUnpassedFixture
+    def dumps_safe(self) -> ConfigDumpSafe:
+        """Dump config for output to the user with sensitive data redacted."""
         return {
             "VERSION": self.VERSION,
             "LOG_LEVEL": self.LOG_LEVEL,
@@ -227,7 +220,7 @@ class Config:
         }
 
     @property
-    def VERSION(self: Self) -> str:
+    def VERSION(self) -> str:
         """
         Application version.
 
@@ -246,13 +239,12 @@ class Config:
                 raise ConfigurationError(msg) from e
 
     @property
-    def LOG_LEVEL_NAME(self: Self) -> str:
+    def LOG_LEVEL_NAME(self) -> str:
         """Logging level name."""
-        # noinspection PyTypeChecker
         return logging.getLevelName(self.LOG_LEVEL)
 
     @property
-    def DB_DSN(self: Self) -> str:
+    def DB_DSN(self) -> str:
         """
         Psycopg connection string for app database connection.
 
@@ -270,7 +262,7 @@ class Config:
         return dsn
 
     @property
-    def DB_DSN_SAFE(self: Self) -> str:
+    def DB_DSN_SAFE(self) -> str:
         """DB_DSN with password redacted."""
         dsn_parsed = dsnparse.parse(self.DB_DSN, EditableDsn)
         dsn_parsed.secret = self._safe_value
@@ -308,19 +300,19 @@ class Config:
         }
 
     @property
-    def ENABLE_PROVIDER_GEOTAB(self: Self) -> bool:
+    def ENABLE_PROVIDER_GEOTAB(self) -> bool:
         """Controls whether Geotab provider is used."""
         with self.env.prefixed(self._app_prefix):
             return self.env.bool("ENABLE_PROVIDER_GEOTAB", True)
 
     @property
-    def ENABLE_PROVIDER_AIRCRAFT_TRACKING(self: Self) -> bool:
+    def ENABLE_PROVIDER_AIRCRAFT_TRACKING(self) -> bool:
         """Controls whether Aircraft Tracking provider is used."""
         with self.env.prefixed(self._app_prefix):
             return self.env.bool("ENABLE_PROVIDER_AIRCRAFT_TRACKING", True)
 
     @property
-    def ENABLED_PROVIDERS(self: Self) -> list[str]:
+    def ENABLED_PROVIDERS(self) -> list[str]:
         """List of enabled providers."""
         providers = []
 
@@ -333,25 +325,25 @@ class Config:
         return providers
 
     @property
-    def ENABLE_EXPORTER_GEOJSON(self: Self) -> bool:
+    def ENABLE_EXPORTER_GEOJSON(self) -> bool:
         """Controls whether GeoJSON exporter is used."""
         with self.env.prefixed(self._app_prefix):
             return self.env.bool("ENABLE_EXPORTER_GEOJSON", True)
 
     @property
-    def ENABLE_EXPORTER_ARCGIS(self: Self) -> bool:
+    def ENABLE_EXPORTER_ARCGIS(self) -> bool:
         """Controls whether ArcGIS exporter is used."""
         with self.env.prefixed(self._app_prefix):
             return self.env.bool("ENABLE_EXPORTER_ARCGIS", True)
 
     @property
-    def ENABLE_EXPORTER_DATA_CATALOGUE(self: Self) -> bool:
+    def ENABLE_EXPORTER_DATA_CATALOGUE(self) -> bool:
         """Controls whether Data Catalogue exporter is used."""
         with self.env.prefixed(self._app_prefix):
             return self.env.bool("ENABLE_EXPORTER_DATA_CATALOGUE", True)
 
     @property
-    def ENABLED_EXPORTERS(self: Self) -> list[str]:
+    def ENABLED_EXPORTERS(self) -> list[str]:
         """List of enabled exporters."""
         exporters = []
 
@@ -367,30 +359,30 @@ class Config:
         return exporters
 
     @property
-    def PROVIDER_GEOTAB_USERNAME(self: Self) -> str:
+    def PROVIDER_GEOTAB_USERNAME(self) -> str:
         """Username for Geotab SDK."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("PROVIDER_GEOTAB_"):
             return self.env.str("USERNAME")
 
     @property
-    def PROVIDER_GEOTAB_PASSWORD(self: Self) -> str:
+    def PROVIDER_GEOTAB_PASSWORD(self) -> str:
         """Password for Geotab SDK."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("PROVIDER_GEOTAB_"):
             return self.env.str("PASSWORD")
 
     @property
-    def PROVIDER_GEOTAB_PASSWORD_SAFE(self: Self) -> str:
+    def PROVIDER_GEOTAB_PASSWORD_SAFE(self) -> str:
         """PROVIDER_GEOTAB_PASSWORD with value redacted."""
         return self._safe_value
 
     @property
-    def PROVIDER_GEOTAB_DATABASE(self: Self) -> str:
+    def PROVIDER_GEOTAB_DATABASE(self) -> str:
         """Database name for Geotab SDK."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("PROVIDER_GEOTAB_"):
             return self.env.str("DATABASE")
 
     @property
-    def PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING(self: Self) -> dict[str, str]:
+    def PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING(self) -> dict[str, str]:
         """
         Mapping of Geotab group names to NVS L06 codes.
 
@@ -405,58 +397,58 @@ class Config:
         }
 
     @property
-    def PROVIDER_AIRCRAFT_TRACKING_USERNAME(self: Self) -> str:
+    def PROVIDER_AIRCRAFT_TRACKING_USERNAME(self) -> str:
         """Username for Aircraft Tracking provider."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("PROVIDER_AIRCRAFT_TRACKING_"):
             return self.env.str("USERNAME")
 
     @property
-    def PROVIDER_AIRCRAFT_TRACKING_PASSWORD(self: Self) -> str:
+    def PROVIDER_AIRCRAFT_TRACKING_PASSWORD(self) -> str:
         """Password for Aircraft Tracking provider."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("PROVIDER_AIRCRAFT_TRACKING_"):
             return self.env.str("PASSWORD")
 
     @property
-    def PROVIDER_AIRCRAFT_TRACKING_PASSWORD_SAFE(self: Self) -> str:
+    def PROVIDER_AIRCRAFT_TRACKING_PASSWORD_SAFE(self) -> str:
         """PROVIDER_AIRCRAFT_TRACKING_PASSWORD with value redacted."""
         return self._safe_value
 
     @property
-    def PROVIDER_AIRCRAFT_TRACKING_API_KEY(self: Self) -> str:
+    def PROVIDER_AIRCRAFT_TRACKING_API_KEY(self) -> str:
         """API key for Aircraft Tracking provider."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("PROVIDER_AIRCRAFT_TRACKING_"):
             return self.env.str("API_KEY")
 
     @property
-    def PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE(self: Self) -> str:
+    def PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE(self) -> str:
         """PROVIDER_AIRCRAFT_TRACKING_API_KEY with value redacted."""
         return self._safe_value
 
     @property
-    def EXPORTER_GEOJSON_OUTPUT_PATH(self: Self) -> Path:
+    def EXPORTER_GEOJSON_OUTPUT_PATH(self) -> Path:
         """Path to GeoJSON output file."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_GEOJSON_"):
             return self.env.path("OUTPUT_PATH")
 
     @property
-    def EXPORTER_ARCGIS_USERNAME(self: Self) -> str:
+    def EXPORTER_ARCGIS_USERNAME(self) -> str:
         """Username of user used to publish ArcGIS exporter outputs."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_ARCGIS_"):
             return self.env.str("USERNAME")
 
     @property
-    def EXPORTER_ARCGIS_PASSWORD(self: Self) -> str:
+    def EXPORTER_ARCGIS_PASSWORD(self) -> str:
         """Password of user used to publish ArcGIS exporter outputs."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_ARCGIS_"):
             return self.env.str("PASSWORD")
 
     @property
-    def EXPORTER_ARCGIS_PASSWORD_SAFE(self: Self) -> str:
+    def EXPORTER_ARCGIS_PASSWORD_SAFE(self) -> str:
         """EXPORTER_ARCGIS_PASSWORD with value redacted."""
         return self._safe_value
 
     @property
-    def EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL(self: Self) -> str:
+    def EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL(self) -> str:
         """
         Base endpoint for ArcGIS items.
 
@@ -466,7 +458,7 @@ class Config:
             return self.env.str("BASE_ENDPOINT_PORTAL")
 
     @property
-    def EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER(self: Self) -> str:
+    def EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER(self) -> str:
         """
         Base endpoint for ArcGIS hosted services.
 
@@ -477,12 +469,17 @@ class Config:
             return self.env.str("BASE_ENDPOINT_SERVER")
 
     @property
-    def EXPORTER_DATA_CATALOGUE_OUTPUT_PATH(self: Self) -> Path:
+    def EXPORTER_DATA_CATALOGUE_OUTPUT_PATH(self) -> Path:
         """Path to Data Catalogue output file."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
             return self.env.path("OUTPUT_PATH")
 
     @property
     def EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID(self) -> str:
-        """Record ID for the collection grouping Assets Tracking Service resources."""
+        """
+        Record ID for the collection grouping Assets Tracking Service resources.
+
+        This value is fixed and must correspond to file identifier (`id`) defined in:
+        `assets_tracking_service.resources/db_migrations/up/019-collection-record.sql
+        """
         return "125d6ae8-0b9a-4c89-88e2-f3ec59723e52"

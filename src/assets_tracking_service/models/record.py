@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Self, TypeVar
+from typing import TypeVar
 from uuid import UUID
 
 import cattrs
@@ -51,7 +51,7 @@ class RecordNew:
 
         _ = self.abstract
 
-    def to_db_dict(self: Self) -> dict:
+    def to_db_dict(self) -> dict:
         """Convert to a dictionary suitable for database insertion."""
         converter = cattrs.Converter()
         return converter.unstructure(self)
@@ -94,7 +94,7 @@ class Record(RecordNew):
         converter.register_structure_hook(datetime, lambda d, t: d.astimezone(UTC))
         return converter.structure(data, cls)
 
-    def __repr__(self: Self) -> str:
+    def __repr__(self) -> str:
         """String representation."""  # noqa: D401
         return f"Record(id={str(self.id)!r}, slug={self.slug!r})"
 
@@ -105,7 +105,7 @@ class RecordsClient:
     _schema = "public"
     _table_view = "record"
 
-    def __init__(self: Self, db_client: DatabaseClient) -> None:
+    def __init__(self, db_client: DatabaseClient) -> None:
         """Create client using injected database client."""
         self._db = db_client
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 from importlib_resources import as_file as resources_as_file
 from importlib_resources import files as resources_files
@@ -26,7 +26,7 @@ class DatabaseMigrationError(DatabaseError):
 class DatabaseClient:
     """Basic database client."""
 
-    def __init__(self: Self, conn: Connection) -> None:
+    def __init__(self, conn: Connection) -> None:
         """
         Create client using injected database connection.
 
@@ -38,7 +38,7 @@ class DatabaseClient:
         self._conn.execute("SET timezone TO 'UTC';")
 
     @property
-    def conn(self: Self) -> Connection:
+    def conn(self) -> Connection:
         """
         Psycopg database connection.
 
@@ -51,7 +51,7 @@ class DatabaseClient:
         self._logger.info("Closing DB connection.")
         self._conn.close()
 
-    def execute(self: Self, query: SQL | Composed, params: Sequence | Mapping[str, Any] | None = None) -> None:
+    def execute(self, query: SQL | Composed, params: Sequence | Mapping[str, Any] | None = None) -> None:
         """Execute a given SQL statement."""
         try:
             with self._conn.cursor() as cur:
@@ -63,7 +63,7 @@ class DatabaseClient:
             msg = "Error executing statement"
             raise DatabaseError(msg) from e
 
-    def execute_file(self: Self, path: Path) -> None:
+    def execute_file(self, path: Path) -> None:
         """Execute SQL statements in a given file."""
         with path.open() as file:
             self._logger.info("Executing SQL from: %s", path.resolve())
@@ -71,13 +71,13 @@ class DatabaseClient:
             # noinspection PyTypeChecker
             self.execute(SQL(file.read()))
 
-    def execute_files_in_path(self: Self, path: Path) -> None:
+    def execute_files_in_path(self, path: Path) -> None:
         """Execute statements in all SQL files in a given directory."""
         for file_path in sorted(path.glob("*.sql")):
             self.execute_file(file_path)
 
     def get_query_result(
-        self: Self, query: SQL | Composed, params: Sequence | Mapping[str, Any] | None = None, as_dict: bool = False
+        self, query: SQL | Composed, params: Sequence | Mapping[str, Any] | None = None, as_dict: bool = False
     ) -> list[tuple | dict]:
         """Execute a query and return the result as a list of tuples or dicts."""
         with self._conn.cursor() as cur:
@@ -91,7 +91,7 @@ class DatabaseClient:
                 return [dict(zip(columns, row)) for row in cur.fetchall()]  # noqa: B905
             return cur.fetchall()
 
-    def insert_dict(self: Self, schema: str, table_view: str, data: dict) -> None:
+    def insert_dict(self, schema: str, table_view: str, data: dict) -> None:
         """
         Insert data into table or view from a dict.
 
@@ -108,7 +108,7 @@ class DatabaseClient:
 
         self.execute(query, list(data.values()))
 
-    def update_dict(self: Self, schema: str, table_view: str, data: dict, where: Composed) -> None:
+    def update_dict(self, schema: str, table_view: str, data: dict, where: Composed) -> None:
         """
         Update data in a table or view from a dict.
 
@@ -125,7 +125,7 @@ class DatabaseClient:
 
         self.execute(query, list(data.values()))
 
-    def _migrate(self: Self, direction: Literal["up", "down"]) -> None:
+    def _migrate(self, direction: Literal["up", "down"]) -> None:
         """
         Migrate DB.
 
@@ -140,18 +140,18 @@ class DatabaseClient:
             msg = f"Error migrating DB {direction}"
             raise DatabaseMigrationError(msg) from e
 
-    def migrate_upgrade(self: Self) -> None:
+    def migrate_upgrade(self) -> None:
         """Upgrade database to head migration."""
         self._logger.info("Upgrading database to head revision...")
         self._migrate("up")
 
-    def migrate_downgrade(self: Self) -> None:
+    def migrate_downgrade(self) -> None:
         """Downgrade database to base migration."""
         self._logger.info("Downgrading database to base revision...")
         self._migrate("down")
 
     @property
-    def _head_available_migration(self: Self) -> int:
+    def _head_available_migration(self) -> int:
         """
         Index of the latest migration that could have been applied.
 
@@ -162,7 +162,7 @@ class DatabaseClient:
             return int(head_file.stem.split("-")[0])
 
     @property
-    def _head_applied_migration(self: Self) -> int | None:
+    def _head_applied_migration(self) -> int | None:
         """
         Index of the latest migration that has been applied to the database.
 
@@ -180,7 +180,7 @@ class DatabaseClient:
             self._logger.warning("Error getting current migration")
             return None
 
-    def get_migrate_status(self: Self) -> bool | None:
+    def get_migrate_status(self) -> bool | None:
         """
         Check if the database is at the head migration.
 

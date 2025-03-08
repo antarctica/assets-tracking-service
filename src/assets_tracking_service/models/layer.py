@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from logging import Logger
-from typing import Self, TypeVar
+from typing import TypeVar
 
 import cattrs
 from psycopg.sql import SQL, Identifier
@@ -28,13 +28,13 @@ class LayerNew:
     slug: str
     source_view: str
 
-    def __post_init__(self: Self) -> None:
+    def __post_init__(self) -> None:
         """Validate fields."""
         if not re.match(r"^[a-z0-9_]+$", self.slug):
             msg = f"Invalid slug: [{self.slug}]. It must be lowercase a-z, 0-9, and underscores only."
             raise ValueError(msg)
 
-    def to_db_dict(self: Self) -> dict:
+    def to_db_dict(self) -> dict:
         """Convert to a dictionary suitable for database insertion."""
         converter = cattrs.Converter()
         return converter.unstructure(self)
@@ -62,7 +62,7 @@ class Layer(LayerNew):
         converter.register_structure_hook(datetime, lambda d, t: d.astimezone(UTC))
         return converter.structure(data, cls)
 
-    def __repr__(self: Self) -> str:
+    def __repr__(self) -> str:
         """String representation."""  # noqa: D401
         parts = [f"slug={self.slug!r}"]
         if self.agol_id_feature is not None:
@@ -83,7 +83,7 @@ class LayersClient:
         self._db = db_client
         self._logger = logger
 
-    def list_slugs(self: Self) -> list[str]:
+    def list_slugs(self) -> list[str]:
         """Retrieve all Layer slugs."""
         results = self._db.get_query_result(query=SQL("""SELECT slug FROM public.layer;"""))
         return [row[0] for row in results]
@@ -181,7 +181,7 @@ class LayersClient:
         return result[0][0]
 
     def set_item_id(
-        self: Self,
+        self,
         slug: str,
         geojson_id: str | None = None,
         feature_id: str | None = None,

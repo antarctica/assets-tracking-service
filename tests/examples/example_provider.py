@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Generator
 from datetime import UTC, datetime
-from typing import Self
 
 from shapely import Point
 
@@ -21,14 +20,14 @@ class ExampleProvider(Provider):
     distinguishing_asset_label_scheme = f"{prefix}:asset_id"
     distinguishing_position_label_scheme = f"{prefix}:position_id"
 
-    def __init__(self: Self, config: Config, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, logger: logging.Logger) -> None:
         self._logger = logger
 
         self._logger.debug("Setting Example Provider configuration...")
         self._config = config
         self._logger.debug("Example Provider configuration ok.")
 
-    def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
+    def fetch_active_assets(self) -> Generator[AssetNew, None, None]:
         """Fetch active assets."""
         for i in range(3):
             value = f"example-asset-{i}"
@@ -49,7 +48,7 @@ class ExampleProvider(Provider):
 
             yield AssetNew(labels=labels)
 
-    def fetch_latest_positions(self: Self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+    def fetch_latest_positions(self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
         """Fetch latest positions for assets."""
         asset = assets[0]
 

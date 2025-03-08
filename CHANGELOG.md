@@ -28,6 +28,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 * `db migrate` command includes whether latest migration has been applied
   [#120](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/120)
 
+### Removed
+
+* `typing.Self` typing due to subtle IDE errors
+  [#130](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/130)
+
 ## [0.4.3] - 2025-02-05
 
 ### Fixed

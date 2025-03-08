@@ -1,6 +1,5 @@
 from copy import copy
 from datetime import UTC, datetime
-from typing import Self
 
 import pytest
 from cattrs import ClassValidationError
@@ -16,7 +15,7 @@ class TestLabel:
     """Test data class."""
 
     def test_init_minimal(
-        self: Self,
+        self,
         freezer: FrozenDateTimeFactory,
         fx_label_rel: LabelRelation,
         fx_label_scheme: str,
@@ -34,7 +33,7 @@ class TestLabel:
         assert label.created == creation_time
 
     def test_init_full(
-        self: Self,
+        self,
         fx_label_rel: LabelRelation,
         fx_label_scheme: str,
         fx_label_scheme_uri: str,
@@ -56,7 +55,7 @@ class TestLabel:
         assert label.value_uri == fx_label_value_uri
 
     def test_init_expired(
-        self: Self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str, fx_label_expiry: int
+        self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str, fx_label_expiry: int
     ):
         """Creates an expired Label."""
         label = Label(rel=fx_label_rel, scheme=fx_label_scheme, value=fx_label_value, expiration=fx_label_expiry)
@@ -66,7 +65,7 @@ class TestLabel:
         assert label.is_expired is True
 
     # noinspection PyTypeChecker
-    def test_invalid_rel(self: Self, fx_label_scheme: str, fx_label_value: str):
+    def test_invalid_rel(self, fx_label_scheme: str, fx_label_value: str):
         """Invalid relation triggers error."""
         rel = "invalid"
 
@@ -74,7 +73,7 @@ class TestLabel:
             Label(rel=rel, scheme=fx_label_scheme, value=fx_label_value)
 
     # noinspection PyArgumentList
-    def test_missing_empty_scheme(self: Self, fx_label_rel: LabelRelation, fx_label_value: str):
+    def test_missing_empty_scheme(self, fx_label_rel: LabelRelation, fx_label_value: str):
         """Missing scheme triggers error."""
         with pytest.raises(TypeError, match="missing 1 required keyword-only argument"):
             Label(rel=fx_label_rel, value=fx_label_value)
@@ -83,24 +82,24 @@ class TestLabel:
             Label(rel=fx_label_rel, scheme="", value=fx_label_value)
 
     @pytest.mark.parametrize("value", [0, 0.0])
-    def test_value_valid(self: Self, fx_label_rel: LabelRelation, fx_label_scheme: str, value: int | float):
+    def test_value_valid(self, fx_label_rel: LabelRelation, fx_label_scheme: str, value: int | float):
         """Missing value triggers error."""
         Label(rel=fx_label_rel, scheme=fx_label_scheme, value=value)
 
     @pytest.mark.parametrize("value", ["", None])
-    def test_value_invalid(self: Self, fx_label_rel: LabelRelation, fx_label_scheme: str, value: str | None):
+    def test_value_invalid(self, fx_label_rel: LabelRelation, fx_label_scheme: str, value: str | None):
         """Missing value triggers error."""
         with pytest.raises(ValueError, match="Invalid label value"):
             Label(rel=fx_label_rel, scheme=fx_label_scheme, value=value)
 
     # noinspection PyArgumentList
-    def test_missing_value_type(self: Self, fx_label_rel: LabelRelation, fx_label_scheme: str):
+    def test_missing_value_type(self, fx_label_rel: LabelRelation, fx_label_scheme: str):
         """Missing value triggers error."""
         with pytest.raises(TypeError, match="missing 1 required keyword-only argument"):
             Label(rel=fx_label_rel, scheme=fx_label_scheme)
 
     def test_empty_scheme_uri(
-        self: Self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str, fx_label_value_uri: str
+        self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str, fx_label_value_uri: str
     ):
         """Empty scheme URI triggers error."""
         with pytest.raises(ValueError, match="Invalid label scheme URI"):
@@ -113,7 +112,7 @@ class TestLabel:
             )
 
     def test_empty_value_uri(
-        self: Self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_scheme_uri: str, fx_label_value: str
+        self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_scheme_uri: str, fx_label_value: str
     ):
         """Empty value URI triggers error."""
         with pytest.raises(ValueError, match="Invalid label value URI"):
@@ -125,7 +124,7 @@ class TestLabel:
                 value_uri="",
             )
 
-    def test_invalid_expiry(self: Self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str):
+    def test_invalid_expiry(self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str):
         """Invalid expiry triggers error."""
         with pytest.raises(ValueError, match="Invalid label expiration"):
             Label(rel=fx_label_rel, scheme=fx_label_scheme, value=fx_label_value, expiration=1_000_000_000_000)
@@ -139,7 +138,7 @@ class TestLabel:
         ],
     )
     def test_is_expired(
-        self: Self,
+        self,
         fx_label_rel: LabelRelation,
         fx_label_scheme: str,
         fx_label_value: str,
@@ -152,7 +151,7 @@ class TestLabel:
         assert label.is_expired is result
 
     def test_eq(
-        self: Self,
+        self,
         freezer: FrozenDateTimeFactory,
         fx_label_rel: LabelRelation,
         fx_label_scheme: str,
@@ -170,7 +169,7 @@ class TestLabel:
 class TestLabels:
     """Test collection class."""
 
-    def test_init_empty(self: Self):
+    def test_init_empty(self):
         """Creates an empty set of Labels."""
         labels = Labels()
 
@@ -178,7 +177,7 @@ class TestLabels:
         assert list(labels) == []
         assert isinstance(labels, list)
 
-    def test_init_single(self: Self, fx_label_minimal: Label):
+    def test_init_single(self, fx_label_minimal: Label):
         """Creates a set of Labels with a single item."""
         labels = Labels([fx_label_minimal])
 
@@ -187,11 +186,11 @@ class TestLabels:
         assert labels == list(labels)
         assert labels[0] == fx_label_minimal
 
-    def test_repr(self: Self, fx_labels_one: Labels):
+    def test_repr(self, fx_labels_one: Labels):
         """String representation of a Labels set."""
         assert repr(fx_labels_one) == f"Labels[v1]([{fx_labels_one[0]!r}])"
 
-    def test_active(self: Self, fx_labels_multiple: Labels, fx_label_full: Label, fx_label_expired: Label):
+    def test_active(self, fx_labels_multiple: Labels, fx_label_full: Label, fx_label_expired: Label):
         """Active (non-expired) labels."""
         active_labels = fx_labels_multiple.active
 
@@ -199,7 +198,7 @@ class TestLabels:
         assert fx_label_full in active_labels
         assert fx_label_expired not in active_labels
 
-    def test_expired(self: Self, fx_labels_multiple: Labels, fx_label_full: Label, fx_label_expired: Label):
+    def test_expired(self, fx_labels_multiple: Labels, fx_label_full: Label, fx_label_expired: Label):
         """Expired (non-active) labels."""
         expired_labels = fx_labels_multiple.expired
 
@@ -207,14 +206,14 @@ class TestLabels:
         assert fx_label_full not in expired_labels
         assert fx_label_expired in expired_labels
 
-    def test_structure(self: Self, fx_label_full_plain: LabelsPlain, fx_labels_one: Labels):
+    def test_structure(self, fx_label_full_plain: LabelsPlain, fx_labels_one: Labels):
         """Loads from plain objects."""
         labels = Labels.structure(data=fx_label_full_plain)
 
         assert labels == fx_labels_one
 
     @pytest.mark.cov()
-    def test_structure_value_types(self: Self, fx_label_full_plain: LabelsPlain):
+    def test_structure_value_types(self, fx_label_full_plain: LabelsPlain):
         """Loads values from plain objects."""
         test_str = "test"
         test_int = 42
@@ -245,7 +244,7 @@ class TestLabels:
         assert labels[2].value == test_float
 
     @pytest.mark.cov()
-    def test_structure_value_types_invalid(self: Self, fx_label_full_plain: LabelsPlain):
+    def test_structure_value_types_invalid(self, fx_label_full_plain: LabelsPlain):
         """Invalid value types trigger error."""
         data: LabelsPlain = {"version": "1", "values": [copy(fx_label_full_plain["values"][0])]}
         data["values"][0]["scheme"] = "test_type_list"
@@ -255,23 +254,23 @@ class TestLabels:
         with pytest.raises(ClassValidationError):
             Labels.structure(data=data)
 
-    def test_unstructure(self: Self, fx_labels_one: Labels, fx_label_full_plain: LabelsPlain):
+    def test_unstructure(self, fx_labels_one: Labels, fx_label_full_plain: LabelsPlain):
         """Returns as plain objects."""
         data = fx_labels_one.unstructure()
 
         assert data == fx_label_full_plain
 
-    def test_filter_by_schema(self: Self, fx_labels_one: Labels):
+    def test_filter_by_schema(self, fx_labels_one: Labels):
         """Filter labels based on schema."""
         filtered = fx_labels_one.filter_by_scheme(scheme="skos:prefLabel")
 
         assert filtered.value == fx_labels_one[0].value
 
-    def test_filter_by_schema_none(self: Self, fx_labels_one: Labels):
+    def test_filter_by_schema_none(self, fx_labels_one: Labels):
         """Filters labels based on schema."""
         with pytest.raises(ValueError, match="No label with scheme"):
             fx_labels_one.filter_by_scheme(scheme="unknown")
 
-    def test_eq(self: Self, fx_label_minimal: Label, fx_label_expired: Label):
+    def test_eq(self, fx_label_minimal: Label, fx_label_expired: Label):
         """Equality check."""
         assert Labels([fx_label_minimal, fx_label_expired]) == Labels([fx_label_expired, fx_label_minimal])

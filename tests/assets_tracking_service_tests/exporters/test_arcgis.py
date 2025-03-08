@@ -1,5 +1,4 @@
 import logging
-from typing import Self
 
 import pytest
 from arcgis.gis import ItemTypeEnum, SharingLevel
@@ -20,7 +19,7 @@ class TestArcGisExporterLayer:
     """ArcGIS exporter layer tests."""
 
     def test_init(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,
@@ -132,7 +131,7 @@ class TestExporterArcGIS:
     """ArcGIS exporter tests."""
 
     def test_init(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,
@@ -144,7 +143,7 @@ class TestExporterArcGIS:
         ArcGisExporter(config=fx_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
     def test_init_auth_error(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,

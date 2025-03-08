@@ -1,5 +1,4 @@
 import logging
-from typing import Self
 from unittest.mock import PropertyMock
 
 import pytest
@@ -15,7 +14,7 @@ class TestExportersManager:
     """Exporters manager tests."""
 
     def test_init(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,
@@ -29,7 +28,7 @@ class TestExportersManager:
         assert len(manager._exporters) > 0
 
     def test_init_no_providers(
-        self: Self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
+        self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
     ):
         """Initialises with no providers."""
         mock_config = mocker.Mock()
@@ -40,7 +39,7 @@ class TestExportersManager:
 
     @pytest.mark.parametrize("enabled_exporters", [["arcgis"], ["geojson"], ["data_catalogue"]])
     def test_make_each_exporter(
-        self: Self,
+        self,
         mocker: MockerFixture,
         fx_db_client_tmp_db_pop: DatabaseClient,
         fx_logger: logging.Logger,
@@ -55,7 +54,7 @@ class TestExportersManager:
         assert len(manager._exporters) == 1
 
     def test_export(
-        self: Self,
+        self,
         mocker: MockerFixture,
         caplog: pytest.LogCaptureFixture,
         fx_exporters_manager_no_exporters: ExportersManager,

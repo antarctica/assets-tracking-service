@@ -1,7 +1,6 @@
 import logging
 from datetime import UTC, datetime
 from tempfile import TemporaryDirectory
-from typing import Self
 
 from arcgis import GIS
 from arcgis.gis import Item as ArcGISItem
@@ -31,7 +30,7 @@ class ArcGisExporterLayer:
     """Represents an ArcGIS layer managed by this exporter."""
 
     def __init__(
-        self: Self,
+        self,
         config: Config,
         db: DatabaseClient,
         logger: logging.Logger,
@@ -226,7 +225,7 @@ class ArcGisExporter(Exporter):
     Creates a hosted feature layer of all assets and their latest position.
     """
 
-    def __init__(self: Self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._output_path: TemporaryDirectory | None = None
         self._config = config
         self._logger = logger
@@ -265,7 +264,7 @@ class ArcGisExporter(Exporter):
 
         return layers
 
-    def export(self: Self) -> None:
+    def export(self) -> None:
         """
         Update each layers.
 

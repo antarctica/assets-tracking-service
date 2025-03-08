@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from collections.abc import Generator
-from typing import Self
 
 from assets_tracking_service.models.asset import Asset, AssetNew
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
@@ -34,7 +33,7 @@ class Provider(ABC):
     distinguishing_position_label_scheme: str = f"{prefix}:"  # e.g. "foo:log_id"
 
     @property
-    def provider_labels(self: Self) -> Labels:
+    def provider_labels(self) -> Labels:
         """
         Concrete, public, method to get labels identifying the provider and its version.
 
@@ -47,12 +46,12 @@ class Provider(ABC):
             ]
         )
 
-    def _index_assets(self: Self, assets: list[Asset]) -> dict[str, Asset]:
+    def _index_assets(self, assets: list[Asset]) -> dict[str, Asset]:
         """Concrete utility method to index assets by their distinguishing label value."""
         return {asset.labels.filter_by_scheme(self.distinguishing_asset_label_scheme).value: asset for asset in assets}
 
     @abstractmethod
-    def fetch_active_assets(self: Self) -> Generator[AssetNew, None, None]:
+    def fetch_active_assets(self) -> Generator[AssetNew, None, None]:
         """
         Public entrypoint for fetching active assets.
 
@@ -64,7 +63,7 @@ class Provider(ABC):
         pass
 
     @abstractmethod
-    def fetch_latest_positions(self: Self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
+    def fetch_latest_positions(self, assets: list[Asset]) -> Generator[PositionNew, None, None]:
         """
         Public entrypoint for fetching latest positions of assets.
 
