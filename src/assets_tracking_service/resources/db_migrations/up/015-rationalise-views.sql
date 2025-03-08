@@ -13,15 +13,15 @@ END $$;
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'summary_export')
-       AND NOT EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'v_latest_asset_pos') THEN
-        ALTER VIEW public.summary_export RENAME TO v_latest_asset_pos;
+       AND NOT EXISTS (SELECT 1 FROM pg_views WHERE viewname = 'v_latest_assets_pos') THEN
+        ALTER VIEW public.summary_export RENAME TO v_latest_assets_pos;
     END IF;
 END $$;
 
 -- rename and update view references
 DROP VIEW IF EXISTS summary_geojson;
-DROP VIEW IF EXISTS v_latest_asset_pos_geojson;
-CREATE VIEW v_latest_asset_pos_geojson AS
+DROP VIEW IF EXISTS v_latest_assets_pos_geojson;
+CREATE VIEW v_latest_assets_pos_geojson AS
 SELECT
     json_build_object(
         'type', 'FeatureCollection',
@@ -53,7 +53,7 @@ FROM (
                 'heading_d', heading_d
             )
         ) AS feature
-    FROM v_latest_asset_pos
+    FROM v_latest_assets_pos
 ) AS features;
 
 -- prevent old views being left behind if migrations are ran again

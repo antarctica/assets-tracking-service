@@ -1,0 +1,4 @@
+- data quality
+- data gaps
+- method
+    - export of v_latest_asset_pos_geojson into AGOL feature service

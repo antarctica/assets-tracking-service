@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 from typing import Self
 
 import pytest
+from psycopg import Connection
 from psycopg.sql import SQL, Identifier
 from psycopg.types.json import Jsonb
 from pytest_mock import MockerFixture
@@ -21,9 +22,10 @@ class TestDBClient:
         assert result == "postgres"
 
     @pytest.mark.cov()
-    def test_close(self: Self, fx_db_client_tmp_db: DatabaseClient):
+    def test_close(self: Self, postgresql: Connection):
         """Closes connection."""
-        fx_db_client_tmp_db.close()
+        client = DatabaseClient(conn=postgresql)
+        client.close()
 
     def test_execute_statement(self: Self, fx_db_client_tmp_db: DatabaseClient):
         """Statement can be executed."""

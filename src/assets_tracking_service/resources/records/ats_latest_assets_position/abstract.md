@@ -1,0 +1,21 @@
+A vector dataset containing the last known position of all assets tracked by the [BAS Assets Tracking Service](https://github.com/antarctica/assets-tracking-service).
+
+- WHO
+  - MAGIC
+  - providers
+- WHAT
+  - summary of contents (assets tracked, variables)
+  - full attributes table
+  - constraints (latest positions only, contact MAGIC for full history)
+- WHERE
+  - broad spatial extent (see extent tab for precise details)
+  - projection
+- WHEN
+  - update frequency
+  - range (see extent tab for precise details)
+- WHY
+  - intended uses
+    - Embedded Maps Service to visualise an asset
+  - non-intended uses
+- HOW
+  - see lineage tab for details and data quality etc.

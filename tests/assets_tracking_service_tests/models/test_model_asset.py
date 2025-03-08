@@ -104,7 +104,6 @@ class TestAssetsClient:
     def test_assets_client_list(self: Self, fx_assets_client_one: AssetsClient, fx_asset: Asset):
         """List all Assets."""
         assets = fx_assets_client_one.list()
-
         assert assets == [fx_asset]
 
     def test_assets_client_list_filtered_by_label_complete(
