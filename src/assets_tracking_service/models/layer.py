@@ -115,18 +115,12 @@ class LayersClient:
         Slug has a DB unique constraint so we assume they'll be at most one result.
 
         Replies on the `layer.source_view` returning rows containing `geom_2d` and `time_utc` columns.
-
-        Currently, this view is typically a post-processed version of this, encoding the data as a GeoJSON feature
-        collection, which is unsuitable. By convention this GeoJSON view is named after the underlying data view (which
-        is suitable) with a `_geojson` suffix. As a workaround, this method remove this to try and get suitable data.
-
-        This is not a long-term solution and will be replaced with a more robust approach.
         """
         source_view_result = self._db.get_query_result(
             query=SQL("""SELECT source_view FROM public.layer WHERE slug = %(slug)s;"""),
             params={"slug": slug},
         )
-        source_view_result = source_view_result[0][0].replace("_geojson", "")
+        source_view_result = source_view_result[0][0]
 
         # noinspection SqlResolve
         result = self._db.get_query_result(

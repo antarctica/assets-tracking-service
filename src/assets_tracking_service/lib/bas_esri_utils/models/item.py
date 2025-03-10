@@ -66,6 +66,8 @@ class Item(ItemBase):
         _loader = PackageLoader("assets_tracking_service.lib.bas_esri_utils", "resources/templates")
         self._jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
 
+        self._validate_record()
+
     @staticmethod
     def _render_arcgis_metadata(md_file_id: str) -> str:
         """
@@ -94,6 +96,12 @@ class Item(ItemBase):
         template = self._jinja.get_template(template_path)
         return template.render(**kwargs)
 
+    def _validate_record(self) -> None:
+        """Check record for ArcGIS specific constraints."""
+        if self._record.identification.purpose is not None and len(self._record.identification.purpose) >= 250:
+            msg = "ArcGIS snippet (summary/purpose) limited to 250 characters."
+            raise ValueError(msg) from None
+
     @property
     def _title(self) -> str:
         """
@@ -103,7 +111,7 @@ class Item(ItemBase):
         Mapped to: title (from [1])
         [1] https://developers.arcgis.com/rest/users-groups-and-items/common-parameters/#item-parameters
         """
-        return self.title_plain
+        return self.title_plain  # pragma: nocover (see `.item_properties()`)
 
     @property
     def _snippet(self) -> str | None:

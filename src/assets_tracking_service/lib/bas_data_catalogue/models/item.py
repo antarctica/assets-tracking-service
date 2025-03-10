@@ -27,6 +27,12 @@ PERMISSIONS_BAS_GROUP = "6fa3b48c-393c-455f-b787-c006f839b51f"
 
 
 class AccessType(Enum):
+    """
+    Item access types.
+
+    Where 'NONE' is a fallback value that should not be needed (as items with no access would not be catalogued).
+    """
+
     NONE: str = "none"
     PUBLIC: str = "public"
     BAS_ALL: str = "bas_all"
@@ -80,18 +86,22 @@ class Graphic:
 
     @property
     def label(self) -> str:
+        """Label."""
         return self._graphic.identifier
 
     @property
     def description(self) -> str | None:
+        """Description."""
         return self._graphic.description
 
     @property
     def src(self) -> str:
+        """Source (src)."""
         return self._graphic.href
 
     @property
     def media_type(self) -> str:
+        """Media type (aka mime-type)."""
         return self._graphic.mime_type
 
 
@@ -397,6 +407,11 @@ class ItemBase:
         return [Identifier(identifier) for identifier in self._record.identification.identifiers]
 
     def get_identifier(self, namespace: str) -> Identifier:
+        """
+        Get a specific identifier by its namespace.
+
+        Where an identifier isn't found, or multiple identifiers match, an exception is raised.
+        """
         _results = []
         for identifier in self.identifiers:
             if identifier.namespace == namespace:

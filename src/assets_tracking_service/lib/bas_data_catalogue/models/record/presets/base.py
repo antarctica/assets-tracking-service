@@ -77,6 +77,7 @@ class RecordMagicDiscoveryV1(Record):
 
     @classmethod
     def loads(cls, value: dict) -> "RecordMagicDiscoveryV1":
+        """Create a Record from a dict loaded from a JSON schema instance."""
         record = super().loads(value)
         return cls(
             file_identifier=record.file_identifier,

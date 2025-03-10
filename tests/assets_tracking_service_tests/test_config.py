@@ -122,7 +122,6 @@ class TestConfig:
     def test_dumps_safe(self, fx_package_version: str, fx_config: Config):
         """Config can be exported to a dict with sensitive values redacted."""
         redacted_value = "[**REDACTED**]"
-
         expected: fx_config.ConfigDumpSafe = {
             "VERSION": fx_package_version,
             "LOG_LEVEL": 20,
@@ -150,6 +149,13 @@ class TestConfig:
             "EXPORTER_ARCGIS_PASSWORD": redacted_value,
             "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": "https://example.com",
             "EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": "https://example.com/arcgis",
+            "EXPORTER_ARCGIS_FOLDER_NAME": "prj-assets-tracking-service",
+            "EXPORTER_ARCGIS_GROUP_INFO": {
+                "name": "Assets Tracking Service",
+                "summary": "Resources pertaining to the BAS Assets Tracking Service, a service to track the location of BAS assets, including ships, aircraft, and vehicles.",
+                "description_file": "description.md",
+                "thumbnail_file": "thumbnail.png",
+            },
             "EXPORTER_GEOJSON_OUTPUT_PATH": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(fx_config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
             "EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID": "125d6ae8-0b9a-4c89-88e2-f3ec59723e52",
@@ -158,7 +164,6 @@ class TestConfig:
         output = fx_config.dumps_safe()
         assert output == expected
         assert redacted_value in output["DB_DSN"]
-        assert "export.geojson" in output["EXPORTER_GEOJSON_OUTPUT_PATH"]
 
     def test_validate(self, fx_config: Config):
         """Valid configuration is ok."""

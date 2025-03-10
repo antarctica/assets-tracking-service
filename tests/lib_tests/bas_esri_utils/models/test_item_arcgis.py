@@ -1,3 +1,5 @@
+from re import escape
+
 import pytest
 from arcgis.gis import ItemTypeEnum, SharingLevel
 
@@ -29,6 +31,13 @@ class TestItemArcGIS:
         item = Item(fx_lib_record_minimal_iso, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="x")
 
         assert item._record == fx_lib_record_minimal_iso
+
+    def test_validate_snippet(self, fx_lib_record_minimal_iso: Record):
+        """Cannot use a record where snippet/purpose is too long."""
+        fx_lib_record_minimal_iso.identification.purpose = "x" * 251
+
+        with pytest.raises(ValueError, match=escape("ArcGIS snippet (summary/purpose) limited to 250 characters.")):
+            Item(fx_lib_record_minimal_iso, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="x")
 
     def test_item_id(self, fx_lib_record_minimal_iso: Record):
         """Can get Item ID assigned by ArcGIS (and set by caller)."""

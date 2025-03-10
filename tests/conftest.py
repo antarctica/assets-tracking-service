@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, PropertyMock
 from uuid import uuid4
 
 import pytest
-from arcgis.gis import Item
+from arcgis.gis import Item, ItemTypeEnum, SharingLevel
 from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
 from psycopg.sql import SQL
@@ -30,6 +30,8 @@ from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCa
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record as LibRecord
+from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
+from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
 from assets_tracking_service.models.asset import Asset, AssetNew, AssetsClient
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
 from assets_tracking_service.models.layer import Layer, LayerNew, LayersClient
@@ -63,10 +65,17 @@ def _prepare_blank_db(db_client: DatabaseClient) -> None:
         db_client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
 
 
-def _create_fake_arcgis_item(item_id: str) -> Item:
+def _create_fake_arcgis_item(item_id: str, item_type: ItemTypeEnum = ItemTypeEnum.GEOJSON) -> Item:
     """Create a fake ArcGIS Item."""
-    modified_at = datetime.now(tz=UTC).timestamp() * 1000
-    item_data = {"owner": "x", "type": "x", "modified": modified_at, "id": item_id}
+    item_data = {
+        "title": "x",
+        "name": "x",  # file-name
+        "owner": "x",
+        "type": item_type.value,
+        "modified": datetime.now(tz=UTC).timestamp() * 1000,
+        "id": item_id,
+        "sharing_level": SharingLevel.PRIVATE,
+    }
 
     mock_gis = MagicMock(auto_spec=True)
     return Item(mock_gis, item_id, item_data)
@@ -453,7 +462,7 @@ def fx_layer_pre_init(fx_record_layer_slug: str) -> LayerNew:
     """Layer that has not yet been initialised."""
     return LayerNew(
         slug=fx_record_layer_slug,
-        source_view="v_latest_assets_pos_geojson",
+        source_view="v_latest_assets_pos",
     )
 
 
@@ -801,3 +810,17 @@ def fx_lib_record_config_minimal_magic_preset() -> dict:
 def fx_lib_record_minimal_iso(fx_lib_record_config_minimal_iso: dict) -> LibRecord:
     """Minimal record instance (ISO)."""
     return LibRecord.loads(fx_lib_record_config_minimal_iso)
+
+
+@pytest.fixture()
+def fx_lib_catalogue_arcgis_item(fx_lib_record_minimal_iso: Record) -> CatalogueItemArcGis:
+    """ItemArcGIS."""
+    return CatalogueItemArcGis(
+        record=fx_lib_record_minimal_iso, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="x"
+    )
+
+
+@pytest.fixture()
+def fx_lib_arcgis_client(mocker: MockerFixture, fx_logger: logging.Logger) -> ArcGisClient:
+    """BAS ArcGIS client."""
+    return ArcGisClient(arcgis=mocker.MagicMock(auto_spec=True), logger=fx_logger)

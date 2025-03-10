@@ -56,9 +56,10 @@ class RecordNew:
         converter = cattrs.Converter()
         return converter.unstructure(self)
 
-    def _get_resource_contents(self, file: str) -> str:
+    def _get_resource_contents(self, filename: str) -> str:
+        """Read contents of a project resource file."""
         with resources_as_file(resources_files("assets_tracking_service.resources.records")) as resources_path:
-            res_path = resources_path.joinpath(self.slug).joinpath(file)
+            res_path = resources_path / self.slug / filename
             with res_path.open() as f:
                 return f.read()
 

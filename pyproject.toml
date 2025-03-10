@@ -116,9 +116,6 @@ ignore = ["D100", "D104", "D107", "D203", "D212", "D402", "E501", "PT001", "PT02
 #   tests/* | ANN201 | ignore public functions
 #   tests/* | ANN401 | ignore use of 'Any' type
 #   tests/* |   S101 | ignore use of assert
-"src/assets_tracking_service/lib/*" = ["D101", "D102"]
-#     lib/* |   D101 | lib code out of scope
-#     lib/* |   D102 | lib code out of scope
 
 [tool.sqlfluff.core]
 dialect = "postgres"
@@ -180,10 +177,7 @@ directory = "htmlcov"
 [tool.coverage.run]
 branch = true
 source = ["src"]
-omit = [
-    "src/assets_tracking_service/lib/bas_esri_utils/*",
-    "src/assets_tracking_service/exporters/arcgis.py",
-]
+omit = []
 
 [build-system]
 requires = ["hatchling"]
