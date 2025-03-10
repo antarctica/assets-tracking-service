@@ -106,9 +106,9 @@ class ArcGisExporterLayer:
         The 'geojson' column:
         - MUST contain a GeoJSON feature collection, which MAY be empty
 
-        TODO: Change to use `_geojson` suffix so source_view can be used for other purposes.
+        Views MUST be named in the form `{layer.source_view}_geojson`. (E.g. `v_foo_geojson` for a source view `v_foo`).
         """
-        source_view = self._layer.source_view
+        source_view = f"{self._layer.source_view}_geojson"
 
         # noinspection SqlResolve
         result = self._db.get_query_result(

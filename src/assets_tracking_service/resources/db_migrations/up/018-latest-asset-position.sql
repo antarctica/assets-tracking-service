@@ -70,7 +70,7 @@ END $$;
 INSERT INTO public.layer (slug, source_view)
 VALUES (
     'ats_latest_assets_position',
-    'v_latest_assets_pos_geojson'
+    'v_latest_assets_pos'
 )
 ON CONFLICT (slug)
 DO NOTHING;

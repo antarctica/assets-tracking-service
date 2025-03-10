@@ -462,7 +462,7 @@ def fx_layer_pre_init(fx_record_layer_slug: str) -> LayerNew:
     """Layer that has not yet been initialised."""
     return LayerNew(
         slug=fx_record_layer_slug,
-        source_view="v_latest_assets_pos_geojson",
+        source_view="v_latest_assets_pos",
     )
 
 

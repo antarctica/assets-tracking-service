@@ -36,14 +36,6 @@ BEGIN
     END IF;
 END $$;
 
-INSERT INTO public.layer (slug, source_view)
-VALUES (
-    'ats_latest_assets_position',
-    'v_latest_assets_pos_geojson'
-)
-ON CONFLICT (slug)
-DO NOTHING;
-
 -- record latest migration
 UPDATE public.meta_migration
 SET migration_id = 19, migration_label = '019-collection-record'
