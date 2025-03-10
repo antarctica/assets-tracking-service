@@ -35,6 +35,15 @@ class ConfigurationError(Exception):
     pass
 
 
+class ArcGISGroupInfo(TypedDict):
+    """Types for `EXPORTER_ARCGIS_GROUP_INFO`."""
+
+    name: str
+    summary: str
+    description_file: str
+    thumbnail_file: str
+
+
 # noinspection PyPep8Naming
 class Config:
     """Application configuration."""
@@ -182,6 +191,8 @@ class Config:
         EXPORTER_ARCGIS_PASSWORD: str
         EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL: str
         EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER: str
+        EXPORTER_ARCGIS_FOLDER_NAME: str
+        EXPORTER_ARCGIS_GROUP_INFO: ArcGISGroupInfo
         EXPORTER_DATA_CATALOGUE_OUTPUT_PATH: str
         EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID: str
 
@@ -215,6 +226,8 @@ class Config:
             "EXPORTER_ARCGIS_PASSWORD": self.EXPORTER_ARCGIS_PASSWORD_SAFE,
             "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": self.EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL,
             "EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": self.EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER,
+            "EXPORTER_ARCGIS_FOLDER_NAME": self.EXPORTER_ARCGIS_FOLDER_NAME,
+            "EXPORTER_ARCGIS_GROUP_INFO": self.EXPORTER_ARCGIS_GROUP_INFO,
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
             "EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID": self.EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID,
         }
@@ -467,6 +480,25 @@ class Config:
         """
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_ARCGIS_"):
             return self.env.str("BASE_ENDPOINT_SERVER")
+
+    @property
+    def EXPORTER_ARCGIS_FOLDER_NAME(self) -> str:
+        """
+        Name of folder ArcGIS items will be stored in.
+
+        Contained within ArcGIS user specified by `EXPORTER_ARCGIS_USERNAME`.
+        """
+        return "prj-assets-tracking-service"
+
+    @property
+    def EXPORTER_ARCGIS_GROUP_INFO(self) -> ArcGISGroupInfo:
+        """Details for the group ArcGIS items will be published to."""
+        return {
+            "name": "Assets Tracking Service",
+            "summary": "Resources pertaining to the BAS Assets Tracking Service, a service to track the location of BAS assets, including ships, aircraft, and vehicles.",
+            "description_file": "description.md",
+            "thumbnail_file": "thumbnail.png",
+        }
 
     @property
     def EXPORTER_DATA_CATALOGUE_OUTPUT_PATH(self) -> Path:
