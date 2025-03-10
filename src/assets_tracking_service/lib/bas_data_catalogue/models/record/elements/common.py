@@ -124,6 +124,7 @@ class Contact:
 
     @property
     def role(self) -> list[ContactRoleCode]:
+        """Role(s)."""
         return self._role
 
     @role.setter
