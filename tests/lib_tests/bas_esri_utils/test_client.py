@@ -6,7 +6,6 @@ import geojson
 import pytest
 from arcgis.gis import Group, Item, ItemTypeEnum, SharingLevel
 from arcgis.gis._impl._content_manager import Folder
-from conftest import _create_fake_arcgis_item
 from geojson import Feature, FeatureCollection, Point
 from pytest_mock import MockerFixture
 
@@ -23,6 +22,7 @@ from assets_tracking_service.lib.bas_esri_utils.client import (
     GroupSharingLevel,
 )
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as ItemArc
+from tests.conftest import _create_fake_arcgis_item
 
 
 class TestGroupSharingLevel:
