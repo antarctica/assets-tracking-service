@@ -189,21 +189,32 @@ class TestArcGisClient:
         with pytest.raises(ArcGISItemDataEmptyError):
             fx_lib_arcgis_client.create_item(folder_name="x", cat_item_arc=fx_lib_catalogue_arcgis_item, data=data)
 
+    @pytest.mark.parametrize(
+        "item_type",
+        [
+            (ItemTypeEnum.GEOJSON, ItemTypeEnum.FEATURE_SERVICE),
+            (ItemTypeEnum.FEATURE_SERVICE, ItemTypeEnum.OGCFEATURESERVER),
+        ],
+    )
     def test_publish_item(
-        self, mocker: MockerFixture, fx_lib_arcgis_client: ArcGisClient, fx_lib_catalogue_arcgis_item: ItemArc
+        self,
+        mocker: MockerFixture,
+        fx_lib_arcgis_client: ArcGisClient,
+        fx_lib_catalogue_arcgis_item: ItemArc,
+        item_type: tuple[ItemTypeEnum],
     ):
         """Can publish an item from an existing item."""
         src_item = _create_fake_arcgis_item(item_id="x")
         expected = _create_fake_arcgis_item(item_id="y")
         src_cat_item = ItemArc(
             record=fx_lib_catalogue_arcgis_item._record,
-            arcgis_item_type=ItemTypeEnum.GEOJSON,
+            arcgis_item_type=item_type[0],
             arcgis_item_id="x",
             arcgis_item_name="x",
         )
         dest_cat_item = ItemArc(
             record=fx_lib_catalogue_arcgis_item._record,
-            arcgis_item_type=ItemTypeEnum.FEATURE_SERVICE,
+            arcgis_item_type=item_type[1],
             arcgis_item_id="y",
             arcgis_item_name="y",
         )
@@ -360,7 +371,7 @@ class TestArcGisClient:
         fx_lib_arcgis_client.overwrite_service_features(features_id="x", geojson_id="y", data=data)
 
     def test_overwrite_service_features_failed(self, mocker: MockerFixture, fx_lib_arcgis_client: ArcGisClient):
-        """Cannot overwrite features in feature service if an overwrite failure occurs."""
+        """Cannot overwrite features in feature service but handles error if a 500 error occurs."""
         data = FeatureCollection(features=[Feature(geometry=Point(coordinates=(0, 0)), properties={"id": "x"})])
         mocker.patch.object(fx_lib_arcgis_client, "get_item", side_effect=self._get_item_override_feat)
 
@@ -372,4 +383,19 @@ class TestArcGisClient:
         feat_collection.manager.overwrite.side_effect = Exception("Internal Server Error")
 
         with pytest.raises(ArcGISInternalServerError):
+            fx_lib_arcgis_client.overwrite_service_features(features_id="x", geojson_id="y", data=data)
+
+    def test_overwrite_service_features_error(self, mocker: MockerFixture, fx_lib_arcgis_client: ArcGisClient):
+        """Cannot overwrite features in feature service and raises exception."""
+        data = FeatureCollection(features=[Feature(geometry=Point(coordinates=(0, 0)), properties={"id": "x"})])
+        mocker.patch.object(fx_lib_arcgis_client, "get_item", side_effect=self._get_item_override_feat)
+
+        feat_collection = mocker.MagicMock(auto_spec=True)
+        mocker.patch(
+            "assets_tracking_service.lib.bas_esri_utils.client.FeatureLayerCollection.fromitem",
+            return_value=feat_collection,
+        )
+        feat_collection.manager.overwrite.side_effect = Exception("x")
+
+        with pytest.raises(Exception):  # noqa: B017, PT011
             fx_lib_arcgis_client.overwrite_service_features(features_id="x", geojson_id="y", data=data)

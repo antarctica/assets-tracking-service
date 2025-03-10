@@ -88,13 +88,7 @@ class ArcGisExporterLayer:
 
     def _get_layer(self) -> Layer:
         """Get model for layer."""
-        layer = self._layers.get_by_slug(self._slug)
-
-        if layer is None:
-            msg = f"Layer not found for '{self._slug}'"
-            raise ValueError(msg)
-
-        return layer
+        return self._layers.get_by_slug(self._slug)
 
     def _get_data(self) -> FeatureCollection:
         """
@@ -162,8 +156,8 @@ class ArcGisExporterLayer:
         metadata_ = self._layer.metadata_last_refreshed
         if isinstance(metadata_, datetime):
             metadata_ = metadata_.isoformat()
-        self._logger.debug(f":Layer.data_last_refreshed now '{data_}'.")
-        self._logger.debug(f":Layer.metadata_last_refreshed now '{metadata_}'.")
+        self._logger.debug(f"Layer.data_last_refreshed now '{data_}'.")
+        self._logger.debug(f"Layer.metadata_last_refreshed now '{metadata_}'.")
 
     def _set_refreshed_at(self, arc_item: ArcGISItem) -> None:
         """Update layer last_refreshed timestamps based on ArcGIS item."""
@@ -292,19 +286,15 @@ class ArcGisExporter(Exporter):
 
         self._logger.info("Creating exporter classes for each layer...")
         for slug in self._layers.list_slugs():
-            try:
-                layer = ArcGisExporterLayer(
-                    config=self._config,
-                    db=self._db,
-                    logger=self._logger,
-                    arcgis=self._arcgis,
-                    layers=self._layers,
-                    layer_slug=slug,
-                )
-                layers.append(layer)
-            except ValueError:
-                self._logger.exception("Failed to create layer for slug '%s', skipping.", slug)
-                continue
+            layer = ArcGisExporterLayer(
+                config=self._config,
+                db=self._db,
+                logger=self._logger,
+                arcgis=self._arcgis,
+                layers=self._layers,
+                layer_slug=slug,
+            )
+            layers.append(layer)
 
         return layers
 

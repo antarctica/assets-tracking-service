@@ -1,8 +1,10 @@
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from _pytest.logging import LogCaptureFixture
 from arcgis.gis import Group, ItemTypeEnum, SharingLevel
 from geojson import FeatureCollection
 from pytest_mock import MockerFixture
@@ -15,6 +17,7 @@ from assets_tracking_service.exporters.arcgis import (
     ArcGisExporterLayer,
 )
 from assets_tracking_service.models.layer import Layer, LayersClient
+from tests.conftest import _create_fake_arcgis_item
 
 
 class TestArcGisExporterLayer:
@@ -80,7 +83,16 @@ class TestArcGisExporterLayer:
         assert layer == fx_layer_init
 
     def test_get_data(self, fx_exporter_arcgis_layer: ArcGisExporterLayer):
-        """Can get data from source view/table."""
+        """Can get geojson feature collection from source view/table."""
+        data = fx_exporter_arcgis_layer._get_data()
+
+        assert isinstance(data, FeatureCollection)
+
+    def test_get_data_empty(self, mocker: MockerFixture, fx_exporter_arcgis_layer: ArcGisExporterLayer):
+        """Can make geojson feature collection from empty source view/table."""
+        q = (('{"type" : "FeatureCollection", "features" : null}',),)
+        mocker.patch.object(fx_exporter_arcgis_layer._db, "get_query_result", return_value=q)
+
         data = fx_exporter_arcgis_layer._get_data()
 
         assert isinstance(data, FeatureCollection)
@@ -126,6 +138,40 @@ class TestArcGisExporterLayer:
         """Can get portrayal information from resource file."""
         portrayal = fx_exporter_arcgis_layer._get_portrayal()
         assert portrayal is not None
+
+    @pytest.mark.cov()
+    @pytest.mark.parametrize("set_dates", [True, False])
+    def test_log_last_refreshed(
+        self, caplog: LogCaptureFixture, fx_exporter_arcgis_layer: ArcGisExporterLayer, set_dates: bool
+    ):
+        """Can log last refreshed time."""
+        data_ = None
+        metadata_ = None
+        if set_dates:
+            dt = datetime.now(tz=UTC)
+            fx_exporter_arcgis_layer._layer.data_last_refreshed = dt
+            fx_exporter_arcgis_layer._layer.metadata_last_refreshed = dt
+            data_ = dt.isoformat()
+            metadata_ = dt.isoformat()
+
+        fx_exporter_arcgis_layer._log_last_refreshed()
+
+        assert f"Layer.data_last_refreshed now '{data_}'." in caplog.messages
+        assert f"Layer.metadata_last_refreshed now '{metadata_}'." in caplog.messages
+
+    @pytest.mark.cov()
+    def test_set_refreshed_at_layers(self, mocker: MockerFixture, fx_exporter_arcgis_layer: ArcGisExporterLayer):
+        """Can set dates based on layer in ArcGIS item."""
+        ts = datetime.now(tz=UTC).timestamp() * 1000
+        item = _create_fake_arcgis_item(item_id="x", item_type=ItemTypeEnum.FEATURE_SERVICE)
+        item.updated = ts
+        layer = mocker.MagicMock(auto_spec=True)
+        layer.properties.editingInfo.dataLastEditDate = ts
+        layers = [layer]
+        item.layers = layers
+        item["layers"] = layers
+
+        fx_exporter_arcgis_layer._set_refreshed_at(item)
 
     def test_setup(self, fx_exporter_arcgis_layer: ArcGisExporterLayer):
         """Creates items for layer."""

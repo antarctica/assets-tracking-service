@@ -65,13 +65,13 @@ def _prepare_blank_db(db_client: DatabaseClient) -> None:
         db_client.execute(query=SQL("CREATE USER assets_tracking_service_ro NOLOGIN;"))
 
 
-def _create_fake_arcgis_item(item_id: str) -> Item:
+def _create_fake_arcgis_item(item_id: str, item_type: ItemTypeEnum = ItemTypeEnum.GEOJSON) -> Item:
     """Create a fake ArcGIS Item."""
     item_data = {
         "title": "x",
         "name": "x",  # file-name
         "owner": "x",
-        "type": "x",
+        "type": item_type.value,
         "modified": datetime.now(tz=UTC).timestamp() * 1000,
         "id": item_id,
         "sharing_level": SharingLevel.PRIVATE,
