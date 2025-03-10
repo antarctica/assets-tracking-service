@@ -1,12 +1,15 @@
+import json
 import logging
 from datetime import UTC, datetime
 from tempfile import TemporaryDirectory
 
 from arcgis import GIS
+from arcgis.gis import Group, ItemTypeEnum, SharingLevel
 from arcgis.gis import Item as ArcGISItem
-from arcgis.gis import ItemTypeEnum
 from geojson import FeatureCollection
 from geojson import loads as geojson_loads
+from importlib_resources import as_file as resources_as_file
+from importlib_resources import files as resources_files
 from psycopg.sql import SQL, Identifier
 
 from assets_tracking_service.config import Config
@@ -14,7 +17,7 @@ from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.exporters.base_exporter import Exporter
 from assets_tracking_service.exporters.catalogue import LayerRecord
 from assets_tracking_service.lib.bas_data_catalogue.models.item import AccessType
-from assets_tracking_service.lib.bas_esri_utils.arcgis import ArcGisClient
+from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
 from assets_tracking_service.models.layer import Layer, LayersClient
 from assets_tracking_service.models.record import RecordsClient
@@ -123,6 +126,35 @@ class ArcGisExporterLayer:
 
         return data
 
+    def _get_group(self) -> Group:
+        """
+        Get application ArcGIS group or create if missing.
+
+        This group is used for all layers and so likely to already exist.
+        """
+        group_info = self._config.EXPORTER_ARCGIS_GROUP_INFO
+        with resources_as_file(resources_files("assets_tracking_service.resources.arcgis_group")) as resources_path:
+            thumbnail_path = resources_path / group_info["thumbnail_file"]
+
+            description_path = resources_path / group_info["description_file"]
+            with description_path.open() as f:
+                description = f.read()
+
+            return self._arcgis_client.create_group(
+                title=group_info["name"],
+                snippet=group_info["summary"],
+                description=description,
+                thumbnail_path=thumbnail_path,
+                sharing_level=SharingLevel.EVERYONE,
+            )
+
+    def _get_portrayal(self) -> dict:
+        """Get portrayal information (symbology, fields, popups) for layer from a resource file."""
+        with resources_as_file(resources_files("assets_tracking_service.resources.arcgis_layers")) as resources_path:
+            data_path = resources_path / f"{self._slug}" / "portrayal.json"
+            with data_path.open() as f:
+                return json.load(f)
+
     def _log_last_refreshed(self) -> None:
         data_ = self._layer.data_last_refreshed
         if isinstance(data_, datetime):
@@ -135,14 +167,14 @@ class ArcGisExporterLayer:
 
     def _set_refreshed_at(self, arc_item: ArcGISItem) -> None:
         """Update layer last_refreshed timestamps based on ArcGIS item."""
-        self._logger.debug(f"Updating layer.data_last_refreshed based on arc item '{arc_item.itemid}'...")
+        self._logger.debug(f"Updating layer.data_last_refreshed based on arc item '{arc_item.id}'...")
         # noinspection PyProtectedMember
         if arc_item._has_layers():
-            self._logger.debug(f"Updating layer.data_last_refreshed based on arc item '{arc_item.itemid}'...")
+            self._logger.debug(f"Updating layer.data_last_refreshed based on arc item '{arc_item.id}'...")
             dt = datetime.fromtimestamp(arc_item.layers[0].properties.editingInfo.dataLastEditDate / 1000, tz=UTC)
             self._layers.set_last_refreshed(self._slug, data_refreshed=dt)
 
-        self._logger.debug(f"Updating layer.metadata_last_refreshed based on arc item '{arc_item.itemid}'...")
+        self._logger.debug(f"Updating layer.metadata_last_refreshed based on arc item '{arc_item.id}'...")
         t = datetime.fromtimestamp(arc_item.modified / 1000, tz=UTC)
         self._layers.set_last_refreshed(self._slug, metadata_refreshed=t)
 
@@ -152,14 +184,21 @@ class ArcGisExporterLayer:
 
     def setup(self) -> None:
         """
-        Create missing ArcGIS items and services for layer.
+        Create ArcGIS items for layer and if needed, their containing folder and group.
 
         Feature layers require a data source which is currently a GeoJSON file populated from the source view.
         """
+        group = self._get_group()
+
         if self._layer.agol_id_geojson is None:
             self._logger.info("Creating Arc GeoJSON item...")
-            geojson_item = self._arcgis_client.create_item(self._catalogue_item_arc_geojson, data=self._get_data())
-            self._layers.set_item_id(self._slug, geojson_id=geojson_item.itemid)
+            geojson_item = self._arcgis_client.create_item(
+                folder_name=self._config.EXPORTER_ARCGIS_FOLDER_NAME,
+                cat_item_arc=self._catalogue_item_arc_geojson,
+                data=self._get_data(),
+            )
+            # GeoJSON item is an implementation detail of the feature layer and so not added to the group
+            self._layers.set_item_id(self._slug, geojson_id=geojson_item.id)
             self._logger.info("Created Arc GeoJSON item [%s].", geojson_item.id)
             self._set_refreshed_at(geojson_item)
 
@@ -168,7 +207,8 @@ class ArcGisExporterLayer:
             feature_item = self._arcgis_client.publish_item(
                 self._catalogue_item_arc_geojson, self._catalogue_item_arc_feature
             )
-            self._layers.set_item_id(self._slug, feature_id=feature_item.itemid)
+            self._arcgis_client.add_item_to_group(item=feature_item, group=group)
+            self._layers.set_item_id(self._slug, feature_id=feature_item.id)
             self._logger.info("Published Arc feature layer item [%s].", feature_item.id)
             self._set_refreshed_at(feature_item)
 
@@ -177,7 +217,8 @@ class ArcGisExporterLayer:
             ogc_feature_item = self._arcgis_client.publish_item(
                 self._catalogue_item_arc_feature, self._catalogue_item_arc_ogc_feature
             )
-            self._layers.set_item_id(self._slug, feature_ogc_id=ogc_feature_item.itemid)
+            self._arcgis_client.add_item_to_group(item=ogc_feature_item, group=group)
+            self._layers.set_item_id(self._slug, feature_ogc_id=ogc_feature_item.id)
             self._logger.info("Published Arc OGC feature layer item [%s].", ogc_feature_item.id)
             self._set_refreshed_at(ogc_feature_item)
 
@@ -197,21 +238,24 @@ class ArcGisExporterLayer:
             self._arcgis_client.overwrite_service_features(
                 geojson_id=self._layer.agol_id_geojson, features_id=self._layer.agol_id_feature, data=self._get_data()
             )
+            self._logger.debug("Features in Arc feature layer [%s] overwritten.", self._layer.agol_id_feature)
 
             self._logger.info("Updating metadata for source Arc GeoJSON item...")
             geojson_item = self._arcgis_client.update_item(self._catalogue_item_arc_geojson)
-            self._logger.info("Arc geojson item [%s] details updated.", geojson_item.itemid)
+            self._logger.info("Arc geojson item [%s] details updated.", geojson_item.id)
             _refresh_item = geojson_item
 
             self._logger.info("Updating metadata for Arc feature layer item...")
-            feature_item = self._arcgis_client.update_item(self._catalogue_item_arc_feature)
-            self._logger.info("Arc feature item [%s] details updated.", feature_item.itemid)
+            feature_item = self._arcgis_client.update_item(
+                self._catalogue_item_arc_feature, item_portrayal=self._get_portrayal()
+            )
+            self._logger.info("Arc feature item [%s] details updated.", feature_item.id)
             _refresh_item = feature_item
 
         if self._layer.agol_id_feature_ogc is not None:
             self._logger.info("Updating metadata for Arc OGC feature layer item...")
             ogc_feature_item = self._arcgis_client.update_item(self._catalogue_item_arc_ogc_feature)
-            self._logger.info("Arc OGC feature item [%s] details updated.", ogc_feature_item.itemid)
+            self._logger.info("Arc OGC feature item [%s] details updated.", ogc_feature_item.id)
             _refresh_item = ogc_feature_item
 
         if _refresh_item is not None:

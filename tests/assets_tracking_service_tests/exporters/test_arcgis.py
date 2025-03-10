@@ -1,7 +1,9 @@
 import logging
+from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
-from arcgis.gis import ItemTypeEnum, SharingLevel
+from arcgis.gis import Group, ItemTypeEnum, SharingLevel
 from geojson import FeatureCollection
 from pytest_mock import MockerFixture
 
@@ -26,7 +28,7 @@ class TestArcGisExporterLayer:
         fx_logger: logging.Logger,
         fx_record_layer_slug: str,
     ):
-        """Initialises."""
+        """Can initialise."""
         layers_client = LayersClient(db_client=fx_db_client_tmp_db_mig, logger=fx_logger)
 
         mock_gis = mocker.MagicMock(auto_spec=True)
@@ -45,7 +47,7 @@ class TestArcGisExporterLayer:
         )
 
     def test_catalogue_item_arc_geojson(self, fx_exporter_arcgis_layer_updated: ArcGisExporterLayer):
-        """Get layer as catalogue ArcGIS GeoJSON item."""
+        """Can get layer as catalogue ArcGIS GeoJSON item."""
         item = fx_exporter_arcgis_layer_updated._catalogue_item_arc_geojson
 
         assert item is not None
@@ -56,7 +58,7 @@ class TestArcGisExporterLayer:
         assert item.sharing_level == SharingLevel.PRIVATE
 
     def test_catalogue_item_arc_feature(self, fx_exporter_arcgis_layer_updated: ArcGisExporterLayer):
-        """Get layer as catalogue ArcGIS feature item."""
+        """Can get layer as catalogue ArcGIS feature item."""
         item = fx_exporter_arcgis_layer_updated._catalogue_item_arc_feature
 
         assert item is not None
@@ -64,7 +66,7 @@ class TestArcGisExporterLayer:
         assert item.item_type == ItemTypeEnum.FEATURE_SERVICE
 
     def test_catalogue_item_arc_ogc_feature(self, fx_exporter_arcgis_layer_updated: ArcGisExporterLayer):
-        """Get layer as catalogue ArcGIS OGC feature item."""
+        """Can get layer as catalogue ArcGIS OGC feature item."""
         item = fx_exporter_arcgis_layer_updated._catalogue_item_arc_ogc_feature
 
         assert item is not None
@@ -72,16 +74,58 @@ class TestArcGisExporterLayer:
         assert item.item_type == ItemTypeEnum.OGCFEATURESERVER
 
     def test_get_layer(self, fx_exporter_arcgis_layer: ArcGisExporterLayer, fx_layer_init: Layer):
-        """Get Layer."""
+        """Can get Layer."""
         layer = fx_exporter_arcgis_layer._get_layer()
 
         assert layer == fx_layer_init
 
     def test_get_data(self, fx_exporter_arcgis_layer: ArcGisExporterLayer):
-        """Get data."""
+        """Can get data from source view/table."""
         data = fx_exporter_arcgis_layer._get_data()
 
         assert isinstance(data, FeatureCollection)
+
+    @staticmethod
+    def _get_group_create_group(
+        title: str,
+        snippet: str | None = None,
+        description: str | None = None,
+        thumbnail_path: Path | None = None,
+        sharing_level: SharingLevel = SharingLevel.PRIVATE,
+    ) -> Group:
+        """Check group is passed correct values."""
+        mock_gis = MagicMock(auto_spec=True)
+        return Group(
+            gis=mock_gis,
+            groupid="x",
+            groupdict={
+                "title": title,
+                "snippet": snippet,
+                "description": description,
+                "thumbnail": thumbnail_path,
+                "access": sharing_level,
+            },
+        )
+
+    def test_get_group(self, mocker: MockerFixture, fx_exporter_arcgis_layer: ArcGisExporterLayer):
+        """Get ArcGIS group for project."""
+        mocker.patch.object(
+            fx_exporter_arcgis_layer._arcgis_client, "create_group", side_effect=self._get_group_create_group
+        )
+        group_info = fx_exporter_arcgis_layer._config.EXPORTER_ARCGIS_GROUP_INFO
+
+        group = fx_exporter_arcgis_layer._get_group()
+        assert group.groupid == "x"
+        assert group.title == group_info["name"]
+        assert group.snippet == group_info["summary"]
+        assert ".." in group.description  # updating when group description is set properly
+        assert group.access == SharingLevel.EVERYONE
+        # can't test thumbnail
+
+    def test_get_portrayal(self, fx_exporter_arcgis_layer: ArcGisExporterLayer):
+        """Can get portrayal information from resource file."""
+        portrayal = fx_exporter_arcgis_layer._get_portrayal()
+        assert portrayal is not None
 
     def test_setup(self, fx_exporter_arcgis_layer: ArcGisExporterLayer):
         """Creates items for layer."""
