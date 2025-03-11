@@ -14,8 +14,8 @@ End users may access information through a combination of:
 
 - primary (upstream) tracking services (i.e. that receive data from the GPS device tracking an asset)
 - this service, via one of it's [Exports](#exporters)
-- another service dependant on this service (such as the Embedded Maps Service)
-- (other unrelated services (such as Flight Radar, Marine Traffic, etc.) - out of scoope for this documentation)
+- another service dependent on this service (such as the Embedded Maps Service)
+- (other unrelated services (such as Flight Radar, Marine Traffic, etc.) - out of scope for this documentation)
 
 As a high-level data flow:
 
@@ -91,20 +91,18 @@ Cron is used to call relevant [CLI](#command-line-interface) commands every 5 mi
 
 See [Configuration](./config.md) documentation.
 
+## Models
+
+Models defined in `assets_tracking_service.models` represent entities in the application
+[Data Model](./data-model.md) and manage data in the [Database](#database).
+
 ## Database
 
 [PostgreSQL](https://www.postgresql.org) with the [PostGIS](https://postgis.net) geospatial extension is used for
 persisting information.
 
-A number of custom functions are used for:
-
-- working with [ULIDs](https://github.com/ulid/spec)
-- formatting coordinates in the DDM form
-- validating [Labels](./data-model.md#labels-validation)
-- setting 'updated_at' values
-
-These functions, and entities to implement the application [Data Model](./data-model.md), including
-[Views](./data-model.md#views), are defined in [Database Migrations](#database-migrations).
+[Database Migrations](#database-migrations) define all entities, functions, etc. needed to implement the application
+[Data Model](./data-model.md), including [Views](./data-model.md#views).
 
 ### Database client
 
@@ -112,7 +110,7 @@ A basic [psycopg3](https://www.psycopg.org/psycopg3/) based [Database Client](..
 used as an interface between the application and the database.
 
 **Note:** This database client runs a `set timezone to 'UTC'` to ensure all data is returned in the correct timezone.
-`
+
 ### Database migrations
 
 A basic database migrations implementation is used to manage objects within the application [Database](#database).
@@ -146,6 +144,10 @@ select *
 from pg_catalog.pg_stat_activity
 where datname = 'assets-tracking-service';
 ```
+
+## Library extensions
+
+See [Libraries](./libraries.md) documentation.
 
 ## Logs
 

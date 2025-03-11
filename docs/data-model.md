@@ -3,7 +3,7 @@
 ## Overview
 
 This data model implements the abstract [Information Model](./info-model.md) using a relational database, specifically
-PostgreSQL and PostGIS for use with the [Application Database](./implementation.md#database).
+PostgreSQL and PostGIS as an [Application Database](./implementation.md#database).
 
 [Database Migrations](./implementation.md#database-migrations) represent the normative/authoritative definition of
 this model. This documentation is for information only.
@@ -12,9 +12,10 @@ this model. This documentation is for information only.
 
 In general:
 
-- the Asset and Asset Position entities are mapped to database tables
+- the Asset and Asset Position entities, and Layer and Record meta-entities, are mapped to database tables
 - the Labels entity is implemented as a JSONB column (with labels encoded as JSON) within relevant tables
-- an additional `nvs_l06_lookup` lookup table is used to support views
+- an additional `nvs_l06_lookup` table is used to support views
+- an additional `meta_migration` table is used to track [Database Migrations](./implementation.md#database-migrations)
 
 ## Asset
 
@@ -164,6 +165,106 @@ Entity name/reference: `public.nvs_l06_lookup`
 Provides a key, value (code, label) lookup for use in DB views. It allows a human-readable label to be returned for a
 NVS L06 code (e.g. a code of '31' is returned as 'RESEARCH VESSEL').
 
+## Migration
+
+Entity type: *table*
+
+Entity name/reference: `public.meta_migration`
+
+Records the currently applied [Database Migration](./implementation.md#database-migrations), a concept specific to this
+data model.
+
+| Property (Abstract) | Property (Database)         | Data Type   | Constraints |
+|---------------------|-----------------------------|-------------|-------------|
+| -                   | `pk`                        | INTEGER     | Primary key |
+| -                   | `migration_id`              | INTEGER     | Not null    |
+| -                   | `migration_label`           | TEXT        | Not null    |
+| -                   | [`created_at`](#created-at) | TIMESTAMPTZ | Not null    |
+| -                   | [`updated_at`](#updated-at) | TIMESTAMPTZ | Not null    |
+
+## Layer
+
+Entity type: *table*
+
+Entity name/reference: `public.layer`
+
+| Property (Abstract) | Property (Database)         | Data Type   | Constraints                                                |
+|---------------------|-----------------------------|-------------|------------------------------------------------------------|
+| -                   | `pk`                        | INTEGER     | Primary key                                                |
+| `slug`              | `slug`                      | TEXT        | Not null, unique                                           |
+| `source`            | `source_view`               | TEXT        | Check (`are_labels_v1_valid`, `are_labels_v1_valid_asset`) |
+| -                   | `agol_id_geojson`           | TEXT        | -                                                          |
+| -                   | `agol_id_feature`           | TEXT        | -                                                          |
+| -                   | `agol_id_feature_ogc`       | TEXT        | -                                                          |
+| -                   | `data_last_refreshed`       | TIMESTAMPTZ | -                                                          |
+| -                   | `metadata_last_refreshed`   | TIMESTAMPTZ | -                                                          |
+| -                   | [`created_at`](#created-at) | TIMESTAMPTZ | Not null                                                   |
+| -                   | [`updated_at`](#updated-at) | TIMESTAMPTZ | Not null                                                   |
+
+### Layer source view
+
+A reference to a view containing the source data for a layer.
+
+### Layer AGOL IDs
+
+Set when a layer is published to ArcGIS Online, recorded as a ArcGIS item ID for relevant layer types
+(GeoJSON, Feature Service, OGC API Features).
+
+### Data last refreshed
+
+Records when data in a layer was last published to a hosting platform, which is assumed to be ArcGIS Online.
+
+### Metadata last refreshed
+
+Records when metadata for a layer was last updated in a hosting platform, which is assumed to be ArcGIS Online.
+
+## Record
+
+Entity type: *table*
+
+Entity name/reference: `public.record`
+
+A subset of the [ISO 19115](https://metadata-standards.data.bas.ac.uk/standards/iso-19115-19139) information model.
+
+| Property (Abstract) | Property (Database)         | Data Type   | Constraints                                                |
+|---------------------|-----------------------------|-------------|------------------------------------------------------------|
+| -                   | `pk`                        | INTEGER     | Primary key                                                |
+| -                   | `id`                        | UUID        | Not null, unique                                           |
+| -                   | `slug`                      | TEXT        | Not null, unique                                           |
+| -                   | `edition`                   | TEXT        | Check (`are_labels_v1_valid`, `are_labels_v1_valid_asset`) |
+| -                   | `title`                     | TEXT        | Not null                                                   |
+| -                   | `summary`                   | TEXT        | Not null                                                   |
+| -                   | `publication`               | TIMESTAMPTZ | Not null                                                   |
+| -                   | `released`                  | TIMESTAMPTZ | Not null                                                   |
+| -                   | `update_frequency`          | TEXT        | Not null                                                   |
+| -                   | `gitlab_issue`              | TEXT        | -                                                          |
+| -                   | [`created_at`](#created-at) | TIMESTAMPTZ | Not null                                                   |
+| -                   | [`updated_at`](#updated-at) | TIMESTAMPTZ | Not null                                                   |
+
+### Record slug
+
+A value corresponding to the `slug` of a [Layer](#layer) used as a foreign key.
+
+### Record ISO 19115 properties
+
+| Property (Database) | Property (Resource File) | Property (ISO 19115)                                           | Required |
+|---------------------|--------------------------|----------------------------------------------------------------|----------|
+| `title`             | -                        | `identification.title.value`                                   | Yes      |
+| `edition`           | -                        | `identification.edition`                                       | Yes      |
+| `summary`           | -                        | `identification.purpose`                                       | Yes      |
+| -                   | `abstract.md`            | `identification.abstract`                                      | Yes      |
+| `publication`       | -                        | `identification.dates.publication`                             | Yes      |
+| `released`          | -                        | `identification.dates.released`                                | Yes      |
+| `update_frequency`  | -                        | `identification.maintenance.update_frequency`                  | Yes      |
+| `gitlab_issue`      | -                        | `identification.identifiers[namespace='gitlab.data.bas.ac.uk]` | No       |
+| -                   | `lineage.md`             | `data_quality.lineage.statement`                               | No       |
+
+Values for `update_frequency` MUST be taken from the ISO 19915
+[`MD_MaintenanceFrequencyCode`](https://wiki.esipfed.org/ISO_19115-3_Codelists#MD_MaintenanceFrequencyCode) code list.
+
+Values for `abstract` and `lineage` are stored as Markdown files in a resource directory
+(`assets_tracking_service.resources/records/`) for ease of composition.
+
 ## Common properties
 
 ### Primary keys
@@ -188,7 +289,6 @@ an implementation detail and:
 - MUST NOT be relied upon existing or being correct
 - values are set automatically to the current time in UTC when data in a row is changed via a trigger
 
-
 ## Views
 
 ### `v_util_basic`
@@ -202,7 +302,7 @@ Intended as a basic, low level, sanity check of the data model.
 
 Not intended for any particular purpose, or to be used as the basis for other views.
 
-### `v_latest_asset_pos`
+### `v_latest_assets_pos`
 
 A view returning information on the latest position for each asset (based on position time).
 
@@ -219,7 +319,7 @@ A view returning information on the latest position for each asset (based on pos
 
 Intended as the source of latest position layer.
 
-### `v_latest_asset_pos_geojson`
+### `v_latest_assets_pos_geojson`
 
 A view returning results of `v_latest_asset_pos` as a GeoJSON feature collection.
 

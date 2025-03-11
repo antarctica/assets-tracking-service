@@ -135,74 +135,51 @@ Required options:
 
 [ArcGIS](https://www.arcgis.com/) is a geospatial data hosting, publishing and analysis platform used by BAS.
 
-The ArcGIS exporter publishes each [Layer](./data-model.md#layer) to [ArcGIS Online](https://www.arcgis.com) as a
-[Hosted Feature Layer](https://doc.arcgis.com/en/arcgis-online/reference/feature-layers.htm#ESRI_SECTION1_26EBAE21F63042B9A51A4312A08A1B25)
-for use by end-users and downstream services (such as the [Embedded Maps Service 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/embedded-maps)).
+The ArcGIS exporter publishes each [Layer](./data-model.md#layer) to [ArcGIS Online](https://www.arcgis.com) using the
+[BAS Esri Utilities](./libraries.md#bas-esri-utilities) library as a:
 
-Feature Layers are associated with a Feature Service, seeded from a GeoJSON item uploaded to AGOL. These items and
-services sit within one of the [BAS AGOL organisations](https://gitlab.data.bas.ac.uk/MAGIC/general/-/wikis/Esri)
-with group:
+- [Hosted Feature Layer](https://doc.arcgis.com/en/arcgis-online/reference/feature-layers.htm#ESRI_SECTION1_26EBAE21F63042B9A51A4312A08A1B25)
+- [OGC API Features](https://enterprise.arcgis.com/en/server/latest/publish-services/linux/ogc-features-service.htm) layer
 
-- [BAS Primary AGOL](https://bas.maps.arcgis.com/home/group.html?id=46d7a701202442c6abc1b47e4958c0fd)
-- [BAS Test AGOL](https://bas-test.maps.arcgis.com/home/group.html?id=94de4d8f7ab647738250d1675a52bc91)
+These are intended for use by end-users and downstream services (such as the
+[Embedded Maps Service 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/embedded-maps)).
 
-Services and items are managed through the [ArcGIS API for Python](https://developers.arcgis.com/python/).
+Feature Layer items are associated with an underlying Feature Service, which for this project are seeded from a
+GeoJSON item. Items and services are hosted in an ArcGIS Online subscription for each
+[Environment](./infrastructure.md#environments).
+
+A folder within the publishing user's account, and a group within each ArcGIS subscription will be created automatically
+to organise content:
+
+- [Production Group]()
+- [Staging Group](https://bas-test.maps.arcgis.com/home/group.html?id=abe005474c74419abc7671cdfd7f5d56)
 
 #### ArcGIS schemas
 
-Each feature layer's schema is based on the source view for the [Layer](./data-model.md#layer) it is based on.
+Feature layer's schemas are based on the source view for each [Layer](./data-model.md#layer).
 
-An additional `ObjectID` attribute is automatically included in each feature layer schema by ArcGIS. This attribute
-MUST be considered an implementation detail and values MUST be ignored by (and ideally hidden from) end-users and
-downstream services.
+An additional `ObjectID` attribute is automatically included in each schema by ArcGIS. This attribute MUST be
+considered an implementation detail and values MUST be hidden from end-users to the extent possible.
 
-**WARNING!** Values MUST NOT be considered stable and MAY change or reused/reassigned without warning.
+**WARNING!** `ObjectID` values MUST NOT be considered stable and MAY change or reused/reassigned without warning.
 
 #### ArcGIS permissions
 
-Content is shared publicly.
+Content is shared publicly, except for underlying GeoJSON items, as they are implementation detail that should not be
+relied upon.
 
-#### ArcGIS requirements:
+#### ArcGIS requirements
 
-Within each ArcGIS Online organisation:
+Required exporters (MUST be enabled):
 
-- a user for publishing content MUST be provisioned:
-  - this user MUST be assigned the `creator` user type
-  - this user MUST be assigned at least the `publisher` role
-  - this user MUST NOT have multi-factor authentication enabled (to allow non-interactive authentication)
-  - this user SHOULD be the conventional `app_automation_bas` / `app_automation_bas_test`  shared automation user
-- a folder within the publishing user's account SHOULD be created:
-  - this folder SHOULD be named `assets-tracking-service`
-- a group for organising content within the organisation MUST be provisioned:
-  - this group MUST have shared update enabled
-  - this group SHOULD be named `Assets Tracking Service`
-  - group members MUST be limited relevant users
+- [Data Catalogue](#data-catalogue)
 
-#### ArcGIS setup
+Within each ArcGIS Online organisation a user for publishing content MUST be provisioned, which:
 
-**Note:** These instructions are outdated and need revision. They relate to an old provisioning process that is no
-longer valid.
-
-Before it can be updated automatically, the ArcGIS feature service needs to be created and configured.
-
-Prepare data:
-
-- run the [GeoJSON](#geojson) exporter to generate an output
-- rename this output to `ats-all-latest.geojson`
-
-Publish data:
-
-- upload the `ats-all-latest.geojson` output to AGOL and publish as a feature service:
-  - name the service: `ats_all_latest`
-  - name the item for the service `Latest Asset Positions (Assets Tracking Service)`
-- from the new feature service:
-  - set the access level for the item to be public accessible
-  - set basic default visualisation options:
-    - popups: set field order as per [GeoJSON Schema](#geojson-schema)
-    - fields:
-      - `time_utc`, `last_fetched_utc`: set to use 24 hour time with seconds
-      - `lat_dd`, `lon_dd`: show to 8 decimal places
-      - `heading_d`: show to 1 decimal place
+- MUST be assigned the `creator` user type
+- MUST be assigned the `administrator` role (to create restricted groups)
+- MUST NOT have multi-factor authentication enabled (to allow non-interactive authentication)
+- SHOULD be the conventional `app_automation_bas` / `app_automation_bas_test`  shared automation user
 
 #### ArcGIS configuration options
 
@@ -212,6 +189,8 @@ Required options:
 - `EXPORTER_ARCGIS_PASSWORD` -> password of publishing user
 - `EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL` -> base endpoint for the ArcGIS portal instance
 - `EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER` -> base endpoint for the ArcGIS hosting server associated with the portal
+- `EXPORTER_ARCGIS_FOLDER_NAME` -> folder exporter will publish content within
+- `EXPORTER_ARCGIS_GROUP_INFO` -> information needed to create the group published content will be shared with
 
 The base endpoints are currently assumed to be ArcGIS Online organisations which use the form:
 
@@ -220,13 +199,16 @@ The base endpoints are currently assumed to be ArcGIS Online organisations which
 
 See the [Infrastructure](./infrastructure.md#exporters) documentation for values to use for BAS AGOL organisations.
 
+The folder name and group information are hard-coded values and do not need to be set. File references within the
+group information are relative to: `src/assets_tracking_service/resources/arcgis_group/`
+
 ### Data Catalogue
 
 The BAS Data Catalogue is data discovery tool used to find, evaluate and access datasets, products, services and other
 resources produced, managed or used by the British Antarctic Survey and UK Polar Data Centre.
 
-This exporter creates and maintains metadata records for each [Layer](./data-model.md#layer) and associated
-[Record](./data-model.md#record).
+This exporter creates and maintains metadata records for each [Layer](./data-model.md#layer) using an associated
+[Record](./data-model.md#record), and lists these within a [Collection](#data-catalogue-collection).
 
 #### Data Catalogue collection
 
@@ -245,27 +227,17 @@ Records additionally confirm to the
 
 #### Metadata record sources
 
-Information from various sources is combined to maintain metadata records:
+Metadata records combine information from multiple sources:
 
-- data from [Layers](./implementation.md#layers) added by the [ArcGIS](#arcgis) exporter, determines the distribution
-  options to include
-- data from [Records](./implementation.md#records) provides temporal/spatial extent and short form fields such as title,
-  edition, etc.
-- data from the [`records`](/src/assets_tracking_service/resources/records) resource directory provides long-form
-  fields such abstract and lineage
+- [Layers](./data-model.md#layer), managed by the [ArcGIS](#arcgis) exporter, define distribution options ad extents
+- [Records](./data-model.md#record) provide static values for properties such as title, abstract, etc.
 
 #### Data Catalogue publishing
 
 Metadata records are exported to a directory specified by the `EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` config option.
 
-Once exported, record need to be imported into the BAS Data Catalogue via the relevant
+Records need to be imported into the BAS Data Catalogue via the relevant
 [Workflow](https://gitlab.data.bas.ac.uk/MAGIC/add-metadata-toolbox/-/blob/main/docs/workflow-updating-records.md).
-
-#### Data Catalogue requirements
-
-Required exporters (MUST be enabled):
-
-- [ArcGIS](#arcgis)
 
 #### Data Catalogue configuration options
 

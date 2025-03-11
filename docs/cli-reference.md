@@ -18,7 +18,7 @@
 
 ## `db` commands
 
-- `ats-ctl db check`: verifies application database can be accessed
+- `ats-ctl db check`: verifies application database can be accessed and all migrations have been applied
 - `ats-ctl db migrate`: runs all [Database Migrations](./implementation.md#database-migrations) to configure database
 - `ats-ctl db rollback`: reverts all [Database Migrations](./implementation.md#database-migrations) to reset database
 
