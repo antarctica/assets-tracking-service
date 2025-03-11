@@ -2,7 +2,7 @@
 
 ## Background
 
-This model is bespoke to this project rather than using a model from a standard such as SensorML which were considered
+This model is bespoke to this project rather than using a model from a standard such as SensorML which was considered
 unsuitable. Alignments with any standards should be possible through an [Exporter](./implementation.md#exporters).
 
 This information model is abstract and requires a concrete implementation through the [Data Model](./data-model.md).
@@ -273,3 +273,47 @@ Values:
 - MAY use any format/scheme (integers, UUIDs, ULIDs, etc.), non-sequential schemes SHOULD be preferred
 - SHOULD use the same scheme consistently all entities
 - SHOULD NOT use or relate to identifiers from another, external, system or database (i.e. not a foreign identifier)
+
+## Meta entities
+
+These entities enable this application to function. They are not intended to be exposed to end-users.
+
+### Layers
+
+Layers are subsets of Asset and Asset Position entities for a particular use-case.
+
+A layer may filter Assets to a particular type (e.g. aircraft) and/or Asset Positions to a particular time period. See
+the [Data Access](../README.md#data-access) for currently available layers.
+
+| Property | Name   | Occurrence | Data Type                         | Data Form | Description                    |
+|----------|--------|------------|-----------------------------------|-----------|--------------------------------|
+| `slug`   | Slug   | 1          | String                            | -         | Unique Identifier              |
+| `source` | Source | 1          | [Data Source](#layer-data-source) | -         | Filtered Asset / Position data |
+
+#### Layer slug
+
+A [Unique Identifier](#unique-identifiers) which can be represented in each all platforms a layer will be implemented
+within.
+
+Slugs MUST:
+
+- be URL safe
+- be permitted as an identifier in all in each all platforms a layer will be implemented within
+
+Slugs SHOULD:
+
+- be concise
+- be human-readable
+- be intuitive
+- be prefixed with `ats`
+
+#### Layer data source
+
+A reference to the data that forms the layer. E.g. a database view or equivalent concept.
+
+### Records
+
+Records are subsets of discovery metadata records used to describe resources, such as Layers.
+
+Records SHOULD use the [ISO 19115](https://metadata-standards.data.bas.ac.uk/standards/iso-19115-19139) information
+model.

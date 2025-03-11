@@ -87,6 +87,10 @@ Conventions:
 - use `Path.resolve()` if displaying or logging file/directory paths
 - use logging to record how actions progress, using the app [`logger`](../src/assets_tracking_service/log.py)
   - (e.g. `logger = logging.getLogger('app')`)
+- extensions to third part dependencies should be:
+  - created in `assets_tracking_service.lib`
+  - documented in [Libraries](./libraries.md)
+  - tested in `tests/assets_tracking_service_tests/lib_tests/`
 
 ## Python version
 
@@ -292,7 +296,7 @@ In the [`Config`](../src/assets_tracking_service/config.py) class:
 In the [Configuration](./config.md) documentation:
 
 - add to options table in alphabetical order
-- if configurable, update the [`.env.example`](../.env.tpl) template and local `.env` file
+- if configurable, update the [`.env.tpl`](../tpl/.env.tpl) template and local `.env` file
 - if configurable, update the [Ansible Deployment Playbook](./deploy.md#bas-it-ansible)
 - if configurable, update the `[tool.pytest_env]` section in [`pyproject.toml`](../pyproject.toml)
 
@@ -327,6 +331,7 @@ This will create an `up` and `down` migration file in the
   - the app does not superuser privileges when deployed so migrations will fail
   - instead, check for the role and emit an exception to create manually if missing
 - if adding a new table with static data, add to the `exclusions` in `.pgsync.yml` & `tpl/.pgsync.yml.tpl`
+- update the [Data Model](./data-model.md) documentation as necessary
 
 See the [Implementation](./implementation.md#database-migrations) documentation for more information on migrations.
 
@@ -351,34 +356,51 @@ In the [CLI Reference](./cli-reference.md) documentation:
 
 ## Adding providers
 
-**[WIP]** This section is a work in progress.
+**[WIP]** This section is a work in progress and may be incomplete.
 
-- add config option for enabling/disabling provider
-- update `enabled_providers` property to include new provider
-- add provider specific [config options](#adding-configuration-options) as needed
-- create a new module in the [`providers`](../src/assets_tracking_service/providers) package
-- create a new class inheriting from the [`BaseProvider`](../src/assets_tracking_service/providers/base_provider.py)
-- implement methods required by the base class
-- integrate into the ProvidersManager class
-  - update the `_make_providers` method
-- add tests as needed
+1. add `ENABLE_PROVIDER_FOO` [Config Option](#adding-configuration-options) for enabling/disabling provider
+1. update `ENABLED_PROVIDERS` computed config property to include new provider
+1. add provider specific [Config Options](#adding-configuration-options) as needed
+1. create a new module in the [`providers`](../src/assets_tracking_service/providers) package
+1. create a new class inheriting from the [`BaseProvider`](../src/assets_tracking_service/providers/base_provider.py)
+1. implement methods required by the base class
+1. integrate into the [`ProvidersManager`](../src/assets_tracking_service/providers/providers_manager.py) class
+    - update the `_make_providers()` method
+1. add tests as needed
 
 ## Adding exporters
 
-**[WIP]** This section is a work in progress.
+**[WIP]** This section is a work in progress and may be incomplete.
 
-Add [Config Options](#adding-configuration-options):
+1. add `ENABLE_EXPORTER_FOO` [Config Option](#adding-configuration-options) for enabling/disabling exporter
+1. update `ENABLED_EXPORTERS` computed config option to include new exporter
+1. add exporter specific [Config Options](#adding-configuration-options) as needed
+1. if exporter relies on another, update `Config.validate()` to ensure dependent exporter is enabled
+1. create a new module in the [`exporters`](../src/assets_tracking_service/exporters) package
+1. create a new class inheriting from the [`BaseExporter`](../src/assets_tracking_service/exporters/base_exporter.py)
+1. implement methods required by the base class
+1. integrate into the [`ExportersManager`](../src/assets_tracking_service/exporters/exporters_manager.py) class:
+    - update the `_make_exporters()` method
+1. add tests as needed:
+    - create a new module in [`exporters`](../tests/assets_tracking_service_tests/exporters) test package
+    - [`test_make_each_exporter`](../tests/assets_tracking_service_tests/exporters/test_exporters_manager.py)
+    - add mock for exporter in [`test_export](../tests/assets_tracking_service_tests/exporters/test_exporters_manager.py)
 
-- add `ENABLE_EXPORTER_FOO` config option for enabling/disabling exporter
-- update `ENABLED_EXPORTERS` option to include new exporter
-- add exporter specific [config options](#adding-configuration-options) as needed
-- if exporter relies on another, ensure dependent exporter enabled in `Config.validate()`
-- create a new module in the [`exporters`](../src/assets_tracking_service/exporters) package
-- create a new class inheriting from the [`BaseExporter`](../src/assets_tracking_service/exporters/base_exporter.py)
-- implement methods required by the base class
-- integrate into the [ExportersManager](../src/assets_tracking_service/exporters/exporters_manager.py) class:
-  - update the `_make_exporters()` method
-- add tests as needed:
-  - create a new module in [`exporters`](../tests/assets_tracking_service_tests/exporters) test package
-  - [`test_make_each_exporter`](../tests/assets_tracking_service_tests/exporters/test_exporters_manager.py)
-  - add mock for exporter in [`test_export](../tests/assets_tracking_service_tests/exporters/test_exporters_manager.py)
+## Adding layers
+
+**[WIP]** This section is a work in progress and may be incomplete.
+
+1. agree a slug to use to identify the new layer (e.g. `foo`)
+1. create a new [Database Migration](#adding-database-migrations) that:
+    - creates a source view, selecting data for the new layer (named `v_{slug}`)
+    - creates a GeoJSON view, selecting from source view into a feature collection (named `v_{slug}_geojson`)
+    - inserts rows into `layer` and `record` with relevant details
+1. create resource files for the record associated with the new layer:
+    - `resources/records/{slug}/abstract.md`
+    - `resources/records/{slug}/lineage.md`
+1. run the [`data export`](./cli-reference.md#data-commands) command to provision and publish new layer and it's record
+1. configure symbology, fields and popups for the ArcGIS feature layer as needed
+1. capture this portrayal information in `resources/arcgis_layers/{slug}/portrayal.json`:
+    1. use https://ago-assistant.esri.com/ and view the relevant item
+    2. copy the contents of the Data file into the relevant `portrayal.json` file
+1. document new layer in the [Data Access](../README.md#data-access) documentation

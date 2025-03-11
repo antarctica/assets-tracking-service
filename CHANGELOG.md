@@ -34,6 +34,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#120](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/120)
 * Upgrading to UV 0.6.x
   [#131](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/131)
+* Updating project documentation
+  [#134](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/134)
 
 ### Removed
 
