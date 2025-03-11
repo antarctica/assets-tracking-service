@@ -69,7 +69,7 @@ If needed, you can then [Populate](#syncing-development-database) the developmen
 ## Running control CLI locally
 
 ```
-% uv run ats-ctl --help
+% ats-ctl --help
 ```
 
 See the [CLI Reference](./cli-reference.md) documentation for available commands.
@@ -110,6 +110,16 @@ Checks are run automatically in [Continuous Integration](#continuous-integration
 ```
 % uv run safety scan --detailed-output
 ```
+
+### Updating dependencies
+
+- switch to a clean branch
+- follow https://docs.astral.sh/uv/concepts/projects/sync/#upgrading-locked-package-versions.
+- note upgrades in an issue
+- review any major/breaking upgrades
+- run tests
+- run fetch/export cycle
+- commit changes
 
 ## Linting
 
