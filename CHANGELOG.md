@@ -36,6 +36,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#131](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/131)
 * Updating project documentation
   [#134](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/134)
+* Updating project dependencies
+  [#133](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/133)
 
 ### Removed
 
