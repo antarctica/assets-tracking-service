@@ -50,6 +50,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * Fixing DB client not closing connections correctly
   [#123](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/123)
+* ArcGIS group search method
+  [#136](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/136)
 
 ## [0.4.2] - 2025-02-03
 

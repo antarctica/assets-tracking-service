@@ -137,7 +137,7 @@ class ArcGisClient:
     def get_group(self, title: str) -> Group | None:
         """Get a ArcGIS group by title."""
         self._logger.debug("Searching for group '%s'", title)
-        results = self._client.groups.search(query="", filter=f"group_title:{title}")
+        results = self._client.groups.search(filter=f'title:"{title}"')
         self._logger.debug("Results: %s", [f"[{g.id}] '{g.title}', " for g in results])
 
         if len(results) == 0:
