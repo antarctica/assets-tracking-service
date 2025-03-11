@@ -21,6 +21,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 * method for checking if latest migration has been applied
   [#103](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/103)
 
+### Fixed
+
+* `prerelease` CI job due to UV behaviour change
+  [#132](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/132)
+
 ### Changed
 
 * Documenting and rationalising database views
