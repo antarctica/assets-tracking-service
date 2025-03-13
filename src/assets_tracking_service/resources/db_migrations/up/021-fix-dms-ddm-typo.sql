@@ -2,8 +2,28 @@
 
 DROP VIEW IF EXISTS v_latest_assets_pos_geojson;
 
-ALTER VIEW v_latest_assets_pos RENAME COLUMN lat_dms TO lat_ddm;
-ALTER VIEW v_latest_assets_pos RENAME COLUMN lon_dms TO lon_ddm;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'v_latest_assets_pos'
+        AND column_name = 'lat_dms'
+    ) THEN
+        ALTER VIEW v_latest_assets_pos RENAME COLUMN lat_dms TO lat_ddm;
+    END IF;
+END $$;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'v_latest_assets_pos'
+        AND column_name = 'lon_dms'
+    ) THEN
+        ALTER VIEW v_latest_assets_pos RENAME COLUMN lon_dms TO lon_ddm;
+    END IF;
+END $$;
 
 CREATE VIEW v_latest_assets_pos_geojson AS
 SELECT
@@ -39,7 +59,6 @@ FROM (
         ) AS feature
     FROM v_latest_assets_pos
 ) AS features;
-
 
 -- record latest migration
 UPDATE public.meta_migration
