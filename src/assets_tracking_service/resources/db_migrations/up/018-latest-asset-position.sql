@@ -45,7 +45,7 @@ BEGIN
             'ats_latest_assets_position',
             '1',
             'Latest assets position - BAS Assets Tracking Service',
-            'The last known position of all assets tracked by the BAS Assets Tracking Service.',
+            'Last known position of large assets operated by the British Antarctic Survey.',
             'continual',
             'https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/37',
             'v_latest_assets_pos_extent'

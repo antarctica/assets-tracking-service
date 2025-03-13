@@ -321,8 +321,6 @@ Intended as the source of latest position layer.
 
 ### `v_latest_assets_pos_geojson`
 
-A view returning results of `v_latest_asset_pos` as a GeoJSON feature collection.
+A view returning results of [`v_latest_asset_pos`](#v_latest_assets_pos) as a GeoJSON feature collection.
 
 Where each row is a feature with a point geometry and identifier based on the position ID.
-
-Intended as the source of the [GeoJSON](./exporters.md#geojson) exporter.
