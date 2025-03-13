@@ -130,7 +130,7 @@ class TestArcGisExporterLayer:
         assert group.groupid == "x"
         assert group.title == group_info["name"]
         assert group.snippet == group_info["summary"]
-        assert ".." in group.description  # updating when group description is set properly
+        assert "Layers relating to the [BAS Assets Tracking Service]" in group.description
         assert group.access == SharingLevel.EVERYONE
         # can't test thumbnail
 

@@ -25,16 +25,14 @@ for more information.
 - ✈️ aircraft (the Dash and Twin Otters)
 - 🚜 vehicles (snowmobiles, Pisten Bully's, loaders, etc.)
 
-Assets are tracked using a range of external [Providers](./docs/providers.md). Assets, and their latest positions are
-fetched from providers every 5 minutes (providers may update less frequently than we check).
+Assets are tracked using a range of external [Providers](./docs/providers.md). Latest positions are checked every 5
+minutes. Providers and individual assets may update less frequently than we check, if they are in storage for example.
 
 ## Data access
 
-### Latest asset positions
-
-For the last known position of all assets (optionally filterable by name or platform type):
-
-- [BAS Data Catalogue record](https://data.bas.ac.uk/datasets/ats-latst-positions)
+See the [Assets Tracking Service](https://data.bas.ac.uk/collections/assets-tracking-service) collection in the
+BAS Data Catalogue for available datasets. See also the
+[Assets Tracking Service](https://www.bas.ac.uk/project/assets-tracking-service) project on the BAS website.
 
 ### Permissions
 
@@ -45,7 +43,7 @@ Previous positions of most asset types is unrestricted but not currently distrib
 ### ArcGIS Online
 
 Data made available through ArcGIS Online (AGOL) is contained in an
-[Assets Tracking Service](https://bas.maps.arcgis.com/home/group.html?id=46d7a701202442c6abc1b47e4958c0fd&view=list#content)
+[Assets Tracking Service](https://bas.maps.arcgis.com/home/group.html?id=xxx=list#content)
 group, including all the services listed above.
 
 ### Historic asset locations
@@ -70,7 +68,7 @@ information, including:
 Data provided by this project is used in projects including:
 
 - the [BAS Field Operations GIS 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/operations/field-operations-gis-data)
-- the [BAS Public Website](https://www.bas.ac.uk)
+- the [BAS Public Website](https://www.bas.ac.uk/)
   - via the Embedded Maps Service
 
 This project was previously known as the [Locations Register 🛡️](https://gitlab.data.bas.ac.uk/MAGIC/locations-register)
