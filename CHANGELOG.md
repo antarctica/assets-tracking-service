@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-03-15
+
 ### Removed [BREAKING!]
 
 * `EXPORTER_DATA_CATALOGUE_RECORD_ID` and `EXPORTER_ARCGIS_ITEM_ID` config options
