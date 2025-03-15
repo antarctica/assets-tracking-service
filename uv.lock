@@ -164,6 +164,7 @@ dependencies = [
     { name = "geojson" },
     { name = "importlib-resources" },
     { name = "jinja2" },
+    { name = "jsonschema" },
     { name = "markdown" },
     { name = "mygeotab" },
     { name = "pint" },
@@ -183,7 +184,6 @@ dev = [
     { name = "sqlfluff" },
 ]
 test = [
-    { name = "jsonschema" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-env" },
@@ -204,6 +204,7 @@ requires-dist = [
     { name = "geojson", specifier = ">=3.2.0" },
     { name = "importlib-resources", specifier = ">=6.5.2" },
     { name = "jinja2", specifier = ">=3.1.5" },
+    { name = "jsonschema", specifier = ">=4.23.0" },
     { name = "markdown", specifier = ">=3.7" },
     { name = "mygeotab", specifier = ">=0.9.2" },
     { name = "pint", specifier = ">=0.24.4" },
@@ -223,7 +224,6 @@ dev = [
     { name = "sqlfluff", specifier = ">=3.3.0" },
 ]
 test = [
-    { name = "jsonschema", specifier = ">=4.23.0" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pytest-env", specifier = ">=1.1.5" },
@@ -311,7 +311,7 @@ name = "cffi"
 version = "1.17.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser" },
+    { name = "pycparser", marker = "platform_python_implementation != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/97/c783634659c2920c3fc70419e3af40972dbaf758daa229a7d6ea6135c90d/cffi-1.17.1.tar.gz", hash = "sha256:1c39c6016c32bc48dd54561950ebd6836e1670f2ae46128f67cf49e789c52824", size = 516621 }
 wheels = [
@@ -864,7 +864,7 @@ name = "importlib-metadata"
 version = "8.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/08/c1395a292bb23fd03bdf572a1357c5a733d3eecbab877641ceacab23db6e/importlib_metadata-8.6.1.tar.gz", hash = "sha256:310b41d755445d74569f993ccfc22838295d9fe005425094fad953d7f15c8580", size = 55767 }
 wheels = [
