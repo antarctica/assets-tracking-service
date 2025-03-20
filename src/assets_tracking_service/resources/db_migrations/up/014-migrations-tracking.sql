@@ -19,3 +19,4 @@ EXECUTE FUNCTION set_updated_at();
 -- record latest migration
 INSERT INTO public.meta_migration (pk, migration_id, migration_label)
 VALUES (1, 14, '014-migrations-tracking')
+ON CONFLICT DO NOTHING;
