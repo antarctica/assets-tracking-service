@@ -1,0 +1,48 @@
+{% macro a(data) %}
+  {% if data is not mapping %}
+    {% set data = {'href': data.href, 'value': data.value} %}
+  {% endif %}
+  {% if data.external %}
+    {% set data = dict(data, icon_post='far fa-external-link') %}
+  {% endif %}
+  <a
+    {% for attr, value in data.items() %}
+      {% if attr not in ['value', 'icon_pre', 'icon_post', 'external'] %} {{ attr }}="{{ value }}"{% endif %}
+    {% endfor %}
+  >
+    {{ i_str(data) }}
+  </a>
+{% endmacro %}
+
+{% macro button(data) %}
+  <button
+    {% for attr, value in data.items() %}
+      {% if attr not in ['value', 'icon_pre', 'icon_post', 'href'] %} {{ attr }}="{{ value }}"{% endif %}
+    {% endfor %}
+  >
+    {{ i_str(data) }}
+  </button>
+{% endmacro %}
+
+{% macro i_str(data) %}
+  {% if data.icon_pre %}<i class="{{ data.icon_pre }}"></i>{% endif %}
+  {{ data.value }}
+  {% if data.icon_post %}<i class="{{ data.icon_post }}"></i>{% endif %}
+{% endmacro %}
+
+{% macro img(data) %}
+  <img {% for attr, value in data.items() %} {{ attr }}="{{ value }}" {% endfor %} />
+{% endmacro %}
+
+{% macro mailto(href, value = None) %}
+  {% set value = value if value is not none else href %}
+  {{ a({'href': 'mailto:' ~ href, 'value': value}) }}
+{% endmacro %}
+
+{% macro ul_a(data, ul_class) %}
+  <ul {% if ul_class %}class="{{ ul_class }}"{% endif %}>
+    {% for item in data %}
+      <li>{{ a(item) }}</li>
+    {% endfor %}
+  </ul>
+{% endmacro %}

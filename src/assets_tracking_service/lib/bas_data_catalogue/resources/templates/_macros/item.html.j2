@@ -1,0 +1,461 @@
+{% import "_macros/base.html.j2" as base %}
+{% import "_macros/bsk.html.j2" as bsk %}
+
+{% macro abstract(data) %}
+  <h3>Abstract</h3>
+  <article>{{ data }}</article>
+{% endmacro %}
+
+{% macro authors(data) %}
+  <section id="authors">
+    {% for item in data.items %}
+      {{ contact_item(item) }}
+    {% endfor %}
+  </section>
+{% endmacro %}
+
+{% macro bounding_box(data) %}
+  <section>
+    <h3>Bounding Coordinates</h3>
+    {% call bsk.dl() %}
+      <dt>Top-right corner</dt>
+      <dd>North: {{ data[2] }}, East: {{ data[1] }}</dd>
+      <dt class="x-pt-3">Bottom-left corner</dt>
+      <dd>South: {{ data[3] }}, West: {{ data[0] }}</dd>
+    {% endcall %}
+  </section>
+{% endmacro %}
+
+{% macro citation(data) %}
+  <h3>Citation</h3>
+  <article>{{ data }}</article>
+{% endmacro %}
+
+{% macro contact(data) %}
+  <section id="contact">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-9">
+        <div class="x-mb-12">{{ contact_form(data) }}</div>
+        <div>{{ contact_details(data) }}</div>
+      </div>
+    </div>
+  </section>
+{% endmacro %}
+
+{% macro contact_details(data) %}
+  <p class="x-mb-12">Your message will be sent to the <strong>{{ data.team }}</strong>, who manage this item. Alternatively you can use these contact methods:</p>
+  <div class="bsk-row">
+    {% call bsk.dl() %}
+      {% if data.address %}
+        <div class="bsk-col-12-md-4">
+          <dt><i class="far fa-envelope"></i> By post</dt>
+          <dd class="x-pt-3">{{ data.address }}</dd>
+        </div>
+      {% endif %}
+      {% if data.email %}
+        <div class="bsk-col-12-md-4">
+          <dt><i class="far fa-at"></i> By email</dt>
+          <dd class="x-pt-3">{{ base.mailto(data.email) }}</dd>
+        </div>
+      {% endif %}
+      {% if data.address %}
+        <div class="bsk-col-12-md-4">
+          <dt><i class="far fa-phone-rotary"></i> By phone</dt>
+          <dd class="x-pt-3">{{ data.phone }}</dd>
+        </div>
+      {% endif %}
+    {% endcall %}
+  </div>
+{% endmacro %}
+
+{% macro contact_form(data) %}
+  <p class="x-mb-6">Complete this form to request information or send feedback about this item.</p>
+  <form action="{{ data.form_action}}">
+    {% for param, value in data.form_params | items %}
+      <input type="hidden" name="{{ param }}" value="{{ value }}">
+    {% endfor %}
+    <fieldset>
+      <div class="bsk-form-group">
+        <label class="bsk-control-label" for="message-subject">Subject</label>
+        <input class="bsk-form-control" type="text" name="message-subject" id="message-subject" value="{{ data.subject_default }}" required>
+      </div>
+      <div class="bsk-form-group">
+        <label class="bsk-control-label" for="message-content">Details</label>
+        <textarea class="bsk-form-control" name="message-content" id="message-content" rows="8" required></textarea>
+      </div>
+      {% call bsk.alert(style="highlight", variant="warning") %}Do not any include any sensitive or personal information.{% endcall %}
+    </fieldset>
+    <fieldset>
+      <div class="bsk-form-group">
+        <label class="bsk-control-label" for="message-sender-name">Your name</label>
+        <input class="bsk-form-control" type="text" name="message-sender-name" id="message-sender-name" placeholder="Connie Watson">
+      </div>
+      <div class="bsk-form-group">
+        <label class="bsk-control-label" for="message-sender-email">Your email address</label>
+        <input class="bsk-form-control" type="email" name="message-sender-email" id="message-sender-email" placeholder="conwat@bas.ac.uk" required>
+      </div>
+      {% call bsk.alert(style="highlight", variant="info") %}We will only use this information for contacting you about your message.{% endcall %}
+    </fieldset>
+    <fieldset>
+      {{ bsk.form_submit("Send Message") }}
+    </fieldset>
+  </form>
+{% endmacro %}
+
+{% macro contact_item(data) %}
+  <article>
+    {% if data.individual.name %}<div><strong>{{ data.individual.name }}</strong></div>{% endif %}
+    {% if data.organisation.name %}<div><strong>{{ data.organisation.name }}</strong></div>{% endif %}
+    {% if data.email %}
+      <div><i class="fa-fw far fa-at"></i> Email: {{ base.mailto(data.email) }}</div>
+    {% endif %}
+    {% if data.orcid %}<div>ORCID: {{ base.a(data={"href": data.orcid, "value": data.orcid}) }}</div>{% endif %}
+  </article>
+{% endmacro %}
+
+{% macro data(items) %}
+  <section id="data">
+    {{ data_grid(items) }}
+  </section>
+{% endmacro %}
+
+{% macro data_grid(items) %}
+  <div class="x-py-2 x-border-b-2-999">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-4"><strong>Format</strong></div>
+      <div class="bsk-col-12-md-4 bsk-text-center"><strong>Size</strong></div>
+      <div class="bsk-col-12-md-4 bsk-text-right"><strong>Access</strong></div>
+    </div>
+  </div>
+  {% for item in items.items %}
+    {{ data_grid_item(item) }}
+  {% endfor %}
+{% endmacro %}
+
+{% macro data_grid_item(item) %}
+  {% set btn_variant = "bsk-btn-" + item.action_btn_variant %}
+  {% set btn_icon = "fa-fw " + item.action_btn_icon %}
+  {% set action = {"value": item.action.value, "href": item.action.href, "icon_post": btn_icon} %}
+  <div class="x-py-3">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-4">{{ item.format_type.value }}</div>
+      <div class="bsk-col-12-md-4 bsk-text-center">{{ item.size }}</div>
+      <div class="bsk-col-12-md-4 bsk-text-right">
+        {% if action.href %}
+          {{ bsk.a_btn(action, btn_variant) }}
+        {% else %}
+          {{
+            base.button({
+              "type": "button",
+              "class": "bsk-btn bsk-btn-" + item.action_btn_variant,
+              "aria-expanded": "true",
+              "aria-label": "Close",
+              "data-target": item.access_target,
+              "aria-controls": item.access_target,
+              "data-toggle": "collapse",
+              "value": item.action.value,
+              "icon_post": item.action_btn_icon,
+            })
+          }}
+        {% endif %}
+      </div>
+    </div>
+    {{ data_grid_action(item) }}
+  </div>
+{% endmacro %}
+
+{% macro data_grid_action(item) %}
+  {% if item.format_type.name == "ARCGIS_FEATURE_LAYER" %}
+    {{ data_grid_action_arc_feature_layer(item) }}
+  {% elif item.format_type.name == "ARCGIS_OGC_FEATURE_LAYER"  %}
+    {{ data_grid_action_arc_ogc_feature_layer(item) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro data_grid_action_close(target) %}
+  {{
+    base.button({
+      "type": "button",
+      "class": "bsk-close",
+      "aria-expanded": "false",
+      "aria-label": "Close",
+      "data-target": target,
+      "aria-controls": target,
+      "data-toggle": "collapse",
+      "value": "&times;",
+    })
+  }}
+{% endmacro %}
+
+{% macro data_grid_action_arc_feature_layer(item) %}
+  <article id="{{ item.access_target | replace("#", "") }}" class="bsk-collapse bsk-fade">
+    <div class="bsk-row x-mt-2">
+      <div class="bsk-col-12-md-12">
+        <div class="x-p-2 x-border-1-eee">
+          {{ data_grid_action_close(item.access_target) }}
+          <h4>Access as an ArcGIS Feature Layer</h4>
+          {% call bsk.alert(style="highlight", variant="info") %}
+            This item can be added to any desktop or online GIS that supports using
+            {{ base.a({"value": "ArcGIS Feature Services", "href": "https://developers.arcgis.com/documentation/portal-and-data-services/data-services/feature-services/introduction/", "external": True, "class": "bsk-alert-link"}) }}.
+          {% endcall %}
+          {% call bsk.dl_horizontal(classes="x-mb-6") %}
+            <dt class="x-py-2 x-text-left">ArcGIS Item</dt>
+            <dd class="x-py-2">{{ base.a({"value": item.item_link.value, "href": item.item_link.href, "external": True}) }}</dd>
+            <dt class="x-py-2 x-text-left">Service Endpoint</dt>
+            <dd class="x-py-2"><code>{{ item.service_endpoint }}</code></dd>
+            <dt class="x-py-2 x-text-left">Instructions</dt>
+            <dd class="x-py-2">
+              {{
+                base.ul_a(
+                  data=[
+                    {"value": "Instructions for Esri ArcGIS Pro", "href": "https://pro.arcgis.com/en/pro-app/latest/help/mapping/layer-properties/add-layers-to-a-map.htm#ESRI_STEPS_334E1F2B89A6447FBA5873DEB7ADDCED", "external": True},
+                    {"value": "Instructions for QGIS", "href": "https://guides.geospatial.bas.ac.uk/using-mapping-data-services/bas-mapping-services/loading-esri-feature-layers-in-qgis", "external": True}
+                  ],
+                  ul_class="bsk-list-unstyled x-mb-0")
+              }}
+            </dd>
+          {% endcall %}
+        </div>
+      </div>
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro data_grid_action_arc_ogc_feature_layer(item) %}
+  <article id="{{ item.access_target | replace("#", "") }}" class="bsk-collapse bsk-fade">
+    <div class="bsk-row x-mt-2">
+      <div class="bsk-col-12-md-12">
+        <div class="x-p-2 x-border-1-eee">
+          {{ data_grid_action_close(item.access_target) }}
+          <h4>Access as an OGC API Features Service (ArcGIS variant)</h4>
+          {% call bsk.alert(style="highlight", variant="info") %}
+            This item can be added to any desktop or online GIS that supports using
+            {{ base.a({"value": "OGC API Features", "href": "https://ogcapi.ogc.org/features/", "external": True, "class": "bsk-alert-link"}) }}.
+          {% endcall %}
+          {% call bsk.dl_horizontal(classes="x-mb-6") %}
+            <dt class="x-py-2 x-text-left">Service Endpoint</dt>
+            <dd class="x-py-2"><code>{{ item.service_endpoint }}</code></dd>
+            <dt class="x-py-2 x-text-left">Instructions</dt>
+            <dd class="x-py-2">
+              {{
+                base.ul_a(
+                  data=[
+                    {"value": "Instructions for Esri ArcGIS Pro", "href": "https://pro.arcgis.com/en/pro-app/latest/help/projects/connect-to-a-gis-server.htm#ESRI_SECTION1_EC0028F06E9F4769AA6EC3BA3E4B64F9", "external": True},
+                    {"value": "Instructions for QGIS", "href": "https://docs.qgis.org/latest/en/docs/user_manual/working_with_ogc/ogc_client_support.html", "external": True}
+                  ],
+                  ul_class="bsk-list-unstyled x-mb-0")
+              }}
+            </dd>
+          {% endcall %}
+        </div>
+      </div>
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro extent(data) %}
+  <section id="extent">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-6">
+        {{ data.map_iframe }}
+      </div>
+      <div class="bsk-col-12-md-6">
+        {{ bounding_box(data.bounding_box) }}
+        {{ temporal_period(start=data.start, end=data.end) }}
+      </div>
+    </div>
+  </section>
+{% endmacro %}
+
+{% macro graphics(data) %}
+  <section>
+    {% for item in data %}
+      {{ base.img(item) }}
+    {% endfor %}
+  </section>
+{% endmacro %}
+
+{% macro header(data) %}
+  {{ bsk.page_header(data) }}
+{% endmacro %}
+
+{% macro info(data) %}
+  <section id="additional_information">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-6">
+        {{ info_item(data) }}
+      </div>
+      <div class="bsk-col-12-md-6">
+        {{ info_metadata(data) }}
+      </div>
+    </div>
+  </section>
+{% endmacro %}
+
+{% macro info_item(data) %}
+  <section>
+    <h3>Item Information</h3>
+    {% call bsk.dl() %}
+      <dt>Item ID</dt>
+      <dd>{{ data.item_id }}</dd>
+      <dt class="x-pt-3">Item type</dt>
+      <dd>
+        {{ base.i_str(data={"icon_pre": data.item_type_icon, "value": data.item_type | capitalize }) }}
+      </dd>
+      {% for term, value in data.dates.items() %}
+        <dt class="x-pt-3">{{ term }}</dt>
+        <dd>{{ value }}</dd>
+      {% endfor %}
+    {% endcall %}
+  </section>
+{% endmacro %}
+
+{% macro info_metadata(data) %}
+  <section>
+    <h3>Metadata Information</h3>
+    {% call bsk.dl() %}
+      <dt>Last updated</dt>
+      <dd>{{ data.datestamp }}</dd>
+      <dt class="x-pt-3">Metadata standard</dt>
+      <dd>{{ data.standard }}</dd>
+      <dt class="x-pt-3">Metadata standard version</dt>
+      <dd>{{ data.standard_version }}</dd>
+      <dt class="x-pt-3">Record links</dt>
+      <dd>{{ base.ul_a(data=data.record_links, ul_class="bsk-list-unstyled x-mb-0") }}</dd>
+    {% endcall %}
+  </section>
+{% endmacro %}
+
+{% macro item_nav(item) %}
+  <ul class="bsk-nav bsk-nav-tabs">
+    {% for tab in item.tabs %}
+      {{ item_nav_item(tab, item.default_tab_anchor) }}
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% macro item_nav_item(item, default_active) %}
+  {% if item.enabled %}
+    <li {% if item.anchor == default_active %}class="bsk-active"{% endif %} role="presentation">
+      {{ base.a(data={"href": "#" + item.anchor, "value": item.title, "icon_pre": item.icon,  "role": "tab", "data-toggle": "tab"}) }}
+    </li>
+  {% endif %}
+{% endmacro %}
+
+{% macro item_summary(item, last) %}
+  <article class="x-border-1-eee x-p-2 {% if not last %}x-mb-6{% endif %}">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-1">
+        {{ base.img({"src": item.href_graphic, "alt": "thumbnail for " + item.title_plain, "width": "90px", "height": "90px"}) }}
+      </div>
+      <div class="bsk-col-12-md-11 x-pl-7">
+        <h5 class="x-mt-0">{{ base.a({"href": item.href, "value": item.title_html}) }}</h5>
+        <div class="x-mb-2">{{ item.summary_html }}</div>
+        <ul class="bsk-list-inline x-mb-0 bsk-text-muted">
+          {% for fragment in item.fragments %}
+            <li class="bsk-list-inline-item">
+              {% if fragment[0] %}
+                {{ base.i_str(data={"icon_pre": fragment[0], "value": fragment[2]}) }}
+              {% else %}
+                {{ fragment[1] }}: {{ fragment[2] }}
+              {% endif %}
+              {% if not loop.last %}<span class="x-ml-2">|</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro items(data) %}
+  <section id="items">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-9">
+        {% for item in data.items %}
+          {{ item_summary(item, loop.last) }}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endmacro %}
+
+{% macro licence(data) %}
+  <section id="licence">{{ data.content }}</section>
+{% endmacro %}
+
+{% macro lineage(data) %}
+  <section id="lineage">
+    <div class="bsk-row">
+      <div class="bsk-col-12-md-9">
+        <article>{{ data.statement }}</article>
+      </div>
+    </div>
+  </section>
+{% endmacro %}
+
+{% macro noscript(href) %}
+  <noscript>
+    {% call bsk.alert(style="solid", variant="warning") %}
+      This page requires JavaScript. If this is unavailable you can read a {{ base.a({"class": "bsk-alert-link", "href": href, "value": "text only version"}) }} of the record this item is based on.
+    {% endcall %}
+  </noscript>
+{% endmacro %}
+
+{% macro related(data) %}
+  <section id="related">
+    {% if data.collections %}
+      {{ related_section(title="Collections", items=data.collections) }}
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% macro related_items(items) %}
+  {{ base.ul_a(data=items, ul_class="bsk-list-unstyled x-mb-0") }}
+{% endmacro %}
+
+{% macro related_section(title, items) %}
+  <section>
+    <h3>{{ title }}</h3>
+    {{ related_items(items) }}
+  </section>
+{% endmacro %}
+
+{% macro summary(data) %}
+  <section class="bsk-sidebar bsk-sidebar-default">
+    {% call bsk.dl_horizontal(classes="x-mb-6") %}
+      {% if data.collections %}
+        <dt class="x-py-2 x-text-left">Collections</dt>
+        <dd class="x-py-2">{{ related_items(items=data.collections) }}</dd>
+      {% endif %}
+      {% if data.items_count > 0 %}
+        <dt class="x-py-2 x-text-left">Items</dt>
+        <dd class="x-py-2">{{ data.items_count }}</dd>
+      {% endif %}
+      {% if data.edition %}
+        <dt class="x-py-2 x-text-left">Edition</dt>
+        <dd class="x-py-2">{{ data.edition }}</dd>
+      {% endif %}
+      {% if data.released %}
+        <dt class="x-pt-2 x-text-left">Released</dt>
+        <dd class="x-pt-2">{{ data.released }}</dd>
+      {% endif %}
+    {% endcall %}
+    {% if data.citation %}
+      {{ citation(data.citation) }}
+    {% endif %}
+    {{ abstract(data.abstract) }}
+  </section>
+{% endmacro %}
+
+{% macro temporal_period(start, end) %}
+  <section>
+    <h3>Temporal Range</h3>
+    {% call bsk.dl() %}
+      <dt>From</dt>
+      <dd>{{ start }}</dd>
+      <dt class="x-pt-3">Until</dt>
+      <dd>{{ end }}</dd>
+    {% endcall %}
+  </section>
+{% endmacro %}

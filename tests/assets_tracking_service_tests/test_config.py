@@ -158,7 +158,11 @@ class TestConfig:
             },
             "EXPORTER_GEOJSON_OUTPUT_PATH": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(fx_config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
-            "EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID": "125d6ae8-0b9a-4c89-88e2-f3ec59723e52",
+            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
+            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": redacted_value,
+            "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
+            "EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT": fx_config.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
+            "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
         }
 
         output = fx_config.dumps_safe()
@@ -396,7 +400,16 @@ class TestConfig:
             ("EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL", "https://example.com", False),
             ("EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER", "https://example.com/arcgis", False),
             ("EXPORTER_GEOJSON_OUTPUT_PATH", Path("export.geojson"), False),
+            ("EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET", "x", False),
+            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID", "x", False),
+            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", "x", True),
             ("EXPORTER_DATA_CATALOGUE_OUTPUT_PATH", Path("records"), False),
+            (
+                "EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT",
+                "https://embedded-maps-testing.data.bas.ac.uk/v1",
+                False,
+            ),
+            ("EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT", "x", False),
         ],
     )
     def test_configurable_property(self, property_name: str, expected: Any, sensitive: bool):
@@ -544,6 +557,50 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": None,
                 }
             ),
         ],

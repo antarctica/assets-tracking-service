@@ -16,7 +16,7 @@ from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.exporters.base_exporter import Exporter
 from assets_tracking_service.exporters.catalogue import LayerRecord
-from assets_tracking_service.lib.bas_data_catalogue.models.item import AccessType
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
 from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
 from assets_tracking_service.models.layer import Layer, LayersClient

@@ -11,6 +11,9 @@ from uuid import uuid4
 
 import pytest
 from arcgis.gis import Item, ItemTypeEnum, SharingLevel
+from boto3 import client as S3Client  # noqa: N812
+from jinja2 import Environment, PackageLoader, select_autoescape
+from moto import mock_aws
 from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
 from psycopg.sql import SQL
@@ -29,7 +32,14 @@ from assets_tracking_service.exporters.arcgis import ArcGisExporter, ArcGisExpor
 from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.exporters.geojson import GeoJsonExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record as LibRecord
+from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
+from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import HierarchyLevelCode
 from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
 from assets_tracking_service.models.asset import Asset, AssetNew, AssetsClient
@@ -615,7 +625,7 @@ def fx_providers_manager_eg_provider(
 
 @pytest.fixture()
 def fx_exporter_geojson(
-    mocker: MockerFixture, fx_config: Config, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
+    mocker: MockerFixture, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
 ) -> GeoJsonExporter:
     """
     GeoJsonExporter with mocked config.
@@ -730,21 +740,22 @@ def fx_exporter_layer_record(
 def fx_exporter_catalogue(
     fx_config: Config,
     fx_db_client_tmp_db_pop: DatabaseClient,
+    fx_s3_client: S3Client,
     fx_logger: logging.Logger,
 ) -> DataCatalogueExporter:
     """DataCatalogueExporter."""
-    return DataCatalogueExporter(config=fx_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+    return DataCatalogueExporter(config=fx_config, db=fx_db_client_tmp_db_pop, s3=fx_s3_client, logger=fx_logger)
 
 
 @pytest.fixture()
 def fx_exporters_manager_no_exporters(
-    mocker: MockerFixture, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
+    mocker: MockerFixture, fx_db_client_tmp_db_pop: DatabaseClient, fx_s3_client: S3Client, fx_logger: logging.Logger
 ) -> ExportersManager:
     """ExportersManager with no configured exporters."""
     mock_config = mocker.Mock()
     type(mock_config).ENABLED_EXPORTERS = PropertyMock(return_value=[])
 
-    return ExportersManager(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+    return ExportersManager(config=mock_config, db=fx_db_client_tmp_db_pop, s3=fx_s3_client, logger=fx_logger)
 
 
 @pytest.fixture()
@@ -781,7 +792,21 @@ def fx_lib_record_config_minimal_iso() -> dict:
 
 
 @pytest.fixture()
-def fx_lib_record_config_minimal_magic_preset() -> dict:
+def fx_lib_record_config_minimal_item(fx_lib_record_config_minimal_iso: dict) -> dict:
+    """
+    Minimal record configuration (Item).
+
+    Minimal record that can be used with an ItemBase.
+
+    Types must be safe to encode as JSON.
+    """
+    config = deepcopy(fx_lib_record_config_minimal_iso)
+    config["file_identifier"] = "x"
+    return config
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_magic_preset(fx_lib_record_config_minimal_item: dict) -> dict:
     """
     Minimal record configuration (MAGIC Preset).
 
@@ -790,20 +815,22 @@ def fx_lib_record_config_minimal_magic_preset() -> dict:
 
     Types must be safe to encode as JSON.
     """
-    return {
-        "$schema": "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json",
-        "file_identifier": "x",
-        "hierarchy_level": "dataset",
-        "metadata": {
-            "contacts": [{"organisation": {"name": "x"}, "role": ["pointOfContact"]}],
-            "date_stamp": "2014-06-30",
-        },
-        "identification": {
-            "title": {"value": "x"},
-            "dates": {"creation": "2014-06-30"},
-            "abstract": "x",
-        },
-    }
+    return deepcopy(fx_lib_record_config_minimal_item)
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_item: dict) -> dict:
+    """
+    Minimal record configuration (ItemCatalogue).
+
+    Minimal record that can be used with an ItemCatalogue.
+
+    Types must be safe to encode as JSON.
+    """
+    config = deepcopy(fx_lib_record_config_minimal_item)
+    config["identification"]["contacts"] = deepcopy(config["metadata"]["contacts"])
+    config["identification"]["contacts"][0]["email"] = "x"
+    return config
 
 
 @pytest.fixture()
@@ -813,10 +840,166 @@ def fx_lib_record_minimal_iso(fx_lib_record_config_minimal_iso: dict) -> LibReco
 
 
 @pytest.fixture()
-def fx_lib_catalogue_arcgis_item(fx_lib_record_minimal_iso: Record) -> CatalogueItemArcGis:
+def fx_lib_record_minimal_item(fx_lib_record_config_minimal_item: dict) -> LibRecord:
+    """Minimal record instance (Item)."""
+    return LibRecord.loads(fx_lib_record_config_minimal_item)
+
+
+@pytest.fixture()
+def fx_lib_record_minimal_item_catalogue(fx_lib_record_config_minimal_item_catalogue: dict) -> LibRecord:
+    """Minimal record instance (ItemCatalogue)."""
+    return LibRecord.loads(fx_lib_record_config_minimal_item_catalogue)
+
+
+@pytest.fixture()
+def fx_lib_record_summary_minimal_item(fx_lib_record_minimal_item_catalogue: Record) -> RecordSummary:
+    """Minimal record summary instance (Item)."""
+    return RecordSummary.loads(fx_lib_record_minimal_item_catalogue)
+
+
+def _lib_get_record_summary(identifier: str) -> RecordSummary:
+    """Minimal record summary lookup method."""
+    return RecordSummary(
+        file_identifier=identifier,
+        hierarchy_level=HierarchyLevelCode.PRODUCT,
+        title="x",
+        abstract="x",
+        creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
+    )
+
+
+@pytest.fixture()
+def fx_lib_get_record_summary() -> callable:
+    """Minimal record summary lookup method."""
+    return _lib_get_record_summary
+
+
+@pytest.fixture()
+def fx_lib_item_catalogue(
+    fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
+) -> ItemCatalogue:
+    """Item Catalogue based on a minimal record instance (Item)."""
+    return ItemCatalogue(
+        fx_lib_record_minimal_item_catalogue,
+        embedded_maps_endpoint="x",
+        item_contact_endpoint="x",
+        sentry_dsn="x",
+        get_record_summary=fx_lib_get_record_summary,
+    )
+
+
+@pytest.fixture()
+def fx_lib_item_catalogue_jinja() -> Environment:
+    """Template environment for Data Catalogue."""
+    return Environment(
+        loader=PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates"),
+        autoescape=select_autoescape(),
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+
+
+@pytest.fixture()
+def fx_s3_bucket_name() -> str:
+    """S3 bucket name."""
+    return "testing"
+
+
+@pytest.fixture()
+def fx_s3_client(mocker: MockerFixture, fx_s3_bucket_name: str) -> S3Client:
+    """Mocked S3 client with testing bucket pre-created."""  # noqa: D401
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID = PropertyMock(return_value="x")
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET = PropertyMock(return_value="x")
+
+    with mock_aws():
+        client = S3Client(
+            "s3",
+            aws_access_key_id=mock_config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
+            aws_secret_access_key=mock_config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET,
+            region_name="eu-west-1",
+        )
+
+        client.create_bucket(
+            Bucket=fx_s3_bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-1"},
+        )
+
+        yield client
+
+
+@pytest.fixture()
+def fx_lib_exporter_base(
+    mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: LibRecord
+) -> Exporter:
+    """Data Catalogue base exporter with a mocked config and S3 client."""  # noqa: D401
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    exporter = Exporter(
+        config=mock_config,
+        s3_client=fx_s3_client,
+        record=fx_lib_record_minimal_item,
+        export_base=output_path.joinpath("x"),
+        export_name="x.txt",
+    )
+    mocker.patch.object(exporter, "dumps", return_value="x")
+    return exporter
+
+
+@pytest.fixture()
+def fx_lib_exporter_iso_xml_html(
+    mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: LibRecord
+) -> Exporter:
+    """ISO 19115 XML as HTML exporter with a mocked config and S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        base_path = Path(tmp_path)
+        exports_path = base_path.joinpath("exports")
+        stylesheets_path = base_path.joinpath("static")
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=base_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    return IsoXmlHtmlExporter(
+        config=mock_config,
+        s3_client=fx_s3_client,
+        record=fx_lib_record_minimal_item,
+        export_base=exports_path,
+        stylesheets_base=stylesheets_path,
+    )
+
+
+@pytest.fixture()
+def fx_lib_exporter_html_alias(
+    mocker: MockerFixture,
+    fx_s3_bucket_name: str,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: LibRecord,
+) -> Exporter:
+    """HTML alias exporter with a mocked config and S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    fx_lib_record_minimal_item_catalogue.identification.identifiers.append(
+        Identifier(identifier="x", href="https://data.bas.ac.uk/datasets/x", namespace="alias.data.bas.ac.uk")
+    )
+
+    return HtmlAliasesExporter(
+        config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item_catalogue, site_base=output_path
+    )
+
+
+@pytest.fixture()
+def fx_lib_catalogue_arcgis_item(fx_lib_record_minimal_item: Record) -> CatalogueItemArcGis:
     """ItemArcGIS."""
     return CatalogueItemArcGis(
-        record=fx_lib_record_minimal_iso, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="x"
+        record=fx_lib_record_minimal_item, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="x"
     )
 
 

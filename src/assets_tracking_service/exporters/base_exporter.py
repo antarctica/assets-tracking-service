@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class Exporter(ABC):
     """
-    Abstract base class for providers.
+    Abstract base class for exporters.
 
     Defines a required interface all exporters must implement to allow operations to be performed across a set of
     exporters without knowledge of how each works.

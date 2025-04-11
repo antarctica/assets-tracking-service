@@ -3,15 +3,22 @@ from datetime import UTC, date, datetime
 import pytest
 from pytest_mock import MockerFixture
 
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordInvalidError, RecordSchema
+from assets_tracking_service.lib.bas_data_catalogue.models.record import (
+    Record,
+    RecordInvalidError,
+    RecordSchema,
+    RecordSummary,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Address,
     Citation,
     Contact,
     ContactIdentity,
+    Contacts,
     Date,
     Dates,
     Identifier,
+    Identifiers,
     OnlineResource,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import (
@@ -22,8 +29,12 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     BoundingBox,
     Constraint,
+    Constraints,
     Extent,
     ExtentGeographic,
+    Extents,
+    GraphicOverview,
+    GraphicOverviews,
     Identification,
     Maintenance,
 )
@@ -51,7 +62,9 @@ class TestRecord:
         record = Record(
             hierarchy_level=hierarchy_level,
             metadata=Metadata(
-                contacts=[Contact(organisation=ContactIdentity(name=value), role=[ContactRoleCode.POINT_OF_CONTACT])],
+                contacts=Contacts(
+                    [Contact(organisation=ContactIdentity(name=value), role=[ContactRoleCode.POINT_OF_CONTACT])]
+                ),
                 date_stamp=date_stamp,
             ),
             identification=Identification(title=value, abstract=value, dates=Dates(creation=Date(date=date_stamp))),
@@ -154,9 +167,9 @@ class TestRecord:
                 "language": "eng",
             },
         }
-        fx_lib_record_minimal_iso.identification.constraints = [
-            Constraint(type=value_enums["constraint_type"], restriction_code=value_enums["constraint_code"])
-        ]
+        fx_lib_record_minimal_iso.identification.constraints = Constraints(
+            [Constraint(type=value_enums["constraint_type"], restriction_code=value_enums["constraint_code"])]
+        )
         config = fx_lib_record_minimal_iso.dumps()
 
         assert config == expected
@@ -166,7 +179,9 @@ class TestRecord:
         record = Record(
             hierarchy_level=HierarchyLevelCode.DATASET,
             metadata=Metadata(
-                contacts=[Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])],
+                contacts=Contacts(
+                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
+                ),
                 date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
             ),
             identification=Identification(
@@ -182,92 +197,100 @@ class TestRecord:
             file_identifier="x",
             hierarchy_level=HierarchyLevelCode.DATASET,
             metadata=Metadata(
-                contacts=[
-                    Contact(
-                        organisation=ContactIdentity(
-                            name="Mapping and Geographic Information Centre, British Antarctic Survey",
-                            href="https://ror.org/01rhff309",
-                            title="ror",
-                        ),
-                        phone="+44 (0)1223 221400",
-                        email="magic@bas.ac.uk",
-                        address=Address(
-                            delivery_point="British Antarctic Survey, High Cross, Madingley Road",
-                            city="Cambridge",
-                            administrative_area="Cambridgeshire",
-                            postal_code="CB3 0ET",
-                            country="United Kingdom",
-                        ),
-                        online_resource=OnlineResource(
-                            href="https://www.bas.ac.uk/teams/magic",
-                            title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
-                            description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
-                            function=OnlineResourceFunctionCode.INFORMATION,
-                        ),
-                        role=[ContactRoleCode.POINT_OF_CONTACT],
-                    )
-                ],
+                contacts=Contacts(
+                    [
+                        Contact(
+                            organisation=ContactIdentity(
+                                name="Mapping and Geographic Information Centre, British Antarctic Survey",
+                                href="https://ror.org/01rhff309",
+                                title="ror",
+                            ),
+                            phone="+44 (0)1223 221400",
+                            email="magic@bas.ac.uk",
+                            address=Address(
+                                delivery_point="British Antarctic Survey, High Cross, Madingley Road",
+                                city="Cambridge",
+                                administrative_area="Cambridgeshire",
+                                postal_code="CB3 0ET",
+                                country="United Kingdom",
+                            ),
+                            online_resource=OnlineResource(
+                                href="https://www.bas.ac.uk/teams/magic",
+                                title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
+                                description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
+                                function=OnlineResourceFunctionCode.INFORMATION,
+                            ),
+                            role=[ContactRoleCode.POINT_OF_CONTACT],
+                        )
+                    ]
+                ),
                 date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
             ),
             identification=Identification(
                 title="x",
                 edition="x",
-                identifiers=[
-                    Identifier(identifier="x", href="https://data.bas.ac.uk/items/x", namespace="data.bas.ac.uk")
-                ],
+                identifiers=Identifiers(
+                    [Identifier(identifier="x", href="https://data.bas.ac.uk/items/x", namespace="data.bas.ac.uk")]
+                ),
                 abstract="x",
                 dates=Dates(creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())),
-                contacts=[
-                    Contact(
-                        organisation=ContactIdentity(
-                            name="Mapping and Geographic Information Centre, British Antarctic Survey",
-                            href="https://ror.org/01rhff309",
-                            title="ror",
-                        ),
-                        phone="+44 (0)1223 221400",
-                        email="magic@bas.ac.uk",
-                        address=Address(
-                            delivery_point="British Antarctic Survey, High Cross, Madingley Road",
-                            city="Cambridge",
-                            administrative_area="Cambridgeshire",
-                            postal_code="CB3 0ET",
-                            country="United Kingdom",
-                        ),
-                        online_resource=OnlineResource(
-                            href="https://www.bas.ac.uk/teams/magic",
-                            title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
-                            description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
-                            function=OnlineResourceFunctionCode.INFORMATION,
-                        ),
-                        role=[ContactRoleCode.POINT_OF_CONTACT],
-                    )
-                ],
+                contacts=Contacts(
+                    [
+                        Contact(
+                            organisation=ContactIdentity(
+                                name="Mapping and Geographic Information Centre, British Antarctic Survey",
+                                href="https://ror.org/01rhff309",
+                                title="ror",
+                            ),
+                            phone="+44 (0)1223 221400",
+                            email="magic@bas.ac.uk",
+                            address=Address(
+                                delivery_point="British Antarctic Survey, High Cross, Madingley Road",
+                                city="Cambridge",
+                                administrative_area="Cambridgeshire",
+                                postal_code="CB3 0ET",
+                                country="United Kingdom",
+                            ),
+                            online_resource=OnlineResource(
+                                href="https://www.bas.ac.uk/teams/magic",
+                                title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
+                                description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
+                                function=OnlineResourceFunctionCode.INFORMATION,
+                            ),
+                            role=[ContactRoleCode.POINT_OF_CONTACT],
+                        )
+                    ]
+                ),
                 maintenance=Maintenance(
                     maintenance_frequency=MaintenanceFrequencyCode.AS_NEEDED, progress=ProgressCode.ON_GOING
                 ),
-                constraints=[
-                    Constraint(
-                        type=ConstraintTypeCode.ACCESS,
-                        restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
-                        statement="Open Access (Anonymous)",
-                    ),
-                    Constraint(
-                        type=ConstraintTypeCode.USAGE,
-                        restriction_code=ConstraintRestrictionCode.LICENSE,
-                        href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-                        statement="This information is licensed under the Open Government Licence v3.0. To view this licence, visit https://www.nationalarchives.gov.uk/doc/open-government-licence/.",
-                    ),
-                ],
-                extents=[
-                    Extent(
-                        identifier="bounding",
-                        geographic=ExtentGeographic(
-                            bounding_box=BoundingBox(
-                                west_longitude=0, east_longitude=0, south_latitude=0, north_latitude=0
-                            )
+                constraints=Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS,
+                            restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
+                            statement="Open Access (Anonymous)",
                         ),
-                    )
-                ],
+                        Constraint(
+                            type=ConstraintTypeCode.USAGE,
+                            restriction_code=ConstraintRestrictionCode.LICENSE,
+                            href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+                            statement="This information is licensed under the Open Government Licence v3.0. To view this licence, visit https://www.nationalarchives.gov.uk/doc/open-government-licence/.",
+                        ),
+                    ]
+                ),
+                extents=Extents(
+                    [
+                        Extent(
+                            identifier="bounding",
+                            geographic=ExtentGeographic(
+                                bounding_box=BoundingBox(
+                                    west_longitude=0, east_longitude=0, south_latitude=0, north_latitude=0
+                                )
+                            ),
+                        )
+                    ]
+                ),
             ),
             data_quality=DataQuality(
                 lineage=Lineage(statement="x"),
@@ -278,31 +301,33 @@ class TestRecord:
                             href="https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1/",
                             dates=Dates(publication=Date(date=date(2024, 11, 1))),
                             edition="1",
-                            contacts=[
-                                Contact(
-                                    organisation=ContactIdentity(
-                                        name="Mapping and Geographic Information Centre, British Antarctic Survey",
-                                        href="https://ror.org/01rhff309",
-                                        title="ror",
-                                    ),
-                                    phone="+44 (0)1223 221400",
-                                    email="magic@bas.ac.uk",
-                                    address=Address(
-                                        delivery_point="British Antarctic Survey, High Cross, Madingley Road",
-                                        city="Cambridge",
-                                        administrative_area="Cambridgeshire",
-                                        postal_code="CB3 0ET",
-                                        country="United Kingdom",
-                                    ),
-                                    online_resource=OnlineResource(
-                                        href="https://www.bas.ac.uk/teams/magic",
-                                        title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
-                                        description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
-                                        function=OnlineResourceFunctionCode.INFORMATION,
-                                    ),
-                                    role=[ContactRoleCode.PUBLISHER],
-                                )
-                            ],
+                            contacts=Contacts(
+                                [
+                                    Contact(
+                                        organisation=ContactIdentity(
+                                            name="Mapping and Geographic Information Centre, British Antarctic Survey",
+                                            href="https://ror.org/01rhff309",
+                                            title="ror",
+                                        ),
+                                        phone="+44 (0)1223 221400",
+                                        email="magic@bas.ac.uk",
+                                        address=Address(
+                                            delivery_point="British Antarctic Survey, High Cross, Madingley Road",
+                                            city="Cambridge",
+                                            administrative_area="Cambridgeshire",
+                                            postal_code="CB3 0ET",
+                                            country="United Kingdom",
+                                        ),
+                                        online_resource=OnlineResource(
+                                            href="https://www.bas.ac.uk/teams/magic",
+                                            title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
+                                            description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
+                                            function=OnlineResourceFunctionCode.INFORMATION,
+                                        ),
+                                        role=[ContactRoleCode.PUBLISHER],
+                                    )
+                                ]
+                            ),
                         ),
                         explanation="Resource within scope of British Antarctic Survey (BAS) Mapping and Geographic Information Centre (MAGIC) Discovery Metadata Profile.",
                         result=True,
@@ -330,31 +355,33 @@ class TestRecord:
                         href="https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1/",
                         dates=Dates(publication=Date(date=date(2024, 11, 1))),
                         edition="1",
-                        contacts=[
-                            Contact(
-                                organisation=ContactIdentity(
-                                    name="Mapping and Geographic Information Centre, British Antarctic Survey",
-                                    href="https://ror.org/01rhff309",
-                                    title="ror",
-                                ),
-                                phone="+44 (0)1223 221400",
-                                email="magic@bas.ac.uk",
-                                address=Address(
-                                    delivery_point="British Antarctic Survey, High Cross, Madingley Road",
-                                    city="Cambridge",
-                                    administrative_area="Cambridgeshire",
-                                    postal_code="CB3 0ET",
-                                    country="United Kingdom",
-                                ),
-                                online_resource=OnlineResource(
-                                    href="https://www.bas.ac.uk/teams/magic",
-                                    title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
-                                    description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
-                                    function=OnlineResourceFunctionCode.INFORMATION,
-                                ),
-                                role=[ContactRoleCode.PUBLISHER],
-                            )
-                        ],
+                        contacts=Contacts(
+                            [
+                                Contact(
+                                    organisation=ContactIdentity(
+                                        name="Mapping and Geographic Information Centre, British Antarctic Survey",
+                                        href="https://ror.org/01rhff309",
+                                        title="ror",
+                                    ),
+                                    phone="+44 (0)1223 221400",
+                                    email="magic@bas.ac.uk",
+                                    address=Address(
+                                        delivery_point="British Antarctic Survey, High Cross, Madingley Road",
+                                        city="Cambridge",
+                                        administrative_area="Cambridgeshire",
+                                        postal_code="CB3 0ET",
+                                        country="United Kingdom",
+                                    ),
+                                    online_resource=OnlineResource(
+                                        href="https://www.bas.ac.uk/teams/magic",
+                                        title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
+                                        description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
+                                        function=OnlineResourceFunctionCode.INFORMATION,
+                                    ),
+                                    role=[ContactRoleCode.PUBLISHER],
+                                )
+                            ]
+                        ),
                     ),
                     explanation="Resource within scope of British Antarctic Survey (BAS) Mapping and Geographic Information Centre (MAGIC) Discovery Metadata Profile.",
                     result=True,
@@ -380,31 +407,33 @@ class TestRecord:
                         href="https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1/",
                         dates=Dates(publication=Date(date=date(2024, 11, 1))),
                         edition="1",
-                        contacts=[
-                            Contact(
-                                organisation=ContactIdentity(
-                                    name="Mapping and Geographic Information Centre, British Antarctic Survey",
-                                    href="https://ror.org/01rhff309",
-                                    title="ror",
-                                ),
-                                phone="+44 (0)1223 221400",
-                                email="magic@bas.ac.uk",
-                                address=Address(
-                                    delivery_point="British Antarctic Survey, High Cross, Madingley Road",
-                                    city="Cambridge",
-                                    administrative_area="Cambridgeshire",
-                                    postal_code="CB3 0ET",
-                                    country="United Kingdom",
-                                ),
-                                online_resource=OnlineResource(
-                                    href="https://www.bas.ac.uk/teams/magic",
-                                    title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
-                                    description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
-                                    function=OnlineResourceFunctionCode.INFORMATION,
-                                ),
-                                role=[ContactRoleCode.PUBLISHER],
-                            )
-                        ],
+                        contacts=Contacts(
+                            [
+                                Contact(
+                                    organisation=ContactIdentity(
+                                        name="Mapping and Geographic Information Centre, British Antarctic Survey",
+                                        href="https://ror.org/01rhff309",
+                                        title="ror",
+                                    ),
+                                    phone="+44 (0)1223 221400",
+                                    email="magic@bas.ac.uk",
+                                    address=Address(
+                                        delivery_point="British Antarctic Survey, High Cross, Madingley Road",
+                                        city="Cambridge",
+                                        administrative_area="Cambridgeshire",
+                                        postal_code="CB3 0ET",
+                                        country="United Kingdom",
+                                    ),
+                                    online_resource=OnlineResource(
+                                        href="https://www.bas.ac.uk/teams/magic",
+                                        title="Mapping and Geographic Information Centre (MAGIC) - BAS public website",
+                                        description="General information about the BAS Mapping and Geographic Information Centre (MAGIC) from the British Antarctic Survey (BAS) public website.",
+                                        function=OnlineResourceFunctionCode.INFORMATION,
+                                    ),
+                                    role=[ContactRoleCode.PUBLISHER],
+                                )
+                            ]
+                        ),
                     ),
                     explanation="Resource within scope of British Antarctic Survey (BAS) Mapping and Geographic Information Centre (MAGIC) Discovery Metadata Profile.",
                     result=True,
@@ -859,3 +888,128 @@ class TestRecord:
             expected["identification"]["language"] = "eng"
 
         assert result == expected
+
+
+class TestRecordSummary:
+    """Test root RecordSummary element."""
+
+    def test_init(self):
+        """Can create a minimal RecordSummary element from directly assigned properties."""
+        expected = "x"
+        expected_hierarchy_level = HierarchyLevelCode.DATASET
+        expected_date = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
+
+        record_summary = RecordSummary(
+            hierarchy_level=expected_hierarchy_level,
+            title=expected,
+            abstract=expected,
+            creation=expected_date,
+        )
+
+        assert record_summary.hierarchy_level == expected_hierarchy_level
+        assert record_summary.title == expected
+        assert record_summary.abstract == expected
+        assert record_summary.creation == expected_date
+
+        assert record_summary.edition is None
+        assert record_summary.purpose is None
+        assert record_summary.publication is None
+        assert record_summary.revision is None
+        assert record_summary.graphic_overview_href is None
+
+    def test_complete(self):
+        """Can create a RecordSummary element with all optional properties directly assigned."""
+        expected = "x"
+        expected_hierarchy_level = HierarchyLevelCode.DATASET
+        expected_date = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
+
+        record_summary = RecordSummary(
+            hierarchy_level=expected_hierarchy_level,
+            title=expected,
+            abstract=expected,
+            creation=expected_date,
+            edition=expected,
+            purpose=expected,
+            publication=expected_date,
+            revision=expected_date,
+            graphic_overview_href=expected,
+        )
+
+        assert record_summary.edition is expected
+        assert record_summary.purpose is expected
+        assert record_summary.publication is expected_date
+        assert record_summary.revision is expected_date
+        assert record_summary.graphic_overview_href is expected
+
+    def test_loads(self):
+        """Can create a RecordSummary from a Record."""
+        expected = "x"
+        expected_hierarchy_level = HierarchyLevelCode.DATASET
+        expected_time = datetime(2014, 6, 30, 14, 30, 45, tzinfo=UTC)
+        record = Record(
+            hierarchy_level=expected_hierarchy_level,
+            metadata=Metadata(
+                contacts=Contacts(
+                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
+                ),
+                date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
+            ),
+            identification=Identification(
+                title=expected,
+                abstract=expected,
+                dates=Dates(
+                    creation=Date(date=expected_time.date()),
+                    revision=Date(date=expected_time),
+                    publication=Date(date=expected_time),
+                ),
+                edition=expected,
+                purpose=expected,
+                graphic_overviews=GraphicOverviews([GraphicOverview(identifier="x", href=expected, mime_type="x")]),
+            ),
+        )
+
+        record_summary = RecordSummary.loads(record)
+
+        assert isinstance(record_summary, RecordSummary)
+        assert record_summary.hierarchy_level == expected_hierarchy_level
+        assert record_summary.title == expected
+        assert record_summary.abstract == expected
+        assert record_summary.creation == Date(date=expected_time.date())
+        assert record_summary.edition == expected
+        assert record_summary.purpose == expected
+        assert record_summary.publication == Date(date=expected_time)
+        assert record_summary.revision == Date(date=expected_time)
+        assert record_summary.graphic_overview_href is expected
+
+    @pytest.mark.parametrize(("purpose", "expected"), [("x", "x"), (None, "y")])
+    def test_purpose_abstract(self, purpose: str | None, expected: str):
+        """Can get either purpose or abstract depending on which values are set."""
+        abstract = "y"
+
+        record_summary = RecordSummary(
+            hierarchy_level=HierarchyLevelCode.DATASET,
+            title="x",
+            abstract=abstract,
+            creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
+            purpose=purpose,
+        )
+
+        assert record_summary.purpose_abstract == expected
+
+    revision_date = Date(date=datetime(2015, 7, 20, tzinfo=UTC).date())
+
+    @pytest.mark.parametrize(
+        ("revision", "expected"),
+        [(revision_date, revision_date), (None, Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()))],
+    )
+    def test_revision_creation(self, revision: Date | None, expected: Date):
+        """Can get either revision or creation date depending on which values are set."""
+        record_summary = RecordSummary(
+            hierarchy_level=HierarchyLevelCode.DATASET,
+            title="x",
+            abstract="x",
+            creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
+            revision=revision,
+        )
+
+        assert record_summary.revision_creation == expected

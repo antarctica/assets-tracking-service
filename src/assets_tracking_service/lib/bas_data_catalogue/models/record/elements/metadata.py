@@ -4,7 +4,7 @@ from typing import TypeVar
 
 import cattrs
 
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contact
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contacts
 
 TMetadata = TypeVar("TMetadata", bound="Metadata")
 
@@ -44,7 +44,7 @@ class Metadata:
 
     character_set: str = "utf8"
     language: str = "eng"
-    contacts: list[Contact]
+    contacts: Contacts = field(default_factory=Contacts)
     date_stamp: date = field(default_factory=lambda: datetime.now(tz=UTC).date())
     metadata_standard: MetadataStandard = field(default_factory=MetadataStandard)
 
@@ -66,6 +66,7 @@ class Metadata:
         E.g. `converter.register_structure_hook(Metadata, lambda d, t: Metadata.structure(d))`
         """
         converter = cattrs.Converter()
+        converter.register_structure_hook(Contacts, lambda d, t: Contacts.structure(d))
         converter.register_structure_hook(date, lambda d, t: date.fromisoformat(d))
         return converter.structure(value, cls)
 
@@ -77,5 +78,6 @@ class Metadata:
         E.g. `converter.register_unstructure_hook(Metadata, lambda d: d.unstructure())`
         """
         converter = cattrs.Converter()
+        converter.register_unstructure_hook(Contacts, lambda d: d.unstructure())
         converter.register_unstructure_hook(date, lambda d: d.isoformat())
         return converter.unstructure(self)

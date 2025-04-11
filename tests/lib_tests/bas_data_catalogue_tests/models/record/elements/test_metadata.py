@@ -6,6 +6,7 @@ import pytest
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Contact,
     ContactIdentity,
+    Contacts,
     clean_dict,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.metadata import Metadata, MetadataStandard
@@ -62,7 +63,7 @@ class TestMetadata:
     def test_invalid_contacts(self):
         """Can't create a Metadata element without any contacts."""
         with pytest.raises(ValueError, match="At least one contact is required"):
-            Metadata(contacts=[])
+            Metadata(contacts=Contacts([]))
 
     def test_structure_cattrs(self):
         """Can use Cattrs to create a Metadata instance from plain types."""
@@ -73,7 +74,7 @@ class TestMetadata:
             "date_stamp": expected_date.isoformat(),
         }
         expected = Metadata(
-            contacts=[Contact(organisation=ContactIdentity(name="x"), role=[expected_enum])],
+            contacts=Contacts([Contact(organisation=ContactIdentity(name="x"), role=[expected_enum])]),
             date_stamp=expected_date,
         )
 
@@ -88,7 +89,7 @@ class TestMetadata:
         expected_date = date(2014, 6, 30)
         expected_enum = ContactRoleCode.POINT_OF_CONTACT
         value = Metadata(
-            contacts=[Contact(organisation=ContactIdentity(name="x"), role=[expected_enum])],
+            contacts=Contacts([Contact(organisation=ContactIdentity(name="x"), role=[expected_enum])]),
             date_stamp=expected_date,
         )
         expected = {

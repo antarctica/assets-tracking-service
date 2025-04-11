@@ -11,7 +11,7 @@ from importlib_resources import files as resources_files
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import clean_dict
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, clean_dict
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import DataQuality
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import Distribution
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Identification
@@ -20,6 +20,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.proje
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import HierarchyLevelCode
 
 TRecord = TypeVar("TRecord", bound="Record")
+TRecordSummary = TypeVar("TRecordSummary", bound="RecordSummary")
 
 
 class RecordInvalidError(Exception):
@@ -61,17 +62,17 @@ class Record:
     [3] https://www.datypic.com/sc/niem21/e-gmd_MD_Metadata.html
     [4] Supported elements:
         - `$schema`
-        - `character_set` (hard-coded)
-        - `citation.title`
-        - `citation.dates`
-        - `citation.edition`
-        - `citation.contacts` (except `contact.position`)
-        - `citation.identifiers`
+        - `*.character_set` (hard-coded)
+        - `*.citation.title`
+        - `*.citation.dates`
+        - `*.citation.edition`
+        - `*.citation.contacts` (except `contact.position`)
+        - `*.citation.identifiers`
         - `common.online_resource.protocol`
         - `(identification.)data_quality.domain_consistency`
         - `(identification.)data_quality.lineage.statement`
         - `distribution.distributor`
-        - `distributor.format` (name and URL only)
+        - `distributor.format` (`format` and `href` only)
         - `distributor.transfer_option`
         - `file_identifier`
         - `hierarchy_level`
@@ -81,7 +82,7 @@ class Record:
         - `identification.extent` (temporal and bounding box extents only)
         - `identification.graphic_overviews`
         - `identification.maintenance`
-        - `identification.purpose
+        - `identification.purpose`
         - `identification.other_citation_details`
         - `language` (hard-coded)
         - `metadata.date_stamp`
@@ -93,7 +94,7 @@ class Record:
         - `distribution.format` (except name and URL)
         - `identification.credit`
         - `identification.constraint.permissions`
-        - `identification.extent.geographic.identifier
+        - `identification.extent.geographic.identifier`
         - `identification.extent.vertical`
         - `identification.keywords`
         - `identification.resource_formats`
@@ -265,3 +266,57 @@ class Record:
                 validate(instance=config, schema=schema)
             except ValidationError as e:
                 raise RecordInvalidError(e) from e
+
+
+@dataclass(kw_only=True)
+class RecordSummary:
+    """
+    Summary of a resource within the BAS Data Catalogue / Metadata ecosystem.
+
+    RecordSummaries are a low-level view of key aspects of a resource, using the ISO 19115 information model. They are
+    intended to be used where full records are unnecessary or would be impractical - such as describing/listing large
+    numbers of resources, or for resources related to a selected resource.
+
+    RecordSummaries can be created independently but are intended to be derived from a Record instance using `loads()`.
+    This class does not support loading/dumping record configurations encoded in JSON or XML.
+
+    When derived from a Record, the `graphic_overview_href` is populated from the first graphic overview, if any exist.
+    """
+
+    file_identifier: str | None = None
+    hierarchy_level: HierarchyLevelCode
+    title: str
+    abstract: str
+    purpose: str | None = None
+    edition: str | None = None
+    creation: Date
+    revision: Date | None = None
+    publication: Date | None = None
+    graphic_overview_href: str | None = None
+
+    @classmethod
+    def loads(cls: type[TRecordSummary], record: Record) -> "RecordSummary":
+        """Create a RecordSummary from a Record."""
+        graphic = record.identification.graphic_overviews[0].href if record.identification.graphic_overviews else None
+        return cls(
+            file_identifier=record.file_identifier,
+            hierarchy_level=record.hierarchy_level,
+            title=record.identification.title,
+            abstract=record.identification.abstract,
+            purpose=record.identification.purpose,
+            edition=record.identification.edition,
+            creation=record.identification.dates.creation,
+            revision=record.identification.dates.revision,
+            publication=record.identification.dates.publication,
+            graphic_overview_href=graphic,
+        )
+
+    @property
+    def purpose_abstract(self) -> str:
+        """Purpose, or abstract if not defined."""
+        return self.purpose if self.purpose else self.abstract
+
+    @property
+    def revision_creation(self) -> Date:
+        """Revision date, or creation if not defined."""
+        return self.revision if self.revision else self.creation

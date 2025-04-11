@@ -9,15 +9,19 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Citation,
     Contact,
     ContactIdentity,
+    Contacts,
     Date,
     Dates,
     Identifier,
+    Identifiers,
     OnlineResource,
     clean_dict,
+    clean_list,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ContactRoleCode,
     DatePrecisionCode,
+    DateTypeCode,
     OnlineResourceFunctionCode,
 )
 
@@ -38,8 +42,31 @@ class TestCleanDict:
         ],
     )
     def test_clean_dict(self, value: dict, expected: dict):
-        """Can clean a dictionary of None values."""
+        """Can clean a dictionary containing None values."""
         result = clean_dict(value)
+        assert result == expected
+
+
+class TestCleanList:
+    """Test clean_list util function."""
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ([], []),
+            ([None], []),
+            ([{}], []),
+            ([None, [], {}], []),
+            ([{"foo": None}], []),
+            ([{"foo": []}], []),
+            ([{"foo": {}}], []),
+            ([{"foo": {"bar": "x"}}], [{"foo": {"bar": "x"}}]),
+            ([{"foo": {"bar": {}}}], []),
+        ],
+    )
+    def test_clean_list(self, value: list, expected: list):
+        """Can clean a list containing None values."""
+        result = clean_list(value)
         assert result == expected
 
 
@@ -199,6 +226,34 @@ class TestCitation:
         assert result == expected
 
 
+class TestContactIdentity:
+    """Test ContactIdentity element."""
+
+    @pytest.mark.parametrize(
+        "values",
+        [
+            {"name": "x"},
+            {"name": "x", "href": "x", "title": "x"},
+        ],
+    )
+    def test_init(self, values: dict):
+        """Can create a ContactIdentity element from directly assigned properties."""
+        expected = "x"
+        identity = ContactIdentity(**values)
+
+        assert identity.name == expected
+
+        if "href" in values:
+            assert identity.href == expected
+        else:
+            assert identity.href is None
+
+        if "title" in values:
+            assert identity.title == expected
+        else:
+            assert identity.title is None
+
+
 class TestContact:
     """Test Contact element."""
 
@@ -324,32 +379,75 @@ class TestContact:
         assert first.eq_contains_roles(second) == expected
 
 
-class TestContactIdentity:
-    """Test ContactIdentity element."""
+class TestContacts:
+    """Test Contacts container."""
+
+    def test_init(self):
+        """Can create a Contacts container from directly assigned properties."""
+        expected = Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])
+        contacts = Contacts([expected])
+
+        assert len(contacts) == 1
+        assert contacts[0] == expected
+
+    test_filer_roles_poc = Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])
+    test_filer_roles_author = Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.AUTHOR])
+    test_filer_roles_poc_publisher = Contact(
+        organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT, ContactRoleCode.PUBLISHER]
+    )
 
     @pytest.mark.parametrize(
-        "values",
+        ("value", "expected"),
         [
-            {"name": "x"},
-            {"name": "x", "href": "x", "title": "x"},
+            (
+                ContactRoleCode.POINT_OF_CONTACT,
+                [test_filer_roles_poc, test_filer_roles_poc_publisher],
+            ),
+            (
+                [ContactRoleCode.POINT_OF_CONTACT, ContactRoleCode.AUTHOR],
+                [test_filer_roles_poc, test_filer_roles_author, test_filer_roles_poc_publisher],
+            ),
+            ([], []),
         ],
     )
-    def test_init(self, values: dict):
-        """Can create a ContactIdentity element from directly assigned properties."""
-        expected = "x"
-        identity = ContactIdentity(**values)
+    def test_filter_roles(self, value: ContactRoleCode | list[ContactRoleCode], expected: list[Contact]):
+        """Can filter contacts by one or more roles."""
+        contacts = Contacts(
+            [self.test_filer_roles_poc, self.test_filer_roles_author, self.test_filer_roles_poc_publisher]
+        )
 
-        assert identity.name == expected
+        result = contacts.filter(value)
+        assert result == expected
 
-        if "href" in values:
-            assert identity.href == expected
-        else:
-            assert identity.href is None
+    def test_structure(self):
+        """Can create a Contacts container by converting a list of plain types."""
+        expected = Contacts([Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])])
+        result = Contacts.structure([{"organisation": {"name": "x"}, "role": ["pointOfContact"]}])
 
-        if "title" in values:
-            assert identity.title == expected
-        else:
-            assert identity.title is None
+        assert type(result) is type(expected)
+        assert result == expected
+
+    def test_structure_cattrs(self):
+        """Can use Cattrs to create a Contacts instance from plain types."""
+        value = [{"organisation": {"name": "x"}, "role": ["pointOfContact"]}]
+        expected = Contacts([Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])])
+
+        converter = cattrs.Converter()
+        converter.register_structure_hook(Contacts, lambda d, t: Contacts.structure(d))
+        result = converter.structure(value, Contacts)
+
+        assert result == expected
+
+    def test_unstructure_cattrs(self):
+        """Can use Cattrs to convert a Contacts instance into plain types."""
+        value = Contacts([Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])])
+        expected = [{"organisation": {"name": "x"}, "role": ["pointOfContact"]}]
+
+        converter = cattrs.Converter()
+        converter.register_unstructure_hook(Contacts, lambda d: d.unstructure())
+        result = clean_list(converter.unstructure(value))
+
+        assert result == expected
 
 
 class TestDate:
@@ -459,7 +557,7 @@ class TestDate:
 
 
 class TestDates:
-    """Test Dates element."""
+    """Test Dates container element."""
 
     @pytest.mark.parametrize(
         "values",
@@ -487,7 +585,7 @@ class TestDates:
         ],
     )
     def test_init(self, values: dict):  # noqa: C901
-        """Can create a Dates element from directly assigned properties."""
+        """Can create a Dates container from directly assigned properties."""
         expected_date = datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC)
         dates = Dates(**values)
 
@@ -557,9 +655,32 @@ class TestDates:
             assert dates.validity_expires is None
 
     def test_invalid_empty(self):
-        """Can't create a Dates element without any dates."""
+        """Can't create a Dates container without any dates."""
         with pytest.raises(ValueError, match="At least one date is required"):
             Dates()
+
+    @pytest.mark.parametrize(
+        "value",
+        [Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC)), None],
+    )
+    def test_get_item(self, value: Date | None):
+        """Can get a date by key."""
+        dates = Dates(
+            creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC)),
+            publication=value,
+        )
+
+        assert dates["publication"] == dates.publication
+        assert dates["publication"] == value
+
+    def test_as_dict_enum(self):
+        """Can convert a Dates container to a dictionary with enum values."""
+        creation = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
+        dates = Dates(creation=creation)
+        expected = {DateTypeCode.CREATION: creation}
+
+        result = dates.as_dict_enum()
+        assert result == expected
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -609,7 +730,7 @@ class TestDates:
         ],
     )
     def test_structure(self, value: dict, expected: Dates):
-        """Can create a Dates element by converting a dict of plain types."""
+        """Can create a Dates container by converting a dict of plain types."""
         result = Dates.structure(value)
 
         assert result == expected
@@ -677,7 +798,7 @@ class TestDates:
         ],
     )
     def test_unstructure(self, value: Dates, expected: dict):
-        """Can convert a Dates element to plain types."""
+        """Can convert a Dates container to plain types."""
         result = value.unstructure()
 
         assert result == expected
@@ -694,8 +815,8 @@ class TestDates:
         assert result == expected
 
 
-class TestIdentifiers:
-    """Test Identifiers element."""
+class TestIdentifier:
+    """Test Identifier element."""
 
     def test_init(self):
         """Can create an Identifier element from directly assigned properties."""
@@ -706,6 +827,55 @@ class TestIdentifiers:
         assert identifier.identifier == expected
         assert identifier.href == expected
         assert identifier.namespace == expected
+
+
+class TestIdentifiers:
+    """Test Identifiers container."""
+
+    def test_init(self):
+        """Can create an Identifiers container from directly assigned properties."""
+        expected = Identifier(identifier="x", href="x", namespace="x")
+        identifiers = Identifiers([expected])
+
+        assert len(identifiers) == 1
+        assert identifiers[0] == expected
+
+    def test_filter_namespace(self):
+        """Can filter identifiers by a namespace."""
+        identifier = Identifier(identifier="x", href="x", namespace="a")
+        identifiers = Identifiers([identifier, Identifier(identifier="x", href="x", namespace="b")])
+        expected = Identifiers([identifier])
+
+        result = identifiers.filter(identifier.namespace)
+        assert result == expected
+
+    def test_structure(self):
+        """Can create an Identifiers container by converting a list of plain types."""
+        expected = Identifiers([Identifier(identifier="x", href="x", namespace="x")])
+        result = Identifiers.structure([{"identifier": "x", "href": "x", "namespace": "x"}])
+        assert result == expected
+
+    def test_structure_cattrs(self):
+        """Can use Cattrs to create an Identifiers instance from plain types."""
+        value = [{"identifier": "x", "href": "x", "namespace": "x"}]
+        expected = Identifiers([Identifier(identifier="x", href="x", namespace="x")])
+
+        converter = cattrs.Converter()
+        converter.register_structure_hook(Identifiers, lambda d, t: Identifiers.structure(d))
+        result = converter.structure(value, Identifiers)
+
+        assert result == expected
+
+    def test_unstructure_cattrs(self):
+        """Can use Cattrs to convert an Identifiers instance into plain types."""
+        value = Identifiers([Identifier(identifier="x", href="x", namespace="x")])
+        expected = [{"identifier": "x", "href": "x", "namespace": "x"}]
+
+        converter = cattrs.Converter()
+        converter.register_unstructure_hook(Identifiers, lambda d: d.unstructure())
+        result = clean_list(converter.unstructure(value))
+
+        assert result == expected
 
 
 class TestOnlineResource:

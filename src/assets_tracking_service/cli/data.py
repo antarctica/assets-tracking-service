@@ -1,6 +1,7 @@
 import logging
 
 import typer
+from boto3 import client as S3Client  # noqa: N812
 from rich import print as rprint
 from sentry_sdk import monitor
 
@@ -42,7 +43,13 @@ def export() -> None:
     """Dump assets with latest positions through each exporter."""
     config = Config()
     db = DatabaseClient(conn=make_conn(config.DB_DSN))
-    exporters = ExportersManager(config=config, db=db, logger=logger)
+    s3 = S3Client(
+        "s3",
+        aws_access_key_id=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
+        aws_secret_access_key=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET,
+        region_name="eu-west-1",
+    )
+    exporters = ExportersManager(config=config, db=db, s3=s3, logger=logger)
 
     exporters.export()
 
@@ -60,8 +67,14 @@ def run() -> None:
     """
     config = Config()
     db = DatabaseClient(conn=make_conn(config.DB_DSN))
+    s3 = S3Client(
+        "s3",
+        aws_access_key_id=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
+        aws_secret_access_key=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET,
+        region_name="eu-west-1",
+    )
     providers = ProvidersManager(config=config, db=db, logger=logger)
-    exporters = ExportersManager(config=config, db=db, logger=logger)
+    exporters = ExportersManager(config=config, db=db, s3=s3, logger=logger)
 
     monitor_slug = "ats-run"
     with monitor(monitor_slug=monitor_slug, monitor_config=config.SENTRY_MONITOR_CONFIG[monitor_slug]):

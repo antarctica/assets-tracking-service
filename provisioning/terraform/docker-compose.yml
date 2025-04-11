@@ -1,0 +1,10 @@
+---
+
+services:
+  terraform:
+    image: hashicorp/terraform:1.11.3
+    volumes:
+      - .:/workspace
+      - ~/.aws:/root/.aws
+    entrypoint: /bin/ash
+    working_dir: /workspace

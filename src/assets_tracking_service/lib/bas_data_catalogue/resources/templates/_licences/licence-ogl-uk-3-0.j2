@@ -1,0 +1,58 @@
+{% import '_macros/base.html.j2' as base %}
+{% import '_macros/bsk.html.j2' as bsk %}
+
+{% call bsk.dl_horizontal() %}
+  <dt class="x-text-left">Item licence</dt>
+  <dd>
+    {{ base.a({'href': 'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/', 'value': 'Open Government Licence (OGL 3.0)', 'external': True}) }}
+    <img class="bsk-pull-right app-item-licence-symbol" src="https://cdn.web.bas.ac.uk/bas-style-kit/0.6.0-beta/img/logos-symbols/ogl-symbol-default-transparent-64.png" alt="OGL symbol" />
+  </dd>
+
+  <dt class="x-text-left">Licence summary</dt>
+  <dd>
+    <p><strong>You are free to:</strong></p>
+    {% call bsk.alert(style='highlight', variant='success', classes='x-text-black') %}
+      <ul class="fa-ul x-py-6">
+        <li class="x-py-3">
+          <span class="fa-li"><i class="fab fa-fw fa-2x fa-creative-commons-share"></i></span>
+          <div class="x-pl-6 x-pt-1"><strong>Share</strong> — copy and redistribute this item in any medium or format</div>
+        </li>
+        <li class="x-py-3">
+          <span class="fa-li"><i class="fab fa-fw fa-2x fa-creative-commons-remix"></i></span>
+          <div class="x-pl-6 x-pt-1"><strong>Adapt</strong> — remix, transform, and build upon this item for any purpose, including commercial</div>
+        </li>
+      </ul>
+    {% endcall %}
+
+    <p><strong>Providing that you:</strong></p>
+    {% call bsk.alert(style='highlight', variant='warning', classes='x-text-black') %}
+      <ul class="fa-ul x-py-6">
+        <li class="x-py-3">
+          <span class="fa-li"><i class="fab fa-fw fa-2x fa-creative-commons-by"></i></span>
+          <div class="x-pl-6 x-pt-1"><strong>Include attribution</strong> — by including a citation, which must not suggest endorsement of you or your use</div>
+        </li>
+        <li class="x-py-3">
+          <span class="fa-li"><i class="far fa-fw fa-2x fa-ban"></i></span>
+          <div class="x-pl-6 x-pt-1"><strong>Don't include additional restrictions</strong> — you may not legally restrict others from doing things this license permits</div>
+        </li>
+      </ul>
+    {% endcall %}
+
+    <p><strong>Important notes:</strong></p>
+    {% call bsk.alert(style='highlight', variant='danger', classes='x-text-black') %}
+      <ul class="fa-ul x-py-6">
+        <li class="x-py-3">
+          <span class="fa-li"><i class="far fa-fw fa-2x fa-question-circle"></i></span>
+          <div class="x-pl-6 x-pt-1"><strong>Inaccuracies and mistakes</strong> — may be included unintentionally due to limited data availability or quality</div>
+        </li>
+        <li class="x-py-3">
+          <span class="fa-li"><i class="far fa-fw fa-2x fa-exclamation-circle"></i></span>
+          <div class="x-pl-6 x-pt-1"><strong>No warranty, liability or fitness for any purpose</strong> — you must not rely on this information for navigation</div>
+        </li>
+      </ul>
+    {% endcall %}
+
+    <p>This is a short licence summary, see the {{ base.a({'href': 'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/', 'value': 'full licence', 'external': True}) }} for more information.</p>
+  </dd>
+
+{% endcall %}

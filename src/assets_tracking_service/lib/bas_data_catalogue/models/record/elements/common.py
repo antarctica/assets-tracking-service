@@ -14,6 +14,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
 
 TDate = TypeVar("TDate", bound="Date")
 TDates = TypeVar("TDates", bound="Dates")
+TContacts = TypeVar("TContacts", bound="Contacts")
 TCitation = TypeVar("TCitation", bound="Citation")
 
 
@@ -31,6 +32,12 @@ def clean_dict(d: dict) -> dict:
     """Remove any None or empty list/dict values from a dict."""
     cleaned = _clean_val(d)
     return {k: v for k, v in cleaned.items() if v not in (None, [], {})}
+
+
+def clean_list(l: list) -> list:  # noqa: E741
+    """Remove any None or empty list/dict values from a list."""
+    cleaned = _clean_val(l)
+    return [v for v in cleaned if v not in (None, [], {})] if cleaned is not None else []
 
 
 @dataclass(kw_only=True)
@@ -148,6 +155,55 @@ class Contact:
         return False
 
 
+class Contacts(list[Contact]):
+    """
+    Contacts.
+
+    Wrapper around a list of Contact items with additional methods for filtering/selecting items.
+
+    Schema definition: contacts [1]
+    ISO element: gmd:CI_ResponsibleParty [2]
+
+    [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L398
+    [2] multiple, see 'used in' section of: https://www.datypic.com/sc/niem21/e-gmd_CI_ResponsibleParty.html
+    """
+
+    @classmethod
+    def structure(cls: type[TContacts], value: list[dict]) -> "Contacts":
+        """
+        Parse contacts from plain types.
+
+        Returns a new class instance with parsed data. Intended to be used as a cattrs structure hook.
+        E.g. `converter.register_structure_hook(Contacts, lambda d, t: Contacts.structure(d))`
+
+        Structures input items into a list of Contact items via cattrs as a new instance of this class.
+
+        Example input: [{'organisation': {'name': 'x'}, 'role': ['pointOfContact']}]
+        Example output: Contacts([Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])])
+        """
+        converter = cattrs.Converter()
+        return cls([converter.structure(contact, Contact) for contact in value])
+
+    def unstructure(self) -> list[dict]:
+        """
+        Convert to plain types.
+
+        Intended to be used as a cattrs unstructure hook.
+        E.g. `converter.register_unstructure_hook(Contacts, lambda d: d.unstructure())`
+
+        Example input: Contacts([Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])])
+        Example output: [{'organisation': {'name': 'x'}, 'role': ['pointOfContact']}]
+        """
+        # noinspection PyUnresolvedReferences
+        converter = cattrs.Converter()
+        return [converter.unstructure(contact) for contact in self]
+
+    def filter(self, roles: ContactRoleCode | list[ContactRoleCode]) -> "Contacts":
+        """Filter contacts by role(s)."""
+        roles = [roles] if isinstance(roles, ContactRoleCode) else roles
+        return Contacts([contact for contact in self if any(role in contact.role for role in roles)])
+
+
 @dataclass(kw_only=True)
 class Date:
     """
@@ -218,7 +274,7 @@ class Date:
 @dataclass(kw_only=True)
 class Dates:
     """
-    Date.
+    Dates.
 
     Schema definition: date [1]
     ISO element: N/A [2]
@@ -251,6 +307,20 @@ class Dates:
             msg = "At least one date is required"
             raise ValueError(msg) from None
 
+    def __getitem__(self, key: str) -> Date | None:
+        """Get date by key."""
+        return getattr(self, key)
+
+    @property
+    def _dict(self) -> dict[str, Date]:
+        """Non-None values as a dictionary."""
+        # noinspection PyUnresolvedReferences
+        return {k: getattr(self, k) for k in self.__dataclass_fields__ if getattr(self, k) is not None}
+
+    def as_dict_enum(self) -> dict[DateTypeCode, Date]:
+        """Non-None values as a dictionary with DateTypeCode enum keys."""
+        return {getattr(DateTypeCode, k.upper()): v for k, v in self._dict.items()}
+
     @classmethod
     def structure(cls: type[TDates], value: dict[str, str]) -> "Dates":
         """
@@ -277,15 +347,14 @@ class Dates:
         E.g. `converter.register_unstructure_hook(Dates, lambda d: d.unstructure())`
 
         Steps:
-        1. create a dict of non-None class attributes
-        3. map each dict key to a DateTypeCode enum term by converting each key to uppercase
-        4. create and return a new dict using the mapped enum values as keys and Date.isoformat as values
+        1. use dict of class attributes that aren't None
+        2. map each dict key to the DateTypeCode enum by converting the key to uppercase
+        3. create and return a new dict using the mapped enum values as keys and Date.isoformat() as values
 
         Example input: Dates(last_revision=Date(date=date(2021, 1, 1), precision=DatePrecisionCode.YEAR))
         Example output: {lastRevision: "2021"}
         """
-        dict_ = {k: getattr(self, k) for k in self.__dataclass_fields__ if getattr(self, k) is not None}
-        return {DateTypeCode[k.upper()].value: v.isoformat for k, v in dict_.items()}
+        return {DateTypeCode[k.upper()].value: v.isoformat for k, v in self._dict.items()}
 
 
 @dataclass(kw_only=True)
@@ -303,6 +372,54 @@ class Identifier:
     identifier: str
     href: str
     namespace: str
+
+
+class Identifiers(list[Identifier]):
+    """
+    Identifiers.
+
+    Wrapper around a list of Identifier items with additional methods for filtering/selecting items.
+
+    Schema definition: identifiers [1]
+    ISO element: gmd:MD_Identifier [2]
+
+    [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L991
+    [2] multiple, see 'used in' section of: https://www.datypic.com/sc/niem21/e-gmd_MD_Identifier.html
+    """
+
+    @classmethod
+    def structure(cls: type[TContacts], value: list[dict]) -> "Contacts":
+        """
+        Parse identifiers from plain types.
+
+        Returns a new class instance with parsed data. Intended to be used as a cattrs structure hook.
+        E.g. `converter.register_structure_hook(Identifiers, lambda d, t: Identifiers.structure(d))`
+
+        Structures input items into a list of Identifier items via cattrs as a new instance of this class.
+
+        Example input: [{"identifier": "x", "href": "x", "namespace": "x"}]
+        Example output: Identifiers([Identifier(identifier="x", href="x", namespace="x")])
+        """
+        converter = cattrs.Converter()
+        return cls([converter.structure(identifier, Identifier) for identifier in value])
+
+    def unstructure(self) -> list[dict]:
+        """
+        Convert to plain types.
+
+        Intended to be used as a cattrs unstructure hook.
+        E.g. `converter.register_unstructure_hook(Identifiers, lambda d: d.unstructure())`
+
+        Example input: Identifiers([Identifier(identifier="x", href="x", namespace="x")])
+        Example output: [{"identifier": "x", "href": "x", "namespace": "x"}]
+        """
+        # noinspection PyUnresolvedReferences
+        converter = cattrs.Converter()
+        return [converter.unstructure(identifier) for identifier in self]
+
+    def filter(self, namespace: str) -> "Identifiers":
+        """Filter identifiers by namespace."""
+        return Identifiers([identifier for identifier in self if identifier.namespace == namespace])
 
 
 @dataclass(kw_only=True)
@@ -326,16 +443,21 @@ class Citation:
     dates: Dates
     edition: str | None = None
     href: str | None = None
-    identifiers: list[Identifier] | None = None
+    identifiers: Identifiers = field(default_factory=Identifiers)
     other_citation_details: str | None = None
-    contacts: list[Contact] = None
+    contacts: Contacts = field(default_factory=Contacts)
 
-    def __post_init__(self) -> None:
-        """Process defaults."""
-        if self.identifiers is None:
-            self.identifiers = []
-        if self.contacts is None:
-            self.contacts = []
+    @classmethod
+    def _converter(cls: type[TCitation]) -> cattrs.Converter:
+        """Cattrs converter with hooks for this class."""
+        converter = cattrs.Converter()
+        converter.register_structure_hook(Contacts, lambda d, t: Contacts.structure(d))
+        converter.register_unstructure_hook(Contacts, lambda d: d.unstructure())
+        converter.register_structure_hook(Dates, lambda d, t: Dates.structure(d))
+        converter.register_unstructure_hook(Dates, lambda d: d.unstructure())
+        converter.register_structure_hook(Identifiers, lambda d, t: Identifiers.structure(d))
+        converter.register_unstructure_hook(Identifiers, lambda d: d.unstructure())
+        return converter
 
     @classmethod
     def structure(cls: type[TCitation], value: dict) -> "Citation":
@@ -353,8 +475,7 @@ class Citation:
         1. Unwrap title and href (i.e. `{'title': {'value': 'x', 'href': 'x'}, ...}` -> `{'title': 'x', 'href': 'x', ...}`)
         2. Convert the input dict to a new instance of this class via cattrs
         """
-        converter = cattrs.Converter()
-        converter.register_structure_hook(Dates, lambda d, t: Dates.structure(d))
+        converter = cls._converter()
 
         if "href" in value["title"]:
             href = value["title"].pop("href")
@@ -378,8 +499,7 @@ class Citation:
         1. Convert the class instance into a dict via cattrs
         2. Wrap title and href (i.e. `{'title': 'x', 'href': 'x', ...}`) -> `{'title': {'value': 'x', 'href': 'x'}, ...}`
         """
-        converter = cattrs.Converter()
-        converter.register_unstructure_hook(Dates, lambda d: d.unstructure())
+        converter = Citation._converter()
         value = converter.unstructure(self)
 
         title = {"value": value.pop("title")}

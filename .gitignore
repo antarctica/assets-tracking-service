@@ -23,5 +23,9 @@ htmlcov/
 # pgsync generated files
 .pgsync.yml
 
+# Terraform generated files
+/provisioning/terraform/.terraform
+/provisioning/terraform/.terraform.lock.hcl
+
 # App generated files
 exports/

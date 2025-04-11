@@ -20,13 +20,14 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
 class TestFormat:
     """Test Format element."""
 
-    def test_init(self):
+    @pytest.mark.parametrize("value", [None, "x"])
+    def test_init(self, value: str | None):
         """Can create a Format element from directly assigned properties."""
         expected = "x"
-        format_ = Format(format=expected, href=expected)
+        format_ = Format(format=expected, href=value)
 
         assert format_.format == expected
-        assert format_.href == expected
+        assert format_.href == value
 
 
 class TestSize:

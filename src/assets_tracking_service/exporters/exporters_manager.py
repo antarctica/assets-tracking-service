@@ -1,5 +1,7 @@
 import logging
 
+from mypy_boto3_s3 import S3Client
+
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.exporters.arcgis import ArcGisExporter
@@ -11,10 +13,11 @@ from assets_tracking_service.exporters.geojson import GeoJsonExporter
 class ExportersManager:
     """Coordinates exporting data to a variety of services and file formats."""
 
-    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, s3: S3Client, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
+        self._s3 = s3
 
         self._exporters: list[Exporter] = self._make_exporters(self._config.ENABLED_EXPORTERS)
 
@@ -35,7 +38,7 @@ class ExportersManager:
 
         if "data_catalogue" in exporter_names:
             self._logger.info("Creating Data Catalogue exporter...")
-            exporters.append(DataCatalogueExporter(config=self._config, db=self._db, logger=self._logger))
+            exporters.append(DataCatalogueExporter(config=self._config, db=self._db, s3=self._s3, logger=self._logger))
             self._logger.info("Created Data Catalogue exporter.")
 
         self._logger.info("Exporters created.")
