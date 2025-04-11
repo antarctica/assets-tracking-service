@@ -145,7 +145,6 @@ More detailed information about this dataset is provided below.
     </tbody>
 </table>
 </details>
-<br />
 
 #### Geometry
 

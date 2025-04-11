@@ -2,6 +2,7 @@ import logging
 from unittest.mock import PropertyMock
 
 import pytest
+from mypy_boto3_s3 import S3Client
 from pytest_mock import MockerFixture
 
 from assets_tracking_service.config import Config
@@ -18,22 +19,27 @@ class TestExportersManager:
         mocker: MockerFixture,
         fx_config: Config,
         fx_db_client_tmp_db_mig: DatabaseClient,
+        fx_s3_client: S3Client,
         fx_logger: logging.Logger,
     ):
         """Initialises."""
         mocker.patch("assets_tracking_service.exporters.arcgis.GIS", return_value=mocker.MagicMock(auto_spec=True))
 
-        manager = ExportersManager(config=fx_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
+        manager = ExportersManager(config=fx_config, db=fx_db_client_tmp_db_mig, s3=fx_s3_client, logger=fx_logger)
 
         assert len(manager._exporters) > 0
 
     def test_init_no_providers(
-        self, mocker: MockerFixture, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger
+        self,
+        mocker: MockerFixture,
+        fx_db_client_tmp_db_mig: DatabaseClient,
+        fx_s3_client: S3Client,
+        fx_logger: logging.Logger,
     ):
         """Initialises with no providers."""
         mock_config = mocker.Mock()
         type(mock_config).ENABLED_EXPORTERS = PropertyMock(return_value=[])
-        manager = ExportersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
+        manager = ExportersManager(config=mock_config, db=fx_db_client_tmp_db_mig, s3=fx_s3_client, logger=fx_logger)
 
         assert len(manager._exporters) == 0
 
@@ -42,6 +48,7 @@ class TestExportersManager:
         self,
         mocker: MockerFixture,
         fx_db_client_tmp_db_pop: DatabaseClient,
+        fx_s3_client: S3Client,
         fx_logger: logging.Logger,
         enabled_exporters: list[str],
     ):
@@ -49,7 +56,7 @@ class TestExportersManager:
         mock_config = mocker.Mock()
         type(mock_config).ENABLED_EXPORTERS = PropertyMock(return_value=enabled_exporters)
 
-        manager = ExportersManager(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+        manager = ExportersManager(config=mock_config, db=fx_db_client_tmp_db_pop, s3=fx_s3_client, logger=fx_logger)
 
         assert len(manager._exporters) == 1
 

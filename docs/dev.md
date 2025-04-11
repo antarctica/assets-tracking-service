@@ -229,6 +229,12 @@ To run tests with coverage locally:
 % uv run pytest --cov --cov-report=html
 ```
 
+To run tests for a specific module locally:
+
+```
+% uv run pytest --cov=assets_tracking_service.some.module --cov-report=html tests/assets_tracking_service_tests/some/module
+```
+
 Where tests are added to ensure coverage, use the `cov` [mark](https://docs.pytest.org/en/7.1.x/how-to/mark.html), e.g:
 
 ```python

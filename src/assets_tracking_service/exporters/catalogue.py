@@ -1,18 +1,30 @@
 import logging
 from datetime import UTC, date, datetime
-from json import dump as json_dump
-from pathlib import Path
+
+from mypy_boto3_s3 import S3Client
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.exporters.base_exporter import Exporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Dates
+from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter, HtmlExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlExporter, IsoXmlHtmlExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.json_exporter import JsonExporter
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+    Contacts,
+    Date,
+    Dates,
+    Identifiers,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Identifier as CatIdentifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import (
     DataQuality,
     Lineage,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+    Aggregations,
+    Constraints,
+    Extents,
     Identification,
     Maintenance,
 )
@@ -64,26 +76,32 @@ class CollectionRecord(RecordMagicDiscoveryV1):
                 revision=Date(date=self._layers.get_latest_data_refresh()),
             ),
             edition=self._record.edition,
-            identifiers=[
-                CatIdentifier(
-                    identifier=self._record.gitlab_issue,
-                    href=self._record.gitlab_issue,
-                    namespace="gitlab.data.bas.ac.uk",
-                ),
-                CatIdentifier(
-                    identifier=self._alias,
-                    href=f"https://data.bas.ac.uk/collections/{self._alias}",
-                    namespace="alias.data.bas.ac.uk",
-                ),
-            ],
+            identifiers=Identifiers(
+                [
+                    CatIdentifier(
+                        identifier=self._record.gitlab_issue,
+                        href=self._record.gitlab_issue,
+                        namespace="gitlab.data.bas.ac.uk",
+                    ),
+                    CatIdentifier(
+                        identifier=self._alias,
+                        href=f"https://data.bas.ac.uk/collections/{self._alias}",
+                        namespace="alias.data.bas.ac.uk",
+                    ),
+                ]
+            ),
             abstract=self._record.abstract,
             purpose=self._record.summary,
-            contacts=[magic_contact(roles=[ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER])],
-            constraints=[OPEN_ACCESS, OGL_V3],
-            extents=[self._layers.get_bounding_extent()],
-            aggregations=[
-                make_bas_cat_collection_member(item_id=str(record_id)) for record_id in self._records.list_ids()
-            ],
+            contacts=Contacts([magic_contact(roles=[ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER])]),
+            constraints=Constraints([OPEN_ACCESS, OGL_V3]),
+            extents=Extents([self._layers.get_bounding_extent()]),
+            aggregations=Aggregations(
+                [
+                    make_bas_cat_collection_member(item_id=str(record_id))
+                    for record_id in self._records.list_ids()
+                    if record_id != self._record.id
+                ]
+            ),
             maintenance=Maintenance(
                 progress=ProgressCode.ON_GOING,
                 maintenance_frequency=MaintenanceFrequencyCode(self._record.update_frequency),
@@ -96,11 +114,6 @@ class CollectionRecord(RecordMagicDiscoveryV1):
             identification=identification,
         )
         self.set_citation()
-
-    @property
-    def output_path(self) -> Path:
-        """Record output path."""
-        return self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("collection.json").resolve()
 
 
 class LayerRecord(RecordMagicDiscoveryV1):
@@ -118,6 +131,7 @@ class LayerRecord(RecordMagicDiscoveryV1):
         self._layers = LayersClient(db_client=db, logger=logger)
 
         self._slug = layer_slug
+        self._collection = self._records.get_by_slug("ats_collection")
         self._record = self._records.get_by_slug(self._slug)
         self._layer = self._layers.get_by_slug(self._slug)
 
@@ -125,19 +139,21 @@ class LayerRecord(RecordMagicDiscoveryV1):
             title=self._record.title,
             dates=self._dates,
             edition=self._record.edition,
-            identifiers=[
-                CatIdentifier(
-                    identifier=self._record.gitlab_issue,
-                    href=self._record.gitlab_issue,
-                    namespace="gitlab.data.bas.ac.uk",
-                ),
-            ],
+            identifiers=Identifiers(
+                [
+                    CatIdentifier(
+                        identifier=self._record.gitlab_issue,
+                        href=self._record.gitlab_issue,
+                        namespace="gitlab.data.bas.ac.uk",
+                    ),
+                ]
+            ),
             abstract=self._record.abstract,
             purpose=self._record.summary,
-            contacts=[magic_contact(roles=[ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER])],
-            constraints=[OPEN_ACCESS, OGL_V3],
-            extents=[self._layers.get_extent_by_slug(self._slug)],
-            aggregations=[make_in_bas_cat_collection(self._config.EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID)],
+            contacts=Contacts([magic_contact(roles=[ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER])]),
+            constraints=Constraints([OPEN_ACCESS, OGL_V3]),
+            extents=Extents([self._layers.get_extent_by_slug(self._slug)]),
+            aggregations=Aggregations([make_in_bas_cat_collection(str(self._collection.id))]),
             maintenance=Maintenance(
                 progress=ProgressCode.ON_GOING,
                 maintenance_frequency=MaintenanceFrequencyCode(self._record.update_frequency),
@@ -174,41 +190,125 @@ class LayerRecord(RecordMagicDiscoveryV1):
             dates.revision = Date(date=self._layer.data_last_refreshed)
         return dates
 
-    @property
-    def output_path(self) -> Path:
-        """Record output path."""
-        return self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath(f"{self._slug}.json").resolve()
-
 
 class DataCatalogueExporter(Exporter):
     """Exports metadata records for the BAS Data Catalogue."""
 
-    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, s3: S3Client, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
+        self._s3 = s3
         self._layers = LayersClient(db_client=db, logger=logger)
 
-    def _get_records(self) -> list[LayerRecord]:
+    def _get_records(self) -> list[CollectionRecord | LayerRecord]:
         """Metadata records to export."""
         collection = CollectionRecord(self._config, self._db, self._logger)
         layers = [LayerRecord(self._config, self._db, self._logger, slug) for slug in self._layers.list_slugs()]
         return [collection, *layers]
 
+    def _get_summarises(self) -> dict[str, RecordSummary]:
+        """
+        Summaries of metadata records for cross-referencing.
+
+        Needed for building Data Catalogue items which may contain references to other items. Record summaries are used
+        to avoid needing to use an index of full records, which would get unwieldy with a large number of records.
+        """
+        return {record.file_identifier: RecordSummary.loads(record) for record in self._get_records()}
+
+    def _export_cat_json(self, record: Record) -> None:
+        """Export record as BAS Metadata Library JSON."""
+        self._logger.debug("Exporting record '%s' as BAS ISO JSON...", record.file_identifier)
+        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
+        exporter = JsonExporter(config=self._config, s3_client=self._s3, record=record, export_base=output_path)
+        exporter.export()
+        exporter.publish()
+        self._logger.debug("Exported record '%s' as BAS ISO JSON", record.file_identifier)
+
+    def _export_cat_html(self, record: Record, summaries: dict[str, RecordSummary]) -> None:
+        """Export record as BAS Data Catalogue item HTML."""
+
+        def _get_item_summary(identifier: str) -> RecordSummary:
+            """
+            Get title for a record identifier.
+
+            This is a very basic implementation of what will in time be provided by a full record repository interface.
+            It doesn't make sense to implement that within this project so this simple stand-in is used.
+            """
+            return summaries[identifier]
+
+        self._logger.debug("Exporting record '%s' as BAS catalogue item...", record.file_identifier)
+        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "items"
+        exporter = HtmlExporter(
+            config=self._config,
+            s3_client=self._s3,
+            record=record,
+            export_base=output_path,
+            get_record_summary=_get_item_summary,
+        )
+        exporter.export()
+        exporter.publish()
+        self._logger.debug("Exported record '%s' as BAS catalogue item", record.file_identifier)
+
+    def _export_aliases_html(self, record: Record) -> None:
+        """Export aliases in record as redirects to catalogue items."""
+        self._logger.debug("Exporting optional catalogue item aliases for record '%s' ...", record.file_identifier)
+        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+        exporter = HtmlAliasesExporter(config=self._config, s3_client=self._s3, record=record, site_base=output_path)
+        exporter.export()
+        exporter.publish()
+        self._logger.debug("Exported optional catalogue item aliases for record '%s'", record.file_identifier)
+
+    def _export_iso_xml(self, record: Record) -> None:
+        """Export record as ISO XML."""
+        self._logger.debug("Exporting record '%s' as ISO XML...", record.file_identifier)
+        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
+        exporter = IsoXmlExporter(config=self._config, s3_client=self._s3, record=record, export_base=output_path)
+        exporter.export()
+        exporter.publish()
+        self._logger.debug("Exported record '%s' as ISO XML", record.file_identifier)
+
+    def _export_iso_xml_html(self, record: Record) -> None:
+        """Export record as ISO XML with HTML stylesheet."""
+        self._logger.debug("Exporting record '%s' as ISO XML with HTML stylesheet...", record.file_identifier)
+        stylesheets_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("static/xsl/iso-html")
+        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
+        exporter = IsoXmlHtmlExporter(
+            config=self._config,
+            s3_client=self._s3,
+            record=record,
+            export_base=output_path,
+            stylesheets_base=stylesheets_path,
+        )
+        exporter.export()
+        exporter.publish()
+        self._logger.debug("Exported record '%s' as ISO XML with HTML stylesheet", record.file_identifier)
+
     def export(self) -> None:
         """
-        Export metadata records as JSON files to the configured output directory.
+        Export metadata records as a mini Data Catalogue static site.
 
-        Any missing parent directories to this output path will be created.
+        Records are exported in a variety of formats for Items and Records (HTML, JSON, XML). These outputs are saved
+        as files to a local directory for reference and uploaded to the S3 bucket used for the ADD Metadata Toolbox
+        / Data Catalogue, to avoid needing to publish records separately through the Toolbox project (which is too slow).
         """
-        for exporter_record in self._get_records():
-            self._logger.debug("Ensuring record '%s' is valid", exporter_record.file_identifier)
-            exporter_record.validate()
+        summaries = self._get_summarises()
+        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+        bucket = self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET
+        self._logger.info("Exporting records locally to '%s'", output_path.resolve())
+        self._logger.info("Publishing records to S3 bucket '%s'", bucket)
 
-            self._logger.debug("Ensuring parent path '%s' exists", exporter_record.output_path.parent.resolve())
-            exporter_record.output_path.parent.mkdir(parents=True, exist_ok=True)
+        self._logger.debug("Ensuring local output path '%s' exists", output_path.resolve())
+        output_path.mkdir(parents=True, exist_ok=True)
 
-            self._logger.info("Writing metadata record to '%s'", exporter_record.output_path.resolve())
-            with exporter_record.output_path.open("w") as f:
-                # noinspection PyTypeChecker
-                json_dump(exporter_record.dumps(), f, indent=2, sort_keys=False)
+        for record in self._get_records():
+            self._logger.info("Exporting record '%s'", record.file_identifier)
+
+            self._logger.debug("Ensuring record '%s' is valid", record.file_identifier)
+            record.validate()
+
+            self._export_cat_json(record=record)
+            self._export_cat_html(record=record, summaries=summaries)
+            self._export_aliases_html(record=record)
+            self._export_iso_xml(record=record)
+            self._export_iso_xml_html(record=record)

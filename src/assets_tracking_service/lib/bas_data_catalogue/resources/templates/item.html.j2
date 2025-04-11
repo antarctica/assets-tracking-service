@@ -1,0 +1,37 @@
+{% import '_macros/site.html.j2' as site %}
+{% import '_macros/item.html.j2' as page %}
+
+<!DOCTYPE html>
+<html lang="en">
+  {{ site.html_head(title=item.html_title) }}
+  <body>
+    {{ site.site_top_anchor() }}
+    {{ site.main_nav({'title_href': '#', 'title_value': 'BAS Data Catalogue'}) }}
+    <main class="bsk-container-fluid">
+      {{ page.header(item.page_header) }}
+      <div class="bsk-row">
+        <div class="bsk-col-12-md-9">
+          {{ page.summary(item.summary) }}
+        </div>
+        <div class="bsk-col-12-md-3">
+          {{ page.graphics(item.graphics) }}
+        </div>
+      </div>
+      {{ page.noscript(item.noscript_href) }}
+      <nav class="bsk-nav-wrapper bsk-nav-wrapper-tabs" role="navigation">
+        {{ page.item_nav(item) }}
+        <div class="bsk-tab-content">
+          {% for tab in item.tabs %}
+            {% if tab.enabled %}
+              <div id="{{ tab.anchor }}" class="bsk-tab-pane {% if tab.anchor == item.default_tab_anchor -%}{{ 'bsk-active' }}{%- endif -%}" role="tabpanel">
+                {{ page[tab.anchor](tab) }}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </nav>
+    </main>
+    {{ site.footer(current_year) }}
+    {{ site.scripts(data={'sentry_dsn': item.sentry_dsn}) }}
+  </body>
+</html>

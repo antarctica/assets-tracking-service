@@ -1,15 +1,15 @@
 import logging
-from json import load as json_load
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import PropertyMock
 
-import pytest
+from mypy_boto3_s3 import S3Client
 from pytest_mock import MockerFixture
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
+from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 
 
 class TestCollectionRecord:
@@ -29,12 +29,6 @@ class TestCollectionRecord:
     def test_valid(self, fx_exporter_collection_record: CollectionRecord):
         """Generates valid metadata record."""
         fx_exporter_collection_record.validate()
-
-    @pytest.mark.cov()
-    def test_output_path(self, fx_exporter_collection_record: CollectionRecord):
-        """Can get output path."""
-        result = fx_exporter_collection_record.output_path
-        assert result.name == "collection.json"
 
 
 class TestLayerRecord:
@@ -58,19 +52,19 @@ class TestLayerRecord:
         """Generates valid metadata record."""
         fx_exporter_layer_record.validate()
 
-    @pytest.mark.cov()
-    def test_output_path(self, fx_exporter_layer_record: LayerRecord, fx_record_layer_slug: str):
-        """Can get output path."""
-        result = fx_exporter_layer_record.output_path
-        assert result.name == f"{fx_record_layer_slug}.json"
-
 
 class TestExporterDataCatalogue:
     """Data Catalogue exporter tests."""
 
-    def test_init(self, fx_config: Config, fx_db_client_tmp_db_mig: DatabaseClient, fx_logger: logging.Logger):
+    def test_init(
+        self,
+        fx_config: Config,
+        fx_db_client_tmp_db_mig: DatabaseClient,
+        fx_s3_client: S3Client,
+        fx_logger: logging.Logger,
+    ):
         """Initialises."""
-        DataCatalogueExporter(config=fx_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
+        DataCatalogueExporter(config=fx_config, db=fx_db_client_tmp_db_mig, s3=fx_s3_client, logger=fx_logger)
 
     def test_get_records(self, fx_exporter_catalogue: DataCatalogueExporter):
         """Generates records."""
@@ -80,32 +74,61 @@ class TestExporterDataCatalogue:
         assert len(result) > 1
         assert all(isinstance(record, LayerRecord | CollectionRecord) for record in result)
 
+    def test_get_summaries(self, fx_exporter_catalogue: DataCatalogueExporter):
+        """Generates record summaries."""
+        result = fx_exporter_catalogue._get_summarises()
+
+        assert isinstance(result, dict)
+        assert len(result) > 1
+        assert all(isinstance(summary, RecordSummary) for summary in result.values())
+
     def test_export(
         self,
         mocker: MockerFixture,
-        fx_db_client_tmp_db_pop: DatabaseClient,
-        fx_logger: logging.Logger,
+        fx_s3_bucket_name: str,
+        fx_exporter_catalogue: DataCatalogueExporter,
         fx_exporter_collection_record: CollectionRecord,
         fx_exporter_layer_record: LayerRecord,
     ):
-        """Exports parsable metadata records."""
+        """Exports valid metadata records in a range of formats."""
         with TemporaryDirectory() as tmp_path:
             output_path = Path(tmp_path)
-            mock_config = mocker.Mock()
-            type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
-        mocker.patch.object(type(fx_exporter_collection_record), "output_path", PropertyMock(return_value=output_path))
-        mocker.patch.object(type(fx_exporter_layer_record), "output_path", PropertyMock(return_value=output_path))
+        mock_config = mocker.Mock()
+        type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+        type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID = PropertyMock(return_value="x")
+        type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET = PropertyMock(return_value="x")
+        type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+        type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
+        type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
 
-        exporter = DataCatalogueExporter(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
+        mocker.patch.object(fx_exporter_catalogue, "_config", new=mock_config)
         mocker.patch.object(
-            type(exporter), "_get_records", return_value=[fx_exporter_collection_record, fx_exporter_layer_record]
+            type(fx_exporter_catalogue),
+            "_get_records",
+            return_value=[fx_exporter_collection_record, fx_exporter_layer_record],
         )
-        expected_path = exporter._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
 
-        exporter.export()
+        fx_exporter_catalogue.export()
 
-        assert expected_path.exists()
-
-        # verify file is valid JSON
-        with expected_path.open("r") as f:
-            json_load(f)
+        expected = [
+            f"records/{fx_exporter_collection_record.file_identifier}.html",
+            f"records/{fx_exporter_layer_record.file_identifier}.xml",
+            f"records/{fx_exporter_collection_record.file_identifier}.xml",
+            f"records/{fx_exporter_layer_record.file_identifier}.json",
+            f"records/{fx_exporter_layer_record.file_identifier}.html",
+            f"records/{fx_exporter_collection_record.file_identifier}.json",
+            f"items/{fx_exporter_layer_record.file_identifier}/index.html",
+            f"items/{fx_exporter_collection_record.file_identifier}/index.html",
+            "collections/assets-tracking-service/index.html",
+            "static/xsl/iso-html/printFormatted.xsl",
+            "static/xsl/iso-html/elements-ISO.xml",
+            "static/xsl/iso-html/xml-to-html-ISO.xsl",
+            "static/xsl/iso-html/xml-to-text-ISO.xsl",
+            "static/xsl/iso-html/headers-ISO.xml",
+            "static/xsl/iso-html/printTextLines.xsl",
+            "static/xsl/iso-html/displayElement.xsl",
+        ]
+        assert output_path.exists()
+        _debug = [path.relative_to(output_path) for path in output_path.glob("**/*.*")]
+        for path in expected:
+            assert output_path.joinpath(path).exists()

@@ -154,6 +154,30 @@ class Config:
                 msg = "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH must be set."
                 raise ConfigurationError(msg) from e
 
+            try:
+                _ = self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID
+            except EnvError as e:
+                msg = "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID must be set."
+                raise ConfigurationError(msg) from e
+
+            try:
+                _ = self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET
+            except EnvError as e:
+                msg = "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET must be set."
+                raise ConfigurationError(msg) from e
+
+            try:
+                _ = self.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET
+            except EnvError as e:
+                msg = "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET must be set."
+                raise ConfigurationError(msg) from e
+
+            try:
+                _ = self.EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT
+            except EnvError as e:
+                msg = "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT must be set."
+                raise ConfigurationError(msg) from e
+
             if (
                 Path(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH).exists()
                 and not Path(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH).is_dir()
@@ -195,6 +219,8 @@ class Config:
         EXPORTER_ARCGIS_GROUP_INFO: ArcGISGroupInfo
         EXPORTER_DATA_CATALOGUE_OUTPUT_PATH: str
         EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID: str
+        EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT: str
+        EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT: str
 
     def dumps_safe(self) -> ConfigDumpSafe:
         """Dump config for output to the user with sensitive data redacted."""
@@ -229,7 +255,11 @@ class Config:
             "EXPORTER_ARCGIS_FOLDER_NAME": self.EXPORTER_ARCGIS_FOLDER_NAME,
             "EXPORTER_ARCGIS_GROUP_INFO": self.EXPORTER_ARCGIS_GROUP_INFO,
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
-            "EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID": self.EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID,
+            "EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT": self.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
+            "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": self.EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT,
+            "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": self.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
+            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
+            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET_SAFE,
         }
 
     @property
@@ -502,16 +532,41 @@ class Config:
 
     @property
     def EXPORTER_DATA_CATALOGUE_OUTPUT_PATH(self) -> Path:
-        """Path to Data Catalogue output file."""
+        """Path to Data Catalogue site output."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
             return self.env.path("OUTPUT_PATH")
 
     @property
-    def EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID(self) -> str:
-        """
-        Record ID for the collection grouping Assets Tracking Service resources.
+    def EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT(self) -> str:
+        """Endpoint for Embedded Maps Service used to generate extent maps in item catalogue pages."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env("EMBEDDED_MAPS_ENDPOINT", default="https://embedded-maps.data.bas.ac.uk/v1")
 
-        This value is fixed and must correspond to file identifier (`id`) defined in:
-        `assets_tracking_service.resources/db_migrations/up/019-collection-record.sql
-        """
-        return "125d6ae8-0b9a-4c89-88e2-f3ec59723e52"
+    @property
+    def EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT(self) -> str:
+        """Endpoint for Embedded Maps Service used to generate extent maps in item catalogue pages."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env("ITEM_CONTACT_ENDPOINT")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET(self) -> str:
+        """S3 bucket for published catalogue output."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env("AWS_S3_BUCKET")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID(self) -> str:
+        """ID for AWS IAM access key used to publish catalogue output to S3."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env("AWS_ACCESS_ID")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET(self) -> str:
+        """Secret for AWS IAM access key used to publish catalogue output to S3."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env("AWS_ACCESS_SECRET")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET_SAFE(self) -> str:
+        """EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET with value redacted."""
+        return self._safe_value

@@ -8,15 +8,20 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Dates,
     Identifier,
     clean_dict,
+    clean_list,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
+    Aggregations,
     BoundingBox,
     Constraint,
+    Constraints,
     Extent,
     ExtentGeographic,
+    Extents,
     ExtentTemporal,
     GraphicOverview,
+    GraphicOverviews,
     Identification,
     Maintenance,
     TemporalPeriod,
@@ -66,6 +71,294 @@ class TestAggregation:
             assert aggregation.initiative_type == values["initiative_type"]
         else:
             assert aggregation.initiative_type is None
+
+    @pytest.mark.parametrize(
+        ("values", "conditions", "expected"),
+        [
+            # namespace
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                },
+                {"namespace": "x"},
+                True,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                },
+                {"namespace": "y"},
+                False,
+            ),
+            # association_type
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                },
+                {"associations": [AggregationAssociationCode.CROSS_REFERENCE]},
+                True,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                },
+                {"associations": [AggregationAssociationCode.SERIES]},
+                False,
+            ),
+            # initiative_type
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {"initiatives": [AggregationInitiativeCode.CAMPAIGN]},
+                True,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {"initiatives": [AggregationInitiativeCode.TASK]},
+                False,
+            ),
+            # namespace + association
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                },
+                {"namespace": "x", "associations": [AggregationAssociationCode.CROSS_REFERENCE]},
+                True,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                },
+                {"namespace": "y", "associations": [AggregationAssociationCode.CROSS_REFERENCE]},
+                False,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                },
+                {"namespace": "x", "associations": [AggregationAssociationCode.SERIES]},
+                False,
+            ),
+            # namespace + initiative
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {"namespace": "x", "initiatives": [AggregationInitiativeCode.CAMPAIGN]},
+                True,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {"namespace": "y", "initiatives": [AggregationInitiativeCode.CAMPAIGN]},
+                False,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {"namespace": "y", "initiatives": [AggregationInitiativeCode.TASK]},
+                False,
+            ),
+            # association + initiative
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {
+                    "associations": [AggregationAssociationCode.CROSS_REFERENCE],
+                    "initiatives": [AggregationInitiativeCode.CAMPAIGN],
+                },
+                True,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {
+                    "associations": [AggregationAssociationCode.SERIES],
+                    "initiatives": [AggregationInitiativeCode.CAMPAIGN],
+                },
+                False,
+            ),
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {
+                    "associations": [AggregationAssociationCode.CROSS_REFERENCE],
+                    "initiatives": [AggregationInitiativeCode.TASK],
+                },
+                False,
+            ),
+            # namespace + association + initiative
+            (
+                {
+                    "identifier": Identifier(identifier="x", href="x", namespace="x"),
+                    "association_type": AggregationAssociationCode.CROSS_REFERENCE,
+                    "initiative_type": AggregationInitiativeCode.CAMPAIGN,
+                },
+                {
+                    "namespace": "x",
+                    "associations": [AggregationAssociationCode.CROSS_REFERENCE],
+                    "initiatives": [AggregationInitiativeCode.CAMPAIGN],
+                },
+                True,
+            ),
+        ],
+    )
+    def test_filter(self, values: dict, conditions: dict, expected: bool):
+        """Can determine whether Aggregation matches filtering conditions."""
+        aggregation = Aggregation(**values)
+        result = aggregation.matches_filter(**conditions)
+        assert result == expected
+
+
+class TestAggregations:
+    """Test Aggregations container."""
+
+    def test_init(self):
+        """Can create an Aggregations container from directly assigned properties."""
+        expected = Aggregation(
+            identifier=Identifier(identifier="x", href="x", namespace="x"),
+            association_type=AggregationAssociationCode.CROSS_REFERENCE,
+        )
+
+        result = Aggregations([expected])
+
+        assert len(result) == 1
+        assert result[0] == expected
+
+    test_filter_a = Aggregation(
+        identifier=Identifier(identifier="x", href="x", namespace="x"),
+        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+    )
+    test_filter_b = Aggregation(
+        identifier=Identifier(identifier="x", href="x", namespace="x"),
+        association_type=AggregationAssociationCode.SERIES,
+    )
+    test_filter_c = Aggregation(
+        identifier=Identifier(identifier="x", href="x", namespace="x"),
+        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+        initiative_type=AggregationInitiativeCode.CAMPAIGN,
+    )
+    test_filter_d = Aggregation(
+        identifier=Identifier(identifier="x", href="x", namespace="y"),
+        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+        initiative_type=AggregationInitiativeCode.CAMPAIGN,
+    )
+
+    @pytest.mark.parametrize(
+        ("conditions", "expected"),
+        [
+            (
+                {"namespace": "x", "associations": AggregationAssociationCode.CROSS_REFERENCE},
+                [test_filter_a, test_filter_c],
+            ),
+            (
+                {"namespace": "x", "initiatives": AggregationInitiativeCode.CAMPAIGN},
+                [test_filter_c],
+            ),
+            (
+                {"initiatives": AggregationInitiativeCode.CAMPAIGN},
+                [test_filter_c, test_filter_d],
+            ),
+            (
+                {"associations": [AggregationAssociationCode.CROSS_REFERENCE, AggregationAssociationCode.SERIES]},
+                [test_filter_a, test_filter_b, test_filter_c, test_filter_d],
+            ),
+        ],
+    )
+    def test_filter(self, conditions: dict, expected: list[Aggregation]):
+        """Can filter aggregations by namespace and/or association type and/or initiative type."""
+        aggregations = Aggregations([self.test_filter_a, self.test_filter_b, self.test_filter_c, self.test_filter_d])
+
+        result = aggregations.filter(**conditions)
+
+        assert len(result) == len(expected)
+        assert result == expected
+
+    def test_structure(self):
+        """Can create an Aggregations element by converting a list of plain types."""
+        expected = Aggregations(
+            [
+                Aggregation(
+                    identifier=Identifier(identifier="x", href="x", namespace="x"),
+                    association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                )
+            ]
+        )
+        result = Aggregations.structure(
+            [{"identifier": {"identifier": "x", "href": "x", "namespace": "x"}, "association_type": "crossReference"}]
+        )
+        assert result == expected
+
+    def test_structure_cattrs(self):
+        """Can use Cattrs to create an Aggregations instance from plain types."""
+        value = [
+            {"identifier": {"identifier": "x", "href": "x", "namespace": "x"}, "association_type": "crossReference"}
+        ]
+        expected = Aggregations(
+            [
+                Aggregation(
+                    identifier=Identifier(identifier="x", href="x", namespace="x"),
+                    association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                )
+            ]
+        )
+
+        converter = cattrs.Converter()
+        converter.register_structure_hook(Aggregations, lambda d, t: Aggregations.structure(d))
+        result = converter.structure(value, Aggregations)
+
+        assert result == expected
+
+    def test_unstructure_cattrs(self):
+        """Can use Cattrs to convert an Aggregations instance into plain types."""
+        value = Aggregations(
+            [
+                Aggregation(
+                    identifier=Identifier(identifier="x", href="x", namespace="x"),
+                    association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                )
+            ]
+        )
+        expected = [
+            {"identifier": {"identifier": "x", "href": "x", "namespace": "x"}, "association_type": "crossReference"}
+        ]
+
+        converter = cattrs.Converter()
+        converter.register_unstructure_hook(Aggregations, lambda d: d.unstructure())
+        result = clean_list(converter.unstructure(value))
+
+        assert result == expected
 
 
 class TestBoundingBox:
@@ -122,6 +415,294 @@ class TestConstraint:
             assert constraint.href == values["href"]
         else:
             assert constraint.href is None
+
+    @pytest.mark.parametrize(
+        ("values", "conditions", "expected"),
+        [
+            # href
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                },
+                {"href": "x"},
+                True,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                },
+                {"href": "y"},
+                False,
+            ),
+            # type
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                },
+                {"types": [ConstraintTypeCode.USAGE]},
+                True,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                },
+                {"types": [ConstraintTypeCode.ACCESS]},
+                False,
+            ),
+            # restriction
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {"restrictions": [ConstraintRestrictionCode.RESTRICTED]},
+                True,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {"restrictions": [ConstraintRestrictionCode.UNRESTRICTED]},
+                False,
+            ),
+            # href + type
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                },
+                {"href": "x", "types": [ConstraintTypeCode.USAGE]},
+                True,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                },
+                {"href": "y", "types": [ConstraintTypeCode.USAGE]},
+                False,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                },
+                {"href": "x", "types": [ConstraintTypeCode.ACCESS]},
+                False,
+            ),
+            # href + restriction
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {"href": "x", "restrictions": [ConstraintRestrictionCode.RESTRICTED]},
+                True,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {"href": "y", "restrictions": [ConstraintRestrictionCode.RESTRICTED]},
+                False,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {"href": "x", "restrictions": [ConstraintRestrictionCode.UNRESTRICTED]},
+                False,
+            ),
+            # type + restriction
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {
+                    "types": [ConstraintTypeCode.USAGE],
+                    "restrictions": [ConstraintRestrictionCode.RESTRICTED],
+                },
+                True,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {
+                    "types": [ConstraintTypeCode.ACCESS],
+                    "restrictions": [ConstraintRestrictionCode.RESTRICTED],
+                },
+                False,
+            ),
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {
+                    "types": [ConstraintTypeCode.USAGE],
+                    "restrictions": [ConstraintRestrictionCode.UNRESTRICTED],
+                },
+                False,
+            ),
+            # href + type + restriction
+            (
+                {
+                    "href": "x",
+                    "type": ConstraintTypeCode.USAGE,
+                    "restriction_code": ConstraintRestrictionCode.RESTRICTED,
+                },
+                {
+                    "href": "x",
+                    "types": [ConstraintTypeCode.USAGE],
+                    "restrictions": [ConstraintRestrictionCode.RESTRICTED],
+                },
+                True,
+            ),
+        ],
+    )
+    def test_filter(self, values: dict, conditions: dict, expected: bool):
+        """Can determine whether Constraint matches filtering conditions."""
+        constraint = Constraint(**values)
+        result = constraint.matches_filter(**conditions)
+        assert result == expected
+
+
+class TestConstraints:
+    """Test Constraints container."""
+
+    def test_init(self):
+        """Can create a Constraints container from directly assigned properties."""
+        expected = Constraint(type=ConstraintTypeCode.ACCESS)
+
+        result = Constraints([expected])
+
+        assert len(result) == 1
+        assert result[0] == expected
+
+    test_filter_a = Constraint(
+        href="x",
+        type=ConstraintTypeCode.USAGE,
+    )
+    test_filter_b = Constraint(
+        href="x",
+        type=ConstraintTypeCode.ACCESS,
+    )
+    test_filter_c = Constraint(
+        href="x",
+        type=ConstraintTypeCode.USAGE,
+        restriction_code=ConstraintRestrictionCode.RESTRICTED,
+    )
+    test_filter_d = Constraint(
+        href="y",
+        type=ConstraintTypeCode.USAGE,
+        restriction_code=ConstraintRestrictionCode.RESTRICTED,
+    )
+
+    @pytest.mark.parametrize(
+        ("conditions", "expected"),
+        [
+            (
+                {"href": "x", "types": ConstraintTypeCode.USAGE},
+                [test_filter_a, test_filter_c],
+            ),
+            (
+                {"href": "x", "restrictions": ConstraintRestrictionCode.RESTRICTED},
+                [test_filter_c],
+            ),
+            (
+                {"restrictions": ConstraintRestrictionCode.RESTRICTED},
+                [test_filter_c, test_filter_d],
+            ),
+            (
+                {"types": [ConstraintTypeCode.USAGE, ConstraintTypeCode.ACCESS]},
+                [test_filter_a, test_filter_b, test_filter_c, test_filter_d],
+            ),
+        ],
+    )
+    def test_filter(self, conditions: dict, expected: list[Aggregation]):
+        """Can filter constraints by href and/or type and/or restriction code."""
+        constraints = Constraints([self.test_filter_a, self.test_filter_b, self.test_filter_c, self.test_filter_d])
+
+        result = constraints.filter(**conditions)
+
+        assert len(result) == len(expected)
+        assert result == expected
+
+    def test_structure(self):
+        """Can create a Constraints element by converting a list of plain types."""
+        expected = Constraints(
+            [
+                Constraint(
+                    type=ConstraintTypeCode.USAGE,
+                    restriction_code=ConstraintRestrictionCode.LICENSE,
+                    statement="x",
+                    href="x",
+                )
+            ]
+        )
+
+        result = Constraints.structure(
+            [{"type": "usage", "restriction_code": "license", "statement": "x", "href": "x"}]
+        )
+        assert result == expected
+
+    def test_structure_cattrs(self):
+        """Can use Cattrs to create a Constraints instance from plain types."""
+        value = [{"type": "usage", "restriction_code": "license", "statement": "x", "href": "x"}]
+        expected = Constraints(
+            [
+                Constraint(
+                    type=ConstraintTypeCode.USAGE,
+                    restriction_code=ConstraintRestrictionCode.LICENSE,
+                    statement="x",
+                    href="x",
+                )
+            ]
+        )
+
+        converter = cattrs.Converter()
+        converter.register_structure_hook(Constraints, lambda d, t: Constraints.structure(d))
+        result = converter.structure(value, Constraints)
+
+        assert result == expected
+
+    def test_unstructure_cattrs(self):
+        """Can use Cattrs to convert a Constraints instance into plain types."""
+        value = Constraints(
+            [
+                Constraint(
+                    type=ConstraintTypeCode.USAGE,
+                    restriction_code=ConstraintRestrictionCode.LICENSE,
+                    statement="x",
+                    href="x",
+                )
+            ]
+        )
+        expected = [{"type": "usage", "restriction_code": "license", "statement": "x", "href": "x"}]
+
+        converter = cattrs.Converter()
+        converter.register_unstructure_hook(Constraints, lambda d: d.unstructure())
+        result = clean_list(converter.unstructure(value))
+
+        assert result == expected
 
 
 class TestExtentGeographic:
@@ -197,6 +778,173 @@ class TestExtent:
             assert extent.temporal is None
 
 
+class TestExtents:
+    """Test Extents container."""
+
+    def test_init(self):
+        """Can create an Extents container from directly assigned properties."""
+        expected = Extent(
+            identifier="x",
+            geographic=ExtentGeographic(
+                bounding_box=BoundingBox(west_longitude=1.0, east_longitude=2.0, south_latitude=3.0, north_latitude=4.0)
+            ),
+        )
+
+        extents = Extents([expected])
+
+        assert len(extents) == 1
+        assert extents[0] == expected
+
+    def test_filter_identifier(self):
+        """Can filter extents by an identifier."""
+        extent = Extent(
+            identifier="x",
+            geographic=ExtentGeographic(
+                bounding_box=BoundingBox(west_longitude=1.0, east_longitude=2.0, south_latitude=3.0, north_latitude=4.0)
+            ),
+        )
+        other = Extent(
+            identifier="y",
+            geographic=ExtentGeographic(
+                bounding_box=BoundingBox(west_longitude=1.0, east_longitude=2.0, south_latitude=3.0, north_latitude=4.0)
+            ),
+        )
+        extents = Extents([extent, other])
+        expected = Extents([extent])
+
+        result = extents.filter(extent.identifier)
+        assert result == expected
+
+    def test_structure(self):
+        """Can create an Extents container by converting a list of plain types."""
+        expected_date = date(2014, 6, 30)
+        expected = Extents(
+            [
+                Extent(
+                    identifier="x",
+                    geographic=ExtentGeographic(
+                        bounding_box=BoundingBox(
+                            west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
+                        )
+                    ),
+                    temporal=ExtentTemporal(
+                        period=TemporalPeriod(start=Date(date=expected_date), end=Date(date=expected_date))
+                    ),
+                )
+            ]
+        )
+        result = Extents.structure(
+            [
+                {
+                    "identifier": "x",
+                    "geographic": {
+                        "bounding_box": {
+                            "west_longitude": 1.0,
+                            "east_longitude": 1.0,
+                            "south_latitude": 1.0,
+                            "north_latitude": 1.0,
+                        }
+                    },
+                    "temporal": {
+                        "period": {
+                            "start": expected_date.isoformat(),
+                            "end": expected_date.isoformat(),
+                        }
+                    },
+                }
+            ]
+        )
+        assert result == expected
+
+    def test_structure_cattrs(self):
+        """Can use Cattrs to create an Extents instance from plain types."""
+        expected_date = date(2014, 6, 30)
+        value = [
+            {
+                "identifier": "x",
+                "geographic": {
+                    "bounding_box": {
+                        "west_longitude": 1.0,
+                        "east_longitude": 1.0,
+                        "south_latitude": 1.0,
+                        "north_latitude": 1.0,
+                    }
+                },
+                "temporal": {
+                    "period": {
+                        "start": expected_date.isoformat(),
+                        "end": expected_date.isoformat(),
+                    }
+                },
+            }
+        ]
+        expected = Extents(
+            [
+                Extent(
+                    identifier="x",
+                    geographic=ExtentGeographic(
+                        bounding_box=BoundingBox(
+                            west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
+                        )
+                    ),
+                    temporal=ExtentTemporal(
+                        period=TemporalPeriod(start=Date(date=expected_date), end=Date(date=expected_date))
+                    ),
+                )
+            ]
+        )
+
+        converter = cattrs.Converter()
+        converter.register_structure_hook(Extents, lambda d, t: Extents.structure(d))
+        result = converter.structure(value, Extents)
+
+        assert result == expected
+
+    def test_unstructure_cattrs(self):
+        """Can use Cattrs to convert an Extents instance into plain types."""
+        expected_date = date(2014, 6, 30)
+        value = Extents(
+            [
+                Extent(
+                    identifier="x",
+                    geographic=ExtentGeographic(
+                        bounding_box=BoundingBox(
+                            west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
+                        )
+                    ),
+                    temporal=ExtentTemporal(
+                        period=TemporalPeriod(start=Date(date=expected_date), end=Date(date=expected_date))
+                    ),
+                )
+            ]
+        )
+        expected = [
+            {
+                "identifier": "x",
+                "geographic": {
+                    "bounding_box": {
+                        "west_longitude": 1.0,
+                        "east_longitude": 1.0,
+                        "south_latitude": 1.0,
+                        "north_latitude": 1.0,
+                    }
+                },
+                "temporal": {
+                    "period": {
+                        "start": expected_date.isoformat(),
+                        "end": expected_date.isoformat(),
+                    }
+                },
+            }
+        ]
+
+        converter = cattrs.Converter()
+        converter.register_unstructure_hook(Extents, lambda d: d.unstructure())
+        result = clean_list(converter.unstructure(value))
+
+        assert result == expected
+
+
 class TestGraphicOverview:
     """Test GraphicOverview element."""
 
@@ -217,6 +965,57 @@ class TestGraphicOverview:
         assert graphic_overview.mime_type == expected
         if "description" in values:
             assert graphic_overview.description == expected
+
+
+class TestGraphicOverviews:
+    """Test GraphicOverviews container."""
+
+    def test_init(self):
+        """Can create a GraphicOverviews container from directly assigned properties."""
+        expected = GraphicOverview(identifier="x", href="x", mime_type="x")
+
+        extents = GraphicOverviews([expected])
+
+        assert len(extents) == 1
+        assert extents[0] == expected
+
+    def test_filter_identifier(self):
+        """Can filter overviews by an identifier."""
+        overview = GraphicOverview(identifier="x", href="x", mime_type="x")
+        other = GraphicOverview(identifier="y", href="x", mime_type="x")
+        overviews = GraphicOverviews([overview, other])
+        expected = GraphicOverviews([overview])
+
+        result = overviews.filter(overview.identifier)
+        assert result == expected
+
+    def test_structure(self):
+        """Can create a GraphicOverviews container by converting a list of plain types."""
+        expected = GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")])
+        result = GraphicOverviews.structure([{"identifier": "x", "href": "x", "mime_type": "x"}])
+        assert result == expected
+
+    def test_structure_cattrs(self):
+        """Can use Cattrs to create a GraphicOverviews instance from plain types."""
+        value = [{"identifier": "x", "href": "x", "mime_type": "x"}]
+        expected = GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")])
+
+        converter = cattrs.Converter()
+        converter.register_structure_hook(GraphicOverviews, lambda d, t: GraphicOverviews.structure(d))
+        result = converter.structure(value, GraphicOverviews)
+
+        assert result == expected
+
+    def test_unstructure_cattrs(self):
+        """Can use Cattrs to convert a GraphicOverviews instance into plain types."""
+        value = GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")])
+        expected = [{"identifier": "x", "href": "x", "mime_type": "x"}]
+
+        converter = cattrs.Converter()
+        converter.register_unstructure_hook(GraphicOverviews, lambda d: d.unstructure())
+        result = clean_list(converter.unstructure(value))
+
+        assert result == expected
 
 
 class TestMaintenance:
@@ -406,22 +1205,28 @@ class TestIdentification:
             title="x",
             dates=Dates(creation=Date(date=expected_date)),
             abstract="x",
-            constraints=[
-                Constraint(type=expected_enums["constraint_type"], restriction_code=expected_enums["constraint_code"]),
-            ],
-            extents=[
-                Extent(
-                    identifier="x",
-                    geographic=ExtentGeographic(
-                        bounding_box=BoundingBox(
-                            west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
-                        )
+            constraints=Constraints(
+                [
+                    Constraint(
+                        type=expected_enums["constraint_type"], restriction_code=expected_enums["constraint_code"]
                     ),
-                    temporal=ExtentTemporal(
-                        period=TemporalPeriod(start=Date(date=expected_date), end=Date(date=expected_date))
-                    ),
-                )
-            ],
+                ]
+            ),
+            extents=Extents(
+                [
+                    Extent(
+                        identifier="x",
+                        geographic=ExtentGeographic(
+                            bounding_box=BoundingBox(
+                                west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
+                            )
+                        ),
+                        temporal=ExtentTemporal(
+                            period=TemporalPeriod(start=Date(date=expected_date), end=Date(date=expected_date))
+                        ),
+                    )
+                ]
+            ),
         )
 
         converter = cattrs.Converter()
@@ -442,22 +1247,28 @@ class TestIdentification:
             title="x",
             dates=Dates(creation=Date(date=expected_date)),
             abstract="x",
-            constraints=[
-                Constraint(type=expected_enums["constraint_type"], restriction_code=expected_enums["constraint_code"]),
-            ],
-            extents=[
-                Extent(
-                    identifier="x",
-                    geographic=ExtentGeographic(
-                        bounding_box=BoundingBox(
-                            west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
-                        )
+            constraints=Constraints(
+                [
+                    Constraint(
+                        type=expected_enums["constraint_type"], restriction_code=expected_enums["constraint_code"]
                     ),
-                    temporal=ExtentTemporal(
-                        period=TemporalPeriod(start=Date(date=expected_date), end=Date(date=expected_date))
-                    ),
-                )
-            ],
+                ]
+            ),
+            extents=Extents(
+                [
+                    Extent(
+                        identifier="x",
+                        geographic=ExtentGeographic(
+                            bounding_box=BoundingBox(
+                                west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
+                            )
+                        ),
+                        temporal=ExtentTemporal(
+                            period=TemporalPeriod(start=Date(date=expected_date), end=Date(date=expected_date))
+                        ),
+                    )
+                ]
+            ),
         )
         expected = {
             "title": {"value": "x"},

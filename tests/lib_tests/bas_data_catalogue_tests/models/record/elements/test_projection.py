@@ -7,6 +7,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Citation,
     Contact,
     ContactIdentity,
+    Contacts,
     Date,
     Dates,
     Identifier,
@@ -93,7 +94,7 @@ class TestReferenceSystemInfo:
                 title="x",
                 href="x",
                 dates=Dates(creation=Date(date=expected_date)),
-                contacts=[Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])],
+                contacts=Contacts([Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])]),
             ),
         )
 
@@ -113,7 +114,7 @@ class TestReferenceSystemInfo:
                 title="x",
                 href="x",
                 dates=Dates(creation=Date(date=expected_date)),
-                contacts=[Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])],
+                contacts=Contacts([Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])]),
             ),
         )
         expected = {

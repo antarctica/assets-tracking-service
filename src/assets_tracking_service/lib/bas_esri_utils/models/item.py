@@ -1,17 +1,12 @@
 import contextlib
-from typing import Any
 
 from arcgis.gis import ItemProperties, ItemTypeEnum, SharingLevel
 from jinja2 import Environment, PackageLoader, select_autoescape
 from lxml.etree import Element, SubElement
 from lxml.etree import tostring as etree_tostring
 
-from assets_tracking_service.lib.bas_data_catalogue.models.item import (
-    AccessType,
-    GraphicLabelNotFoundError,
-    IdentifierNamespaceNotFoundError,
-)
-from assets_tracking_service.lib.bas_data_catalogue.models.item import ItemBase as ItemBase
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemBase as ItemBase
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 
 TERMS_OF_USE_MAPPING = {
@@ -91,11 +86,6 @@ class Item(ItemBase):
         md_file_id_e.text = md_file_id
         return etree_tostring(root, encoding="unicode")
 
-    def _render_template(self, template_path: str, **kwargs: Any) -> str:  # noqa: ANN401
-        """Render Jinja template to a string."""
-        template = self._jinja.get_template(template_path)
-        return template.render(**kwargs)
-
     def _validate_record(self) -> None:
         """Check record for ArcGIS specific constraints."""
         if self._record.identification.purpose is not None and len(self._record.identification.purpose) >= 250:
@@ -139,16 +129,15 @@ class Item(ItemBase):
         Mapped to: description (from [1])
         [1] https://developers.arcgis.com/rest/users-groups-and-items/common-parameters/#item-parameters
         """
-        kwargs = {"template_path": "description.j2", "abstract": self.abstract_html}
-
+        parts = {"abstract": self.abstract_html}
         if self.lineage_html is not None:
-            kwargs["lineage"] = self.lineage_html
+            parts["lineage"] = self.lineage_html
         if self.citation_html is not None:
-            kwargs["citation"] = self.citation_html
-        with contextlib.suppress(IdentifierNamespaceNotFoundError):
-            kwargs["catalogue_href"] = self.get_identifier(namespace="data.bas.ac.uk").href
+            parts["citation"] = self.citation_html
+        with contextlib.suppress(IndexError):
+            parts["catalogue_href"] = self.identifiers.filter(namespace="data.bas.ac.uk")[0].href
 
-        return self._render_template(**kwargs)
+        return self._jinja.get_template("description.j2").render(**parts)
 
     @property
     def _attribution(self) -> str:
@@ -175,7 +164,7 @@ class Item(ItemBase):
             return None
         try:
             template_name = TERMS_OF_USE_MAPPING[self.licence.href]
-            return self._render_template(template_path=template_name)
+            return self._jinja.get_template(template_name).render()
         except KeyError as e:
             msg = f"Unknown licence href: '{self.licence.href}'."
             raise ArcGisItemLicenceHrefUnsupportedError(msg) from e
@@ -291,6 +280,6 @@ class Item(ItemBase):
         ArcGIS instance (Online or Enterprise). It should be sized as per Esri's recommendations.
         """
         try:
-            return self.get_graphic_overview("overview-agol").src
-        except GraphicLabelNotFoundError:
+            return self.graphics.filter(identifier="overview-agol")[0].href
+        except IndexError:
             return None

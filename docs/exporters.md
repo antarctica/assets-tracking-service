@@ -239,6 +239,15 @@ Metadata records are exported to a directory specified by the `EXPORTER_DATA_CAT
 Records need to be imported into the BAS Data Catalogue via the relevant
 [Workflow](https://gitlab.data.bas.ac.uk/MAGIC/add-metadata-toolbox/-/blob/main/docs/workflow-updating-records.md).
 
+#### Data Catalogue setup
+
+After running [Database Migrations](./implementation.md#database-migrations), set the
+`EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID` config option to the result of:
+
+```sql
+SELECT id from public.record where slug='ats_collection';
+```
+
 #### Data Catalogue configuration options
 
 Required options:
@@ -248,4 +257,10 @@ Required options:
   - the application will try to create any missing parent directories to this directory if needed
   - e.g. `/data/exports/records`
 - `EXPORTER_DATA_CATALOGUE_COLLECTION_RECORD_ID` -> Record identifier for the
-  [Collection Record](#data-catalogue-collection)
+  [Collection Record](#data-catalogue-collection), see [Setup](#data-catalogue-setup)
+- `EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT`
+  - [BAS Embedded Maps Service](https://github.com/antarctica/embedded-maps) endpoint
+  - can/should be omitted to use production endpoint as a default
+- `EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT`
+  - action to use for the item contact form
+  - should be set the endpoint for Power Automate flow used for processing item messages

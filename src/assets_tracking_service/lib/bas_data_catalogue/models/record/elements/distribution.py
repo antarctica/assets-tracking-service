@@ -17,7 +17,7 @@ class Format:
     """
 
     format: str
-    href: str
+    href: str | None = None
 
 
 @dataclass(kw_only=True)

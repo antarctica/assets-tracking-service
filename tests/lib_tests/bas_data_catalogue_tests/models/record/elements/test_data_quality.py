@@ -7,6 +7,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Citation,
     Contact,
     ContactIdentity,
+    Contacts,
     Date,
     Dates,
     clean_dict,
@@ -93,7 +94,9 @@ class TestDataQuality:
                     specification=Citation(
                         title="x",
                         dates=Dates(creation=Date(date=expected_date)),
-                        contacts=[Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])],
+                        contacts=Contacts(
+                            [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])]
+                        ),
                     ),
                     explanation="x",
                     result=True,
@@ -117,7 +120,9 @@ class TestDataQuality:
                     specification=Citation(
                         title="x",
                         dates=Dates(creation=Date(date=expected_date)),
-                        contacts=[Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])],
+                        contacts=Contacts(
+                            [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.PUBLISHER])]
+                        ),
                     ),
                     explanation="x",
                     result=True,

@@ -4,6 +4,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Citation,
     Contact,
     ContactIdentity,
+    Contacts,
     Date,
     Dates,
     OnlineResource,
@@ -26,19 +27,21 @@ def make_epsg_projection(code: str) -> ReferenceSystemInfo:
         authority=Citation(
             title="European Petroleum Survey Group (EPSG) Geodetic Parameter Registry",
             dates=Dates(publication=Date(date=date(2008, 11, 12))),
-            contacts=[
-                Contact(
-                    organisation=ContactIdentity(name="European Petroleum Survey Group"),
-                    email="EPSGadministrator@iogp.org",
-                    online_resource=OnlineResource(
-                        href="https://www.epsg-registry.org/",
-                        title="EPSG Geodetic Parameter Dataset",
-                        description="The EPSG Geodetic Parameter Dataset is a structured dataset of Coordinate Reference Systems and Coordinate Transformations, accessible through this online registry.",
-                        function=OnlineResourceFunctionCode.INFORMATION,
-                    ),
-                    role=[ContactRoleCode.PUBLISHER],
-                )
-            ],
+            contacts=Contacts(
+                [
+                    Contact(
+                        organisation=ContactIdentity(name="European Petroleum Survey Group"),
+                        email="EPSGadministrator@iogp.org",
+                        online_resource=OnlineResource(
+                            href="https://www.epsg-registry.org/",
+                            title="EPSG Geodetic Parameter Dataset",
+                            description="The EPSG Geodetic Parameter Dataset is a structured dataset of Coordinate Reference Systems and Coordinate Transformations, accessible through this online registry.",
+                            function=OnlineResourceFunctionCode.INFORMATION,
+                        ),
+                        role=[ContactRoleCode.PUBLISHER],
+                    )
+                ]
+            ),
         ),
     )
 
