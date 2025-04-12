@@ -189,7 +189,8 @@ class ItemCatalogue(ItemBase):
         return Summary(
             item_type=self.resource_type,
             edition=self.edition,
-            released_date=self._dates.released,
+            published_date=self._dates.publication,
+            revision_date=self._dates.revision,
             aggregations=self._aggregations,
             citation=self.citation_html,
             abstract=self.abstract_html,
