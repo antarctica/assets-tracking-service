@@ -219,7 +219,7 @@ class TestAircraftTrackingProvider:
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:name", value="VP-FAZ"),
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:registration", value="VP-FAZ"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="aircraft_tracking"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-05"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-12"),
                 ]
             )
         )
@@ -274,7 +274,7 @@ class TestAircraftTrackingProvider:
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:name", value="VP-FAZ"),
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:registration", value="VP-FAZ"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="aircraft_tracking"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-05"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-12"),
                 ]
             ),
         )
@@ -299,7 +299,7 @@ class TestAircraftTrackingProvider:
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:longitude", value=1.0),
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:latitude", value=2.0),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="aircraft_tracking"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-05"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-12"),
                 ]
             ),
         )

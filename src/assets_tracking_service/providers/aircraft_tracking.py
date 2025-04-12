@@ -23,7 +23,7 @@ class AircraftTrackingProvider(Provider):
 
     name = "aircraft_tracking"
     prefix = name
-    version = "2024-07-05"
+    version = "2025-04-12"
     distinguishing_asset_label_scheme = f"{prefix}:aircraft_id"
     distinguishing_position_label_scheme = f"{prefix}:_fake_position_id"
 
