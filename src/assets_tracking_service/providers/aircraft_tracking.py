@@ -23,7 +23,7 @@ class AircraftTrackingProvider(Provider):
     prefix = name
     version = "2024-07-05"
     distinguishing_asset_label_scheme = f"{prefix}:aircraft_id"
-    distinguishing_position_label_scheme = f"{prefix}:position_id"
+    distinguishing_position_label_scheme = f"{prefix}:_fake_position_id"
 
     def __init__(self, config: Config, logger: logging.Logger) -> None:
         self._units = UnitsConverter()
@@ -187,7 +187,9 @@ class AircraftTrackingProvider(Provider):
                 continue
 
             id_label = Label(
-                rel=LabelRelation.SELF, scheme=self.distinguishing_position_label_scheme, value=position["position_id"]
+                rel=LabelRelation.SELF,
+                scheme=self.distinguishing_position_label_scheme,
+                value=position["_fake_position_id"],
             )
 
             position_labels = [

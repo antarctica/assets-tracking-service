@@ -133,7 +133,8 @@ class TestConfig:
             "SENTRY_MONITOR_CONFIG": fx_config.SENTRY_MONITOR_CONFIG,
             "ENABLE_PROVIDER_AIRCRAFT_TRACKING": True,
             "ENABLE_PROVIDER_GEOTAB": True,
-            "ENABLED_PROVIDERS": ["aircraft_tracking", "geotab"],
+            "ENABLE_PROVIDER_RVDAS": True,
+            "ENABLED_PROVIDERS": ["geotab", "aircraft_tracking", "rvdas"],
             "PROVIDER_AIRCRAFT_TRACKING_API_KEY": redacted_value,
             "PROVIDER_AIRCRAFT_TRACKING_PASSWORD": redacted_value,
             "PROVIDER_AIRCRAFT_TRACKING_USERNAME": "x",
@@ -141,6 +142,7 @@ class TestConfig:
             "PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING": fx_config.PROVIDER_GEOTAB_GROUP_NVS_LO6_CODE_MAPPING,
             "PROVIDER_GEOTAB_PASSWORD": redacted_value,
             "PROVIDER_GEOTAB_USERNAME": "x",
+            "PROVIDER_RVDAS_URL": "https://example.com/items.json",
             "ENABLE_EXPORTER_ARCGIS": True,
             "ENABLE_EXPORTER_DATA_CATALOGUE": True,
             "ENABLED_EXPORTERS": ["arcgis", "data_catalogue"],
@@ -228,6 +230,9 @@ class TestConfig:
             ("GEOTAB", "true", True),
             ("GEOTAB", "false", False),
             ("GEOTAB", None, True),
+            ("RVDAS", "true", True),
+            ("RVDAS", "false", False),
+            ("RVDAS", None, True),
         ],
     )
     def test_enable_provider(self, provider_name: str, input_value: str, expected_value: bool):
@@ -247,6 +252,31 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "true",
+                },
+                ["aircraft_tracking", "geotab", "rvdas"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "true",
+                },
+                ["geotab", "rvdas"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "true",
+                },
+                ["aircraft_tracking", "rvdas"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "false",
                 },
                 ["aircraft_tracking", "geotab"],
             ),
@@ -254,6 +284,7 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "true",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "false",
                 },
                 ["aircraft_tracking"],
             ),
@@ -261,6 +292,7 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "true",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "false",
                 },
                 ["geotab"],
             ),
@@ -268,6 +300,15 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "true",
+                },
+                ["rvdas"],
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "false",
                 },
                 [],
             ),
@@ -278,7 +319,7 @@ class TestConfig:
         envs_bck = self._set_envs(envs)
 
         config = Config()
-        assert expected == config.ENABLED_PROVIDERS
+        assert sorted(expected) == sorted(config.ENABLED_PROVIDERS)
 
         self._unset_envs(envs, envs_bck)
 
@@ -354,6 +395,7 @@ class TestConfig:
             ("PROVIDER_GEOTAB_USERNAME", "x", False),
             ("PROVIDER_GEOTAB_PASSWORD", "x", True),
             ("PROVIDER_GEOTAB_DATABASE", "x", False),
+            ("PROVIDER_RVDAS_URL", "x", False),
             ("EXPORTER_ARCGIS_USERNAME", "x", False),
             ("EXPORTER_ARCGIS_PASSWORD", "x", True),
             ("EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL", "https://example.com", False),
@@ -395,6 +437,7 @@ class TestConfig:
         envs = {
             "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_AIRCRAFT_TRACKING": "false",
             "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB": "false",
+            "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "false",
         }
         envs_bck = self._set_envs(envs)
 
@@ -466,6 +509,12 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_USERNAME": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_PASSWORD": "x",
                     "ASSETS_TRACKING_SERVICE_PROVIDER_GEOTAB_DATABASE": None,
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_RVDAS": "true",
+                    "ASSETS_TRACKING_SERVICE_PROVIDER_RVDAS_URL": None,
                 }
             ),
             (

@@ -45,7 +45,7 @@ class TestProvidersManager:
 
         assert len(manager._providers) == 0
 
-    @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"]])
+    @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"], ["rvdas"]])
     def test_make_each_provider(
         self,
         mocker: MockerFixture,
@@ -65,7 +65,7 @@ class TestProvidersManager:
 
         assert len(manager._providers) == 1
 
-    @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"]])
+    @pytest.mark.parametrize("enabled_providers", [["geotab"], ["aircraft_tracking"], ["rvdas"]])
     def test_make_providers_error(
         self,
         caplog: pytest.LogCaptureFixture,
@@ -85,6 +85,7 @@ class TestProvidersManager:
             "assets_tracking_service.providers.aircraft_tracking.AircraftTrackingProvider.__init__",
             side_effect=RuntimeError,
         )
+        mocker.patch("assets_tracking_service.providers.rvdas.RvdasProvider.__init__", side_effect=RuntimeError)
 
         manager = ProvidersManager(config=mock_config, db=fx_db_client_tmp_db_mig, logger=fx_logger)
 
