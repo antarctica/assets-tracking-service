@@ -107,7 +107,7 @@ class TestAircraftTrackingProvider:
         mock_aircraft_tracker_client = mocker.MagicMock(auto_spec=True)
         mock_aircraft_tracker_client.get_last_aircraft_positions.return_value = [
             {
-                "battenberg": 88803930,
+                "_fake_position_id": "dc6da2aaedcff133f4e82cd4f181bfef",
                 "carrot": 1,
                 "sponge": 1719660930000,
                 "christmas": 0,
@@ -127,7 +127,7 @@ class TestAircraftTrackingProvider:
         provider = AircraftTrackingProvider(config=fx_config, logger=fx_logger)
 
         assert provider._fetch_latest_positions()[0] == {
-            "position_id": "88803930",
+            "_fake_position_id": "dc6da2aaedcff133f4e82cd4f181bfef",
             "speed_knots": 0.0,
             "altitude_feet": 0.0,
             "heading_degrees": 0.0,
@@ -286,8 +286,11 @@ class TestAircraftTrackingProvider:
             heading=67.2,
             labels=Labels(
                 [
-                    Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:position_id", value="88803930"),
-                    Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:position_id", value="88803930"),
+                    Label(
+                        rel=LabelRelation.SELF,
+                        scheme="aircraft_tracking:_fake_position_id",
+                        value="dc6da2aaedcff133f4e82cd4f181bfef",
+                    ),
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:speed_knots", value=12),
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:altitude_feet", value=30000),
                     Label(rel=LabelRelation.SELF, scheme="aircraft_tracking:heading_degrees", value=67.2),
@@ -303,7 +306,7 @@ class TestAircraftTrackingProvider:
 
         positions = [
             {
-                "position_id": "88803930",
+                "_fake_position_id": "dc6da2aaedcff133f4e82cd4f181bfef",
                 "speed_knots": 12,
                 "altitude_feet": 30_000,
                 "heading_degrees": 67.2,
@@ -337,7 +340,7 @@ class TestAircraftTrackingProvider:
         """Skips positions for assets not available."""
         positions = [
             {
-                "position_id": "88803930",
+                "_fake_position_id": "dc6da2aaedcff133f4e82cd4f181bfef",
                 "speed_knots": 0.0,
                 "altitude_feet": 0.0,
                 "heading_degrees": 0.0,

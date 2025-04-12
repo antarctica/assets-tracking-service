@@ -1,6 +1,8 @@
+import json
 import logging
 from collections.abc import Generator
 from datetime import UTC, datetime
+from hashlib import md5
 
 from assets_tracking_service_aircraft_provider.providers.aircraft_tracking import (
     AircraftTrackerProvider as AircraftTrackerClient,
@@ -45,7 +47,7 @@ class AircraftTrackingProvider(Provider):
         """
         Fetch aircraft from provider.
 
-        An aircraft  represents an asset.
+        An aircraft represents an asset.
 
         Properties are obscured for legal reasons and need converting back into something useful.
         """
@@ -83,6 +85,8 @@ class AircraftTrackingProvider(Provider):
         Fetch aircraft positions from provider.
 
         Properties are obscured for legal reasons and need converting back into something useful.
+
+        This provider doesn't assign useful IDs to positions, so we generate a fake one based on position data.
         """
         self._logger.info("Fetching aircraft positions...")
 
@@ -103,8 +107,10 @@ class AircraftTrackingProvider(Provider):
                     "heading_degrees": float(position["lemon_drizzle"]),
                     "utc_milliseconds": int(position["victoria"]),
                     "aircraft_id": str(position["banana"]),
-                    "position_id": str(position["battenberg"]),
                 }
+                # hash _position to generate a fake position ID
+                _position["_fake_position_id"] = md5(json.dumps(_position, sort_keys=True).encode()).hexdigest()  # noqa: S324
+
                 self._logger.info("Fetched position for aircraft ID: '%s'", position["banana"])
                 _positions.append(_position)
             except KeyError:
@@ -122,7 +128,7 @@ class AircraftTrackingProvider(Provider):
         """
         Acquire aircraft as assets.
 
-        - all assets returned by this provider are considered active
+        - all Assets returned by this provider are considered active
         - Assets can be easily distinguished via an ID
         - as only aircraft are returned, the platform type can be hard coded.
         """
@@ -162,9 +168,9 @@ class AircraftTrackingProvider(Provider):
         """
         Acquire aircraft positions as asset positions.
 
-        - Positions can be easily distinguished via an ID.
+        - Positions can be easily distinguished via a derived/fake ID.
         """
-        self._logger.info("Fetching position of Aircraft...")
+        self._logger.info("Fetching position of aircraft...")
 
         indexed_assets = self._index_assets(assets)
 
