@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Added
+
+* Refactored Data Catalogue exporter with support for catalogue items and other derived formats
+  [#137](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/137)
+
 ## [0.5.0] - 2025-03-15
 
 ### Removed [BREAKING!]

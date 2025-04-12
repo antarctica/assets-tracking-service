@@ -142,9 +142,8 @@ class TestConfig:
             "PROVIDER_GEOTAB_PASSWORD": redacted_value,
             "PROVIDER_GEOTAB_USERNAME": "x",
             "ENABLE_EXPORTER_ARCGIS": True,
-            "ENABLE_EXPORTER_GEOJSON": True,
             "ENABLE_EXPORTER_DATA_CATALOGUE": True,
-            "ENABLED_EXPORTERS": ["arcgis", "geojson", "data_catalogue"],
+            "ENABLED_EXPORTERS": ["arcgis", "data_catalogue"],
             "EXPORTER_ARCGIS_USERNAME": "x",
             "EXPORTER_ARCGIS_PASSWORD": redacted_value,
             "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": "https://example.com",
@@ -156,7 +155,6 @@ class TestConfig:
                 "description_file": "description.md",
                 "thumbnail_file": "thumbnail.png",
             },
-            "EXPORTER_GEOJSON_OUTPUT_PATH": str(fx_config.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(fx_config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
             "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
             "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": redacted_value,
@@ -290,9 +288,6 @@ class TestConfig:
             ("ARCGIS", "true", True),
             ("ARCGIS", "false", False),
             ("ARCGIS", None, True),
-            ("GEOJSON", "true", True),
-            ("GEOJSON", "false", False),
-            ("GEOJSON", None, True),
             ("DATA_CATALOGUE", "true", True),
             ("DATA_CATALOGUE", "false", False),
             ("DATA_CATALOGUE", None, True),
@@ -314,15 +309,13 @@ class TestConfig:
             (
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
                 },
-                ["arcgis", "geojson", "data_catalogue"],
+                ["arcgis", "data_catalogue"],
             ),
             (
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
                 },
                 ["arcgis"],
@@ -330,47 +323,13 @@ class TestConfig:
             (
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
-                },
-                ["geojson"],
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
                 },
                 ["data_catalogue"],
             ),
             (
                 {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
-                },
-                ["arcgis", "geojson"],
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
-                },
-                ["arcgis", "data_catalogue"],
-            ),
-            (
-                {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
-                },
-                ["geojson", "data_catalogue"],
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
                 },
                 [],
@@ -399,7 +358,6 @@ class TestConfig:
             ("EXPORTER_ARCGIS_PASSWORD", "x", True),
             ("EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL", "https://example.com", False),
             ("EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER", "https://example.com/arcgis", False),
-            ("EXPORTER_GEOJSON_OUTPUT_PATH", Path("export.geojson"), False),
             ("EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET", "x", False),
             ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID", "x", False),
             ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", "x", True),
@@ -450,7 +408,6 @@ class TestConfig:
         """Needed to satisfy coverage that config is valid when all exporters can be disabled."""
         envs = {
             "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_ARCGIS": "false",
-            "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "false",
             "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "false",
         }
         envs_bck = self._set_envs(envs)
@@ -545,12 +502,6 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD": "x",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": "https://example.com",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER": None,
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_GEOJSON": "true",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH": None,
                 }
             ),
             (
