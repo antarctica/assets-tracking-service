@@ -428,9 +428,9 @@ class Config:
         See http://vocab.nerc.ac.uk/collection/L06/current/ for allowed codes and descriptions.
         """
         return {
-            "b2795": "15",  # snowmobiles, land/onshore vehicle - awaiting specific term
+            "b2795": "98",  # snowmobile
             "b2794": "31",  # ship, research vessel
-            "b2796": "15",  # Pistonbully's, land/onshore vehicle - awaiting specific term
+            "b2796": "97",  # snowcat (Pistonbully)
         }
 
     @property

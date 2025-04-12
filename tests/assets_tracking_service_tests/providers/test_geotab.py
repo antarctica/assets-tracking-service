@@ -271,7 +271,7 @@ class TestGeotabProvider:
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_comment", value="GR9 Beta test in Skidoo"),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_group_ids", value="GroupVehicleId"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             )
         )
@@ -319,7 +319,7 @@ class TestGeotabProvider:
                     ),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_group_ids", value="GroupVehicleId,b2794"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             ),
         )
@@ -339,7 +339,7 @@ class TestGeotabProvider:
                     Label(rel=LabelRelation.SELF, scheme="geotab:date", value="2024-07-06T18:12:58+00:00"),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_id", value="b7"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             ),
         )
@@ -416,7 +416,7 @@ class TestGeotabProvider:
                     ),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_group_ids", value="GroupVehicleId,b2794"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             ),
         )
@@ -437,7 +437,7 @@ class TestGeotabProvider:
                     Label(rel=LabelRelation.SELF, scheme="geotab:date", value="2024-07-06T13:49:47+00:00"),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_id", value="b7"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             ),
         )
@@ -488,7 +488,7 @@ class TestGeotabProvider:
                     ),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_group_ids", value="GroupVehicleId,b2794"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             ),
         )
@@ -544,7 +544,7 @@ class TestGeotabProvider:
                     ),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_group_ids", value="GroupVehicleId,b2794"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             ),
         )
@@ -565,7 +565,7 @@ class TestGeotabProvider:
                     Label(rel=LabelRelation.SELF, scheme="geotab:date", value="2024-07-06T13:49:47+00:00"),
                     Label(rel=LabelRelation.SELF, scheme="geotab:device_id", value="b7"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="geotab"),
-                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2024-07-02"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-14"),
                 ]
             ),
         )
