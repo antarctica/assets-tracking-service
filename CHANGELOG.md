@@ -9,12 +9,22 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Removed [BREAKING!]
+
+* GeoJSON exporter
+  [#150](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/150)
+
 ### Added
 
 * Refactored Data Catalogue exporter with support for catalogue items and other derived formats
   [#137](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/137)
 * RVDAS provider for tracking the SDA
   [#25](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/25)
+
+### Changed
+
+* Refactored aircraft tracking provider position IDs to avoid stale positions
+  [#151](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/151)
 
 ## [0.5.0] - 2025-03-15
 
