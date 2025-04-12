@@ -337,7 +337,7 @@ class TestSummary:
     """Test summary panel."""
 
     @pytest.mark.parametrize(
-        ("item_type", "edition", "released", "aggregations", "citation"),
+        ("item_type", "edition", "published", "aggregations", "citation"),
         [
             (
                 HierarchyLevelCode.PRODUCT,
@@ -388,7 +388,7 @@ class TestSummary:
         self,
         item_type: HierarchyLevelCode,
         edition: str | None,
-        released: str | None,
+        published: str | None,
         aggregations: Aggregations,
         citation: str | None,
     ):
@@ -399,7 +399,8 @@ class TestSummary:
         summary = Summary(
             item_type=item_type,
             edition=edition,
-            released_date=released,
+            published_date=published,
+            revision_date=None,
             aggregations=aggregations,
             citation=citation,
             abstract="x",
@@ -411,9 +412,34 @@ class TestSummary:
 
         if item_type != HierarchyLevelCode.COLLECTION:
             assert summary.edition == edition
-            assert summary.released == released
+            assert summary.published == published
             assert summary.citation == citation
         else:
             assert summary.edition is None
-            assert summary.released is None
+            assert summary.published is None
             assert summary.citation is None
+
+    @pytest.mark.parametrize(
+        ("item_type", "published", "revision", "expected"),
+        [
+            (HierarchyLevelCode.PRODUCT, None, None, None),
+            (HierarchyLevelCode.PRODUCT, "x", None, "x"),
+            (HierarchyLevelCode.PRODUCT, None, "x", None),
+            (HierarchyLevelCode.PRODUCT, "x", "x", "x"),
+            (HierarchyLevelCode.PRODUCT, "x", "y", "x (last updated: y)"),
+            (HierarchyLevelCode.COLLECTION, "x", "y", None),
+        ],
+    )
+    def test_published(self, item_type: HierarchyLevelCode, published: str, revision: str, expected: str):
+        """Can show combination of publication and revision date if relevant."""
+        summary = Summary(
+            item_type=item_type,
+            edition=None,
+            published_date=published,
+            revision_date=revision,
+            aggregations=Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+            citation=None,
+            abstract="x",
+        )
+
+        assert summary.published == expected

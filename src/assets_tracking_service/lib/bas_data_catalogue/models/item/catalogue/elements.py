@@ -288,14 +288,16 @@ class Summary:
         self,
         item_type: HierarchyLevelCode,
         edition: str | None,
-        released_date: str | None,
+        published_date: str | None,
+        revision_date: str | None,
         aggregations: Aggregations,
         citation: str | None,
         abstract: str,
     ) -> None:
         self._item_type = item_type
         self._edition = edition
-        self._released_date = released_date
+        self._published_date = published_date
+        self._revision_date = revision_date
         self._aggregations = aggregations
         self._citation = citation
         self._abstract = abstract
@@ -308,11 +310,15 @@ class Summary:
         return self._edition
 
     @property
-    def released(self) -> str | None:
-        """Formatted released date."""
+    def published(self) -> str | None:
+        """Formatted published date with revision date if set and different to publication."""
         if self._item_type == HierarchyLevelCode.COLLECTION:
             return None
-        return self._released_date
+        if self._published_date is None:
+            return None
+        if self._published_date != self._revision_date and self._revision_date is not None:
+            return f"{self._published_date} (last updated: {self._revision_date})"
+        return self._published_date
 
     @property
     def collections(self) -> list[Link]:
