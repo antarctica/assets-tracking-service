@@ -112,15 +112,6 @@ class Config:
                 msg = "PROVIDER_GEOTAB_DATABASE must be set."
                 raise ConfigurationError(msg) from e
 
-        if self.ENABLE_EXPORTER_GEOJSON:
-            try:
-                _ = self.EXPORTER_GEOJSON_OUTPUT_PATH
-            except EnvError as e:
-                msg = "EXPORTER_GEOJSON_OUTPUT_PATH must be set."
-                raise ConfigurationError(msg) from e
-
-            # can't check if EXPORTER_GEOJSON_OUTPUT_PATH is a file as it's created by the exporter
-
         if self.ENABLE_EXPORTER_ARCGIS:
             if not self.ENABLE_EXPORTER_DATA_CATALOGUE:
                 msg = "ENABLE_EXPORTER_ARCGIS requires ENABLE_EXPORTER_DATA_CATALOGUE to be True."
@@ -199,7 +190,6 @@ class Config:
         ENABLE_PROVIDER_GEOTAB: bool
         ENABLE_PROVIDER_AIRCRAFT_TRACKING: bool
         ENABLED_PROVIDERS: list[str]
-        ENABLE_EXPORTER_GEOJSON: bool
         ENABLE_EXPORTER_ARCGIS: bool
         ENABLE_EXPORTER_DATA_CATALOGUE: bool
         ENABLED_EXPORTERS: list[str]
@@ -210,7 +200,6 @@ class Config:
         PROVIDER_AIRCRAFT_TRACKING_USERNAME: str
         PROVIDER_AIRCRAFT_TRACKING_PASSWORD: str
         PROVIDER_AIRCRAFT_TRACKING_API_KEY: str
-        EXPORTER_GEOJSON_OUTPUT_PATH: str
         EXPORTER_ARCGIS_USERNAME: str
         EXPORTER_ARCGIS_PASSWORD: str
         EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL: str
@@ -236,7 +225,6 @@ class Config:
             "ENABLE_PROVIDER_GEOTAB": self.ENABLE_PROVIDER_GEOTAB,
             "ENABLE_PROVIDER_AIRCRAFT_TRACKING": self.ENABLE_PROVIDER_AIRCRAFT_TRACKING,
             "ENABLED_PROVIDERS": self.ENABLED_PROVIDERS,
-            "ENABLE_EXPORTER_GEOJSON": self.ENABLE_EXPORTER_GEOJSON,
             "ENABLE_EXPORTER_ARCGIS": self.ENABLE_EXPORTER_ARCGIS,
             "ENABLE_EXPORTER_DATA_CATALOGUE": self.ENABLE_EXPORTER_DATA_CATALOGUE,
             "ENABLED_EXPORTERS": self.ENABLED_EXPORTERS,
@@ -247,7 +235,6 @@ class Config:
             "PROVIDER_AIRCRAFT_TRACKING_USERNAME": self.PROVIDER_AIRCRAFT_TRACKING_USERNAME,
             "PROVIDER_AIRCRAFT_TRACKING_PASSWORD": self.PROVIDER_AIRCRAFT_TRACKING_PASSWORD_SAFE,
             "PROVIDER_AIRCRAFT_TRACKING_API_KEY": self.PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE,
-            "EXPORTER_GEOJSON_OUTPUT_PATH": str(self.EXPORTER_GEOJSON_OUTPUT_PATH.resolve()),
             "EXPORTER_ARCGIS_USERNAME": self.EXPORTER_ARCGIS_USERNAME,
             "EXPORTER_ARCGIS_PASSWORD": self.EXPORTER_ARCGIS_PASSWORD_SAFE,
             "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": self.EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL,
@@ -368,12 +355,6 @@ class Config:
         return providers
 
     @property
-    def ENABLE_EXPORTER_GEOJSON(self) -> bool:
-        """Controls whether GeoJSON exporter is used."""
-        with self.env.prefixed(self._app_prefix):
-            return self.env.bool("ENABLE_EXPORTER_GEOJSON", True)
-
-    @property
     def ENABLE_EXPORTER_ARCGIS(self) -> bool:
         """Controls whether ArcGIS exporter is used."""
         with self.env.prefixed(self._app_prefix):
@@ -392,9 +373,6 @@ class Config:
 
         if self.ENABLE_EXPORTER_ARCGIS:
             exporters.append("arcgis")
-
-        if self.ENABLE_EXPORTER_GEOJSON:
-            exporters.append("geojson")
 
         if self.ENABLE_EXPORTER_DATA_CATALOGUE:
             exporters.append("data_catalogue")
@@ -466,12 +444,6 @@ class Config:
     def PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE(self) -> str:
         """PROVIDER_AIRCRAFT_TRACKING_API_KEY with value redacted."""
         return self._safe_value
-
-    @property
-    def EXPORTER_GEOJSON_OUTPUT_PATH(self) -> Path:
-        """Path to GeoJSON output file."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_GEOJSON_"):
-            return self.env.path("OUTPUT_PATH")
 
     @property
     def EXPORTER_ARCGIS_USERNAME(self) -> str:

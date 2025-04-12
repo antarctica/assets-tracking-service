@@ -31,7 +31,6 @@ from assets_tracking_service.db import DatabaseClient, DatabaseError
 from assets_tracking_service.exporters.arcgis import ArcGisExporter, ArcGisExporterLayer
 from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
-from assets_tracking_service.exporters.geojson import GeoJsonExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
@@ -621,23 +620,6 @@ def fx_providers_manager_eg_provider(
     """ProvidersManager with ExampleProvider as configured provider."""
     fx_providers_manager_no_providers._providers = [fx_provider_example]
     return fx_providers_manager_no_providers
-
-
-@pytest.fixture()
-def fx_exporter_geojson(
-    mocker: MockerFixture, fx_db_client_tmp_db_pop: DatabaseClient, fx_logger: logging.Logger
-) -> GeoJsonExporter:
-    """
-    GeoJsonExporter with mocked config.
-
-    To use a temporary directory for output.
-    """
-    with TemporaryDirectory() as tmp_path:
-        output_path = Path(tmp_path) / "output.geojson"
-        mock_config = mocker.Mock()
-        type(mock_config).EXPORTER_GEOJSON_OUTPUT_PATH = PropertyMock(return_value=output_path)
-
-    return GeoJsonExporter(config=mock_config, db=fx_db_client_tmp_db_pop, logger=fx_logger)
 
 
 @pytest.fixture()

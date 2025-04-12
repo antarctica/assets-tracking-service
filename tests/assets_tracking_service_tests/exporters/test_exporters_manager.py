@@ -43,7 +43,7 @@ class TestExportersManager:
 
         assert len(manager._exporters) == 0
 
-    @pytest.mark.parametrize("enabled_exporters", [["arcgis"], ["geojson"], ["data_catalogue"]])
+    @pytest.mark.parametrize("enabled_exporters", [["arcgis"], ["data_catalogue"]])
     def test_make_each_exporter(
         self,
         mocker: MockerFixture,
@@ -70,10 +70,6 @@ class TestExportersManager:
         """Exports."""
         mocker.patch(
             "assets_tracking_service.exporters.exporters_manager.ArcGisExporter",
-            return_value=mocker.MagicMock(auto_spec=True),
-        )
-        mocker.patch(
-            "assets_tracking_service.exporters.exporters_manager.GeoJsonExporter",
             return_value=mocker.MagicMock(auto_spec=True),
         )
         mocker.patch(
