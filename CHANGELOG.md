@@ -25,6 +25,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * Refactored aircraft tracking provider position IDs to avoid stale positions
   [#151](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/151)
+* Adding additional NVS terms for snowmobile and snow cats used by the Geotab provider
+  [#5](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/5)
 
 ## [0.5.0] - 2025-03-15
 

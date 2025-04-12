@@ -21,7 +21,7 @@ class GeotabProvider(Provider):
 
     name = "geotab"
     prefix = name
-    version = "2024-07-02"
+    version = "2025-04-14"
     distinguishing_asset_label_scheme = f"{prefix}:device_id"
     distinguishing_position_label_scheme = f"{prefix}:log_record_id"
 
