@@ -78,6 +78,23 @@ class Config:
             msg = "DB_DSN is invalid."
             raise ConfigurationError(msg) from e
 
+        if self.ENABLE_PROVIDER_GEOTAB:
+            try:
+                _ = self.PROVIDER_GEOTAB_USERNAME
+            except EnvError as e:
+                msg = "PROVIDER_GEOTAB_USERNAME must be set."
+                raise ConfigurationError(msg) from e
+            try:
+                _ = self.PROVIDER_GEOTAB_PASSWORD
+            except EnvError as e:
+                msg = "PROVIDER_GEOTAB_PASSWORD must be set."
+                raise ConfigurationError(msg) from e
+            try:
+                _ = self.PROVIDER_GEOTAB_DATABASE
+            except EnvError as e:
+                msg = "PROVIDER_GEOTAB_DATABASE must be set."
+                raise ConfigurationError(msg) from e
+
         if self.ENABLE_PROVIDER_AIRCRAFT_TRACKING:
             try:
                 _ = self.PROVIDER_AIRCRAFT_TRACKING_USERNAME
@@ -95,21 +112,11 @@ class Config:
                 msg = "PROVIDER_AIRCRAFT_TRACKING_API_KEY must be set."
                 raise ConfigurationError(msg) from e
 
-        if self.ENABLE_PROVIDER_GEOTAB:
+        if self.ENABLE_PROVIDER_RVDAS:
             try:
-                _ = self.PROVIDER_GEOTAB_USERNAME
+                _ = self.PROVIDER_RVDAS_URL
             except EnvError as e:
-                msg = "PROVIDER_GEOTAB_USERNAME must be set."
-                raise ConfigurationError(msg) from e
-            try:
-                _ = self.PROVIDER_GEOTAB_PASSWORD
-            except EnvError as e:
-                msg = "PROVIDER_GEOTAB_PASSWORD must be set."
-                raise ConfigurationError(msg) from e
-            try:
-                _ = self.PROVIDER_GEOTAB_DATABASE
-            except EnvError as e:
-                msg = "PROVIDER_GEOTAB_DATABASE must be set."
+                msg = "PROVIDER_RVDAS_URL must be set."
                 raise ConfigurationError(msg) from e
 
         if self.ENABLE_EXPORTER_ARCGIS:
@@ -224,6 +231,7 @@ class Config:
             "SENTRY_MONITOR_CONFIG": self.SENTRY_MONITOR_CONFIG,
             "ENABLE_PROVIDER_GEOTAB": self.ENABLE_PROVIDER_GEOTAB,
             "ENABLE_PROVIDER_AIRCRAFT_TRACKING": self.ENABLE_PROVIDER_AIRCRAFT_TRACKING,
+            "ENABLE_PROVIDER_RVDAS": self.ENABLE_PROVIDER_RVDAS,
             "ENABLED_PROVIDERS": self.ENABLED_PROVIDERS,
             "ENABLE_EXPORTER_ARCGIS": self.ENABLE_EXPORTER_ARCGIS,
             "ENABLE_EXPORTER_DATA_CATALOGUE": self.ENABLE_EXPORTER_DATA_CATALOGUE,
@@ -235,6 +243,7 @@ class Config:
             "PROVIDER_AIRCRAFT_TRACKING_USERNAME": self.PROVIDER_AIRCRAFT_TRACKING_USERNAME,
             "PROVIDER_AIRCRAFT_TRACKING_PASSWORD": self.PROVIDER_AIRCRAFT_TRACKING_PASSWORD_SAFE,
             "PROVIDER_AIRCRAFT_TRACKING_API_KEY": self.PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE,
+            "PROVIDER_RVDAS_URL": self.PROVIDER_RVDAS_URL,
             "EXPORTER_ARCGIS_USERNAME": self.EXPORTER_ARCGIS_USERNAME,
             "EXPORTER_ARCGIS_PASSWORD": self.EXPORTER_ARCGIS_PASSWORD_SAFE,
             "EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL": self.EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL,
@@ -342,15 +351,22 @@ class Config:
             return self.env.bool("ENABLE_PROVIDER_AIRCRAFT_TRACKING", True)
 
     @property
+    def ENABLE_PROVIDER_RVDAS(self) -> bool:
+        """Controls whether RVDAS provider is used."""
+        with self.env.prefixed(self._app_prefix):
+            return self.env.bool("ENABLE_PROVIDER_RVDAS", True)
+
+    @property
     def ENABLED_PROVIDERS(self) -> list[str]:
         """List of enabled providers."""
         providers = []
 
-        if self.ENABLE_PROVIDER_AIRCRAFT_TRACKING:
-            providers.append("aircraft_tracking")
-
         if self.ENABLE_PROVIDER_GEOTAB:
             providers.append("geotab")
+        if self.ENABLE_PROVIDER_AIRCRAFT_TRACKING:
+            providers.append("aircraft_tracking")
+        if self.ENABLE_PROVIDER_RVDAS:
+            providers.append("rvdas")
 
         return providers
 
@@ -444,6 +460,17 @@ class Config:
     def PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE(self) -> str:
         """PROVIDER_AIRCRAFT_TRACKING_API_KEY with value redacted."""
         return self._safe_value
+
+    @property
+    def PROVIDER_RVDAS_URL(self) -> str:
+        """
+        URL for RVDAS provider.
+
+        Must be items endpoint, as JSON, within a relevant collection in an OGC API - Features service.
+        E.g. https://example.com/collections/x/items.json.
+        """
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("PROVIDER_RVDAS_"):
+            return self.env.str("URL")
 
     @property
     def EXPORTER_ARCGIS_USERNAME(self) -> str:

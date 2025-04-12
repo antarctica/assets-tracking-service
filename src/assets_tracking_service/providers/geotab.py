@@ -166,11 +166,10 @@ class GeotabProvider(Provider):
         """
         Acquire devices as assets.
 
-        - all assets returned by this provider are assumed to be active
+        - all Assets returned by this provider are assumed to be active
         - Assets can be easily distinguished via an ID
-        - asset names are used as the preferred label, if available, otherwise the serial number is used
+        - Asset names are used as the preferred label, if available, otherwise the serial number is used
         - the platform type is determined by a machine type group assigned in the Geotab interface
-        - some platform types do not yet have specific terms in the L06 vocabulary and so use a general class
         """
         self._logger.info("Fetching Geotab devices as assets...")
 

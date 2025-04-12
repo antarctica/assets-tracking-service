@@ -49,6 +49,7 @@ from assets_tracking_service.models.record import Record, RecordNew, RecordsClie
 from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
 from assets_tracking_service.providers.geotab import GeotabProvider
 from assets_tracking_service.providers.providers_manager import ProvidersManager
+from assets_tracking_service.providers.rvdas import RvdasProvider
 from tests.examples.example_exporter import ExampleExporter
 from tests.examples.example_provider import ExampleProvider
 from tests.pytest_pg_factories import (
@@ -600,6 +601,25 @@ def fx_provider_geotab_mocked_error_http(mocker: MockerFixture, fx_config: Confi
     mocker.patch("assets_tracking_service.providers.geotab.Geotab", return_value=mock_geotab_client)
 
     return GeotabProvider(config=fx_config, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_provider_rvdas(mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger) -> RvdasProvider:
+    """RvdasProvider."""
+    provider = RvdasProvider(config=fx_config, logger=fx_logger)
+    positions = [
+        {
+            "longitude": -45.579346,
+            "latitude": -60.701442,
+            "speedknots": 0.1,
+            "headingtrue": 299.55,
+            "gps_time": "2025-04-12 12:09:34.729+00",
+            "_fake_vessel_id": "1",
+            "_fake_position_id": "c28c61d85e803b933c722bef9307cf76",
+        }
+    ]
+    mocker.patch.object(provider, "_fetch_latest_positions", return_value=positions)
+    return provider
 
 
 @pytest.fixture()

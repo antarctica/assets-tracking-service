@@ -12,6 +12,7 @@ from assets_tracking_service.models.position import PositionNew, PositionsClient
 from assets_tracking_service.providers.aircraft_tracking import AircraftTrackingProvider
 from assets_tracking_service.providers.base_provider import Provider
 from assets_tracking_service.providers.geotab import GeotabProvider
+from assets_tracking_service.providers.rvdas import RvdasProvider
 
 
 class ProvidersManager:
@@ -48,6 +49,15 @@ class ProvidersManager:
             except RuntimeError:
                 self._logger.exception("Failed to create Aircraft Tracking provider.")
                 self._logger.info("Aircraft Tracking provider will be skipped.")
+
+        if "rvdas" in provider_names:
+            self._logger.info("Creating RVDAS provider...")
+            try:
+                providers.append(RvdasProvider(config=self._config, logger=self._logger))
+                self._logger.info("Created RVDAS provider.")
+            except RuntimeError:
+                self._logger.exception("Failed to create RVDAS provider.")
+                self._logger.info("Rvdas provider will be skipped.")
 
         self._logger.info("Providers created.")
         return providers
