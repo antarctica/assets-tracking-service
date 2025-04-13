@@ -63,7 +63,7 @@
                 "heading": "",
                 "classes": [
                   {
-                    "label": "0",
+                    "label": "Unknown",
                     "symbol": {
                       "type": "CIMSymbolReference",
                       "symbol": {
@@ -578,7 +578,7 @@
                     ]
                   },
                   {
-                    "label": "15",
+                    "label": "Piston Bully",
                     "symbol": {
                       "type": "CIMSymbolReference",
                       "symbol": {
@@ -939,12 +939,378 @@
                     },
                     "values": [
                       [
-                        "15"
+                        "97"
                       ]
                     ]
                   },
                   {
-                    "label": "62",
+                    "label": "Snowmobile",
+                    "symbol": {
+                      "type": "CIMSymbolReference",
+                      "symbol": {
+                        "type": "CIMPointSymbol",
+                        "symbolLayers": [
+                          {
+                            "type": "CIMVectorMarker",
+                            "enable": true,
+                            "anchorPointUnits": "Relative",
+                            "dominantSizeAxis3D": "Y",
+                            "size": 18,
+                            "billboardMode3D": "FaceNearPlane",
+                            "frame": {
+                              "xmin": 0,
+                              "ymin": 0,
+                              "xmax": 12.34,
+                              "ymax": 29.42
+                            },
+                            "markerGraphics": [
+                              {
+                                "type": "CIMMarkerGraphic",
+                                "geometry": {
+                                  "rings": [
+                                    [
+                                      [
+                                        10.12,
+                                        0.51
+                                      ],
+                                      [
+                                        10.75,
+                                        0.64
+                                      ],
+                                      [
+                                        11.32,
+                                        0.99
+                                      ],
+                                      [
+                                        11.7,
+                                        1.5
+                                      ],
+                                      [
+                                        11.84,
+                                        2.07
+                                      ],
+                                      [
+                                        11.84,
+                                        17.63
+                                      ],
+                                      [
+                                        11.55,
+                                        19.37
+                                      ],
+                                      [
+                                        11.08,
+                                        21.51
+                                      ],
+                                      [
+                                        10.54,
+                                        23.41
+                                      ],
+                                      [
+                                        9.88,
+                                        25.19
+                                      ],
+                                      [
+                                        9.19,
+                                        26.58
+                                      ],
+                                      [
+                                        8.47,
+                                        27.63
+                                      ],
+                                      [
+                                        7.49,
+                                        28.52
+                                      ],
+                                      [
+                                        6.83,
+                                        28.82
+                                      ],
+                                      [
+                                        6.17,
+                                        28.92
+                                      ],
+                                      [
+                                        5.05,
+                                        28.64
+                                      ],
+                                      [
+                                        4.33,
+                                        28.12
+                                      ],
+                                      [
+                                        3.55,
+                                        27.22
+                                      ],
+                                      [
+                                        2.76,
+                                        25.84
+                                      ],
+                                      [
+                                        2.02,
+                                        24.05
+                                      ],
+                                      [
+                                        1.47,
+                                        22.31
+                                      ],
+                                      [
+                                        1.13,
+                                        20.97
+                                      ],
+                                      [
+                                        0.83,
+                                        19.6
+                                      ],
+                                      [
+                                        0.5,
+                                        17.63
+                                      ],
+                                      [
+                                        0.5,
+                                        2.07
+                                      ],
+                                      [
+                                        0.63,
+                                        1.47
+                                      ],
+                                      [
+                                        0.98,
+                                        0.96
+                                      ],
+                                      [
+                                        1.52,
+                                        0.62
+                                      ],
+                                      [
+                                        2.14,
+                                        0.51
+                                      ],
+                                      [
+                                        10.12,
+                                        0.51
+                                      ]
+                                    ]
+                                  ]
+                                },
+                                "symbol": {
+                                  "type": "CIMPolygonSymbol",
+                                  "symbolLayers": [
+                                    {
+                                      "type": "CIMSolidFill",
+                                      "enable": true,
+                                      "color": [
+                                        244,
+                                        119,
+                                        56,
+                                        255
+                                      ]
+                                    }
+                                  ],
+                                  "angleAlignment": "Map"
+                                }
+                              },
+                              {
+                                "type": "CIMMarkerGraphic",
+                                "geometry": {
+                                  "rings": [
+                                    [
+                                      [
+                                        11.84,
+                                        17.63
+                                      ],
+                                      [
+                                        11.55,
+                                        19.37
+                                      ],
+                                      [
+                                        11.08,
+                                        21.51
+                                      ],
+                                      [
+                                        10.54,
+                                        23.41
+                                      ],
+                                      [
+                                        9.88,
+                                        25.19
+                                      ],
+                                      [
+                                        9.19,
+                                        26.58
+                                      ],
+                                      [
+                                        8.47,
+                                        27.63
+                                      ],
+                                      [
+                                        7.49,
+                                        28.52
+                                      ],
+                                      [
+                                        6.83,
+                                        28.82
+                                      ],
+                                      [
+                                        6.17,
+                                        28.92
+                                      ],
+                                      [
+                                        5.05,
+                                        28.64
+                                      ],
+                                      [
+                                        4.33,
+                                        28.12
+                                      ],
+                                      [
+                                        3.55,
+                                        27.22
+                                      ],
+                                      [
+                                        2.76,
+                                        25.84
+                                      ],
+                                      [
+                                        2.02,
+                                        24.05
+                                      ],
+                                      [
+                                        1.47,
+                                        22.31
+                                      ],
+                                      [
+                                        1.13,
+                                        20.97
+                                      ],
+                                      [
+                                        0.83,
+                                        19.6
+                                      ],
+                                      [
+                                        0.5,
+                                        17.63
+                                      ],
+                                      [
+                                        0.5,
+                                        2.07
+                                      ],
+                                      [
+                                        0.63,
+                                        1.47
+                                      ],
+                                      [
+                                        0.98,
+                                        0.96
+                                      ],
+                                      [
+                                        1.52,
+                                        0.62
+                                      ],
+                                      [
+                                        2.14,
+                                        0.51
+                                      ],
+                                      [
+                                        10.12,
+                                        0.51
+                                      ],
+                                      [
+                                        10.75,
+                                        0.64
+                                      ],
+                                      [
+                                        11.32,
+                                        0.99
+                                      ],
+                                      [
+                                        11.7,
+                                        1.5
+                                      ],
+                                      [
+                                        11.84,
+                                        2.07
+                                      ],
+                                      [
+                                        11.84,
+                                        17.63
+                                      ]
+                                    ]
+                                  ]
+                                },
+                                "symbol": {
+                                  "type": "CIMPolygonSymbol",
+                                  "symbolLayers": [
+                                    {
+                                      "type": "CIMSolidStroke",
+                                      "enable": true,
+                                      "capStyle": "Butt",
+                                      "joinStyle": "Round",
+                                      "lineStyle3D": "Strip",
+                                      "miterLimit": 4,
+                                      "width": 1.0000120200356728,
+                                      "height3D": 1,
+                                      "anchor3D": "Center",
+                                      "color": [
+                                        25,
+                                        25,
+                                        26,
+                                        255
+                                      ]
+                                    }
+                                  ],
+                                  "angleAlignment": "Map"
+                                }
+                              }
+                            ],
+                            "scaleSymbolsProportionally": true,
+                            "respectFrame": true,
+                            "clippingPath": {
+                              "type": "CIMClippingPath",
+                              "clippingType": "Intersect",
+                              "path": {
+                                "rings": [
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ],
+                                    [
+                                      12.34,
+                                      0
+                                    ],
+                                    [
+                                      12.34,
+                                      29.42
+                                    ],
+                                    [
+                                      0,
+                                      29.42
+                                    ],
+                                    [
+                                      0,
+                                      0
+                                    ]
+                                  ]
+                                ]
+                              }
+                            },
+                            "rotation": 360
+                          }
+                        ],
+                        "haloSize": 1,
+                        "scaleX": 1,
+                        "angleAlignment": "Display",
+                        "angle": 360
+                      }
+                    },
+                    "values": [
+                      [
+                        "98"
+                      ]
+                    ]
+                  },
+                  {
+                    "label": "Aeroplane",
                     "symbol": {
                       "type": "CIMSymbolReference",
                       "symbol": {
@@ -1844,7 +2210,7 @@
                     ]
                   },
                   {
-                    "label": "31",
+                    "label": "Research Vessel",
                     "symbol": {
                       "type": "CIMSymbolReference",
                       "symbol": {
@@ -2235,7 +2601,7 @@
             ],
             "uniqueValueInfos": [
               {
-                "label": "0",
+                "label": "Unknown",
                 "symbol": {
                   "type": "CIMSymbolReference",
                   "symbol": {
@@ -2746,7 +3112,7 @@
                 "value": "0"
               },
               {
-                "label": "15",
+                "label": "Pisten Bully",
                 "symbol": {
                   "type": "CIMSymbolReference",
                   "symbol": {
@@ -3105,10 +3471,372 @@
                     "angle": 360
                   }
                 },
-                "value": "15"
+                "value": "97"
               },
               {
-                "label": "62",
+                "label": "Snowmobile",
+                "symbol": {
+                  "type": "CIMSymbolReference",
+                  "symbol": {
+                    "type": "CIMPointSymbol",
+                    "symbolLayers": [
+                      {
+                        "type": "CIMVectorMarker",
+                        "enable": true,
+                        "anchorPointUnits": "Relative",
+                        "dominantSizeAxis3D": "Y",
+                        "size": 18,
+                        "billboardMode3D": "FaceNearPlane",
+                        "frame": {
+                          "xmin": 0,
+                          "ymin": 0,
+                          "xmax": 12.34,
+                          "ymax": 29.42
+                        },
+                        "markerGraphics": [
+                          {
+                            "type": "CIMMarkerGraphic",
+                            "geometry": {
+                              "rings": [
+                                [
+                                  [
+                                    10.12,
+                                    0.51
+                                  ],
+                                  [
+                                    10.75,
+                                    0.64
+                                  ],
+                                  [
+                                    11.32,
+                                    0.99
+                                  ],
+                                  [
+                                    11.7,
+                                    1.5
+                                  ],
+                                  [
+                                    11.84,
+                                    2.07
+                                  ],
+                                  [
+                                    11.84,
+                                    17.63
+                                  ],
+                                  [
+                                    11.55,
+                                    19.37
+                                  ],
+                                  [
+                                    11.08,
+                                    21.51
+                                  ],
+                                  [
+                                    10.54,
+                                    23.41
+                                  ],
+                                  [
+                                    9.88,
+                                    25.19
+                                  ],
+                                  [
+                                    9.19,
+                                    26.58
+                                  ],
+                                  [
+                                    8.47,
+                                    27.63
+                                  ],
+                                  [
+                                    7.49,
+                                    28.52
+                                  ],
+                                  [
+                                    6.83,
+                                    28.82
+                                  ],
+                                  [
+                                    6.17,
+                                    28.92
+                                  ],
+                                  [
+                                    5.05,
+                                    28.64
+                                  ],
+                                  [
+                                    4.33,
+                                    28.12
+                                  ],
+                                  [
+                                    3.55,
+                                    27.22
+                                  ],
+                                  [
+                                    2.76,
+                                    25.84
+                                  ],
+                                  [
+                                    2.02,
+                                    24.05
+                                  ],
+                                  [
+                                    1.47,
+                                    22.31
+                                  ],
+                                  [
+                                    1.13,
+                                    20.97
+                                  ],
+                                  [
+                                    0.83,
+                                    19.6
+                                  ],
+                                  [
+                                    0.5,
+                                    17.63
+                                  ],
+                                  [
+                                    0.5,
+                                    2.07
+                                  ],
+                                  [
+                                    0.63,
+                                    1.47
+                                  ],
+                                  [
+                                    0.98,
+                                    0.96
+                                  ],
+                                  [
+                                    1.52,
+                                    0.62
+                                  ],
+                                  [
+                                    2.14,
+                                    0.51
+                                  ],
+                                  [
+                                    10.12,
+                                    0.51
+                                  ]
+                                ]
+                              ]
+                            },
+                            "symbol": {
+                              "type": "CIMPolygonSymbol",
+                              "symbolLayers": [
+                                {
+                                  "type": "CIMSolidFill",
+                                  "enable": true,
+                                  "color": [
+                                    244,
+                                    119,
+                                    56,
+                                    255
+                                  ]
+                                }
+                              ],
+                              "angleAlignment": "Map"
+                            }
+                          },
+                          {
+                            "type": "CIMMarkerGraphic",
+                            "geometry": {
+                              "rings": [
+                                [
+                                  [
+                                    11.84,
+                                    17.63
+                                  ],
+                                  [
+                                    11.55,
+                                    19.37
+                                  ],
+                                  [
+                                    11.08,
+                                    21.51
+                                  ],
+                                  [
+                                    10.54,
+                                    23.41
+                                  ],
+                                  [
+                                    9.88,
+                                    25.19
+                                  ],
+                                  [
+                                    9.19,
+                                    26.58
+                                  ],
+                                  [
+                                    8.47,
+                                    27.63
+                                  ],
+                                  [
+                                    7.49,
+                                    28.52
+                                  ],
+                                  [
+                                    6.83,
+                                    28.82
+                                  ],
+                                  [
+                                    6.17,
+                                    28.92
+                                  ],
+                                  [
+                                    5.05,
+                                    28.64
+                                  ],
+                                  [
+                                    4.33,
+                                    28.12
+                                  ],
+                                  [
+                                    3.55,
+                                    27.22
+                                  ],
+                                  [
+                                    2.76,
+                                    25.84
+                                  ],
+                                  [
+                                    2.02,
+                                    24.05
+                                  ],
+                                  [
+                                    1.47,
+                                    22.31
+                                  ],
+                                  [
+                                    1.13,
+                                    20.97
+                                  ],
+                                  [
+                                    0.83,
+                                    19.6
+                                  ],
+                                  [
+                                    0.5,
+                                    17.63
+                                  ],
+                                  [
+                                    0.5,
+                                    2.07
+                                  ],
+                                  [
+                                    0.63,
+                                    1.47
+                                  ],
+                                  [
+                                    0.98,
+                                    0.96
+                                  ],
+                                  [
+                                    1.52,
+                                    0.62
+                                  ],
+                                  [
+                                    2.14,
+                                    0.51
+                                  ],
+                                  [
+                                    10.12,
+                                    0.51
+                                  ],
+                                  [
+                                    10.75,
+                                    0.64
+                                  ],
+                                  [
+                                    11.32,
+                                    0.99
+                                  ],
+                                  [
+                                    11.7,
+                                    1.5
+                                  ],
+                                  [
+                                    11.84,
+                                    2.07
+                                  ],
+                                  [
+                                    11.84,
+                                    17.63
+                                  ]
+                                ]
+                              ]
+                            },
+                            "symbol": {
+                              "type": "CIMPolygonSymbol",
+                              "symbolLayers": [
+                                {
+                                  "type": "CIMSolidStroke",
+                                  "enable": true,
+                                  "capStyle": "Butt",
+                                  "joinStyle": "Round",
+                                  "lineStyle3D": "Strip",
+                                  "miterLimit": 4,
+                                  "width": 1.0000120200356728,
+                                  "height3D": 1,
+                                  "anchor3D": "Center",
+                                  "color": [
+                                    25,
+                                    25,
+                                    26,
+                                    255
+                                  ]
+                                }
+                              ],
+                              "angleAlignment": "Map"
+                            }
+                          }
+                        ],
+                        "scaleSymbolsProportionally": true,
+                        "respectFrame": true,
+                        "clippingPath": {
+                          "type": "CIMClippingPath",
+                          "clippingType": "Intersect",
+                          "path": {
+                            "rings": [
+                              [
+                                [
+                                  0,
+                                  0
+                                ],
+                                [
+                                  12.34,
+                                  0
+                                ],
+                                [
+                                  12.34,
+                                  29.42
+                                ],
+                                [
+                                  0,
+                                  29.42
+                                ],
+                                [
+                                  0,
+                                  0
+                                ]
+                              ]
+                            ]
+                          }
+                        },
+                        "rotation": 360
+                      }
+                    ],
+                    "haloSize": 1,
+                    "scaleX": 1,
+                    "angleAlignment": "Display",
+                    "angle": 360
+                  }
+                },
+                "value": "98"
+              },
+              {
+                "label": "Aeroplane",
                 "symbol": {
                   "type": "CIMSymbolReference",
                   "symbol": {
@@ -4004,7 +4732,7 @@
                 "value": "62"
               },
               {
-                "label": "31",
+                "label": "Research Vessel",
                 "symbol": {
                   "type": "CIMSymbolReference",
                   "symbol": {
