@@ -313,8 +313,8 @@ In the [Configuration](./config.md) documentation:
 
 - add to options table in alphabetical order
 - if configurable, update the [`.env.tpl`](../tpl/.env.tpl) template and local `.env` file
-- if configurable, update the [Ansible Deployment Playbook](./deploy.md#bas-it-ansible)
 - if configurable, update the `[tool.pytest_env]` section in [`pyproject.toml`](../pyproject.toml)
+- if configurable, update the [Ansible Deployment Playbook](./deploy.md#bas-it-ansible)
 
 In the [test_config.py](../tests/assets_tracking_service_tests/test_config.py) module:
 
@@ -371,8 +371,6 @@ In the [CLI Reference](./cli-reference.md) documentation:
 - list and summarise the new command in the relevant group section
 
 ## Adding providers
-
-**[WIP]** This section is a work in progress and may be incomplete.
 
 1. add `ENABLE_PROVIDER_FOO` [Config Option](#adding-configuration-options) for enabling/disabling provider
 1. update `ENABLED_PROVIDERS` computed config property to include new provider

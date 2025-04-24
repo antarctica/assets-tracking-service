@@ -43,7 +43,7 @@ Previous positions of most asset types is unrestricted but not currently distrib
 ### ArcGIS Online
 
 Data made available through ArcGIS Online (AGOL) is contained in an
-[Assets Tracking Service](https://bas.maps.arcgis.com/home/group.html?id=xxx=list#content)
+[Assets Tracking Service](https://bas.maps.arcgis.com/home/group.html?id=3d7f9fac347e413e8528656dfc3ab325#overview)
 group, including all the services listed above.
 
 ### Historic asset locations

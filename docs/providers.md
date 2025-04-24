@@ -113,3 +113,17 @@ Required options:
 
 See the [Geotab Python SDK](https://mygeotab-python.readthedocs.io/en/latest/api.html#mygeotab.api.API.__init__)
 documentation for more information on how to configure these values.
+
+### RVDAS
+
+[RVDAS](https://rvdas.org/), the (Open) Research Vessel Data Acquisition System, is used on the RRS Sir David
+Attenborough (SDA) to collect data from sensors including (multiple) GPS and heading feeds.
+
+A 'latest position, heading and depth' database view is made available from this system through an OGC API - Features
+service. This view is used to populate a single fixed asset representing the SDA.
+
+#### RVDAS configuration options
+
+Required options:
+
+- `PROVIDER_RVDAS_URL`: Items endpoint for the relevant layer within an OGC API - Features service

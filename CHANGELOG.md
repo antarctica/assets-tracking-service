@@ -20,6 +20,10 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#137](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/137)
 * RVDAS provider for tracking the SDA
   [#25](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/25)
+* util view for querying asset / position labels
+  [#152](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/152)
+* Tailwind based catalogue item templates
+  [#154](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/154)
 
 ### Changed
 
