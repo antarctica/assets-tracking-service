@@ -6,8 +6,74 @@ import pytest
 from pytest_mock import MockerFixture
 
 from assets_tracking_service.config import Config
-from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+
+
+class TestS3Utils:
+    """Test S3 utility methods."""
+
+    def test_init(self, mocker: MockerFixture, fx_s3_bucket_name: str):
+        """Can create instance."""
+        with TemporaryDirectory() as tmp_path:
+            path = Path(tmp_path)
+        s3_client = mocker.MagicMock()
+
+        s3_utils = S3Utils(s3=s3_client, s3_bucket=fx_s3_bucket_name, relative_base=path)
+        assert isinstance(s3_utils, S3Utils)
+
+    def test_calc_s3_key(self, fx_lib_s3_utils: S3Utils):
+        """Can get S3 key from path relative to site base."""
+        expected = "x/y/z.txt"
+        path = fx_lib_s3_utils._relative_base.joinpath(expected)
+
+        actual = fx_lib_s3_utils.calc_key(path=path)
+        assert actual == expected
+
+    def test_upload_content(self, fx_s3_bucket_name: str, fx_lib_s3_utils: S3Utils):
+        """Can write output to an object at a low level."""
+        expected = "x"
+
+        fx_lib_s3_utils.upload_content(key=expected, content_type="text/plain", body="x")
+
+        result = fx_lib_s3_utils._s3.list_objects_v2(Bucket=fx_s3_bucket_name)
+        assert len(result["Contents"]) == 1
+        result = result["Contents"][0]
+        assert result["Key"] == expected
+
+    def test_upload_content_redirect(self, fx_s3_bucket_name: str, fx_lib_s3_utils: S3Utils):
+        """Can write output to an object with a object redirect."""
+        key = "x"
+        expected = "y"
+
+        fx_lib_s3_utils.upload_content(key=key, content_type="text/plain", body="x", redirect="y")
+
+        result = fx_lib_s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key=key)
+        assert result["WebsiteRedirectLocation"] == expected
+
+    def test_upload_package_resources(self, fx_s3_bucket_name: str, fx_lib_s3_utils: S3Utils):
+        """Can upload package resources to S3 bucket."""
+        expected = "static/xsl/iso-html/xml-to-html-ISO.xsl"
+        fx_lib_s3_utils.upload_package_resources(
+            src_ref="assets_tracking_service.lib.bas_data_catalogue.resources.xsl.iso-html",
+            base_key="static/xsl/iso-html",
+        )
+
+        result = fx_lib_s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key=expected)
+        assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
+
+    def test_upload_package_resources_exists(self, fx_s3_bucket_name: str, fx_lib_s3_utils: S3Utils):
+        """Can keep existing objects if already copied to S3 bucket from package resources."""
+        src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl.iso-html"
+        base_key = "static/xsl/iso-html"
+        key = "static/xsl/iso-html/xml-to-html-ISO.xsl"
+
+        fx_lib_s3_utils.upload_package_resources(src_ref=src_ref, base_key=base_key)
+        initial = fx_lib_s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key=key)
+
+        fx_lib_s3_utils.upload_package_resources(src_ref=src_ref, base_key=base_key)
+        repeat = fx_lib_s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key=key)
+        assert initial["LastModified"] == repeat["LastModified"]
 
 
 class TestBaseExporter:
@@ -72,34 +138,14 @@ class TestBaseExporter:
         fx_lib_exporter_base._dump(path=expected)
         assert expected.exists()
 
-    def test_put_object(self, fx_s3_bucket_name: str, fx_lib_exporter_base: Exporter):
-        """Can write output to an object at a low level."""
-        expected = "x"
+    def test_dump_package_resources(self, fx_lib_exporter_base: Exporter):
+        """Can copy package resources to directory if not already present."""
+        src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl.iso-html"
+        dest_path = fx_lib_exporter_base._export_path / "xsl" / "iso-html"
 
-        fx_lib_exporter_base._put_object(key=expected, content_type="text/plain", body="x")
+        fx_lib_exporter_base._dump_package_resources(src_ref=src_ref, dest_path=dest_path)
 
-        result = fx_lib_exporter_base._s3_client.list_objects_v2(Bucket=fx_s3_bucket_name)
-        assert len(result["Contents"]) == 1
-        result = result["Contents"][0]
-        assert result["Key"] == expected
-
-    def test_put_object_redirect(self, fx_s3_bucket_name: str, fx_lib_exporter_base: Exporter):
-        """Can write output to an object with a object redirect."""
-        key = "x"
-        expected = "y"
-
-        fx_lib_exporter_base._put_object(key=key, content_type="text/plain", body="x", redirect="y")
-
-        result = fx_lib_exporter_base._s3_client.get_object(Bucket=fx_s3_bucket_name, Key=key)
-        assert result["WebsiteRedirectLocation"] == expected
-
-    def test_calc_s3_key(self, fx_lib_exporter_base: Exporter):
-        """Can get S3 key from path relative to site base."""
-        expected = "x/y/z.txt"
-        path = fx_lib_exporter_base._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath(expected)
-
-        actual = fx_lib_exporter_base._calc_s3_key(path=path)
-        assert actual == expected
+        assert dest_path.exists()
 
     def test_dumps_invalid(self, mocker: MockerFixture, fx_lib_record_minimal_item: Record):
         """Cannot export record from base exporter."""
@@ -128,7 +174,7 @@ class TestBaseExporter:
         """Can write output to an object at a high level."""
         fx_lib_exporter_base.publish()
 
-        result = fx_lib_exporter_base._s3_client.list_objects_v2(Bucket=fx_s3_bucket_name)
+        result = fx_lib_exporter_base._s3_utils._s3.list_objects_v2(Bucket=fx_s3_bucket_name)
         assert len(result["Contents"]) == 1
 
     def test_publish_unknown_media_type(self, fx_s3_bucket_name: str, fx_lib_exporter_base: Exporter):
@@ -137,5 +183,5 @@ class TestBaseExporter:
 
         fx_lib_exporter_base.publish()
 
-        result = fx_lib_exporter_base._s3_client.get_object(Bucket=fx_s3_bucket_name, Key="x/x.txt/x.unknown")
+        result = fx_lib_exporter_base._s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key="x/x.txt/x.unknown")
         assert result["ContentType"] == "application/octet-stream"

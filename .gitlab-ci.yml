@@ -72,6 +72,14 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 .before_script_testing: &before_script_testing
   - apt-get update
 
+  # setup locale
+  - apt-get install -y locales
+  - sed -i 's/# en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
+  - locale-gen
+  - export LANG=en_GB.UTF-8
+  - export LANGUAGE=en_GB:en
+  - export LC_ALL=en_GB.UTF-8
+
   # setup app deps
   - apt-get install -y gcc libkrb5-dev
   - uv sync --all-groups

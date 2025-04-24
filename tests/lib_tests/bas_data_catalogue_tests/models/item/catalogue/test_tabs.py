@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Contact, Contacts
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Contact, Contacts, Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distributions import ArcGisFeatureLayer
@@ -10,8 +10,12 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Aggregations,
     Dates,
     Extent,
+    Identifiers,
+    ItemSummaryCatalogue,
+    Maintenance,
     format_date,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
     AdditionalInfoTab,
     AuthorsTab,
@@ -24,17 +28,24 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs i
     LineageTab,
     RelatedTab,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Distribution as RecordDistribution
-from assets_tracking_service.lib.bas_data_catalogue.models.record import HierarchyLevelCode
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Address,
+    Citation,
     ContactIdentity,
     Date,
     Identifier,
     OnlineResource,
+    Series,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contact as RecordContact
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+    Identifiers as RecordIdentifiers,
+)
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import DomainConsistency
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import (
+    Distribution as RecordDistribution,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import Format, TransferOption
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
@@ -46,6 +57,9 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.ident
     Aggregations as RecordAggregations,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Extent as RecordExtent
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+    Maintenance as RecordMaintenance,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.metadata import MetadataStandard
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
@@ -53,7 +67,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintRestrictionCode,
     ConstraintTypeCode,
     ContactRoleCode,
+    HierarchyLevelCode,
+    MaintenanceFrequencyCode,
     OnlineResourceFunctionCode,
+    ProgressCode,
 )
 from tests.conftest import _lib_get_record_summary
 
@@ -250,7 +267,7 @@ class TestLicenceTab:
         tab = LicenceTab(jinja=fx_lib_item_catalogue._jinja, item_type=HierarchyLevelCode.PRODUCT, licence=constraint)
 
         assert tab.enabled is True
-        assert tab.content != ""
+        assert tab.slug == Licence.OGL_UK_3_0
         # cov
         assert tab.title != ""
         assert tab.icon != ""
@@ -278,8 +295,10 @@ class TestLicenceTab:
         tab = LicenceTab(jinja=fx_lib_item_catalogue._jinja, item_type=item_type, licence=licence)
 
         assert tab.enabled == expected
-        if not has_licence:
-            assert tab.content == ""
+        if has_licence:
+            assert isinstance(tab.slug, Licence)
+        else:
+            assert tab.slug is None
 
 
 class TestLineageTab:
@@ -320,6 +339,7 @@ class TestRelatedTab:
 
         assert tab.enabled is True
         assert len(tab.collections) > 0
+        assert all(isinstance(collection, ItemSummaryCatalogue) for collection in tab.collections)
         # cov
         assert tab.title != ""
         assert tab.icon != ""
@@ -332,16 +352,16 @@ class TestAdditionalInfoTab:
         """Can create additional information tab."""
         item_id = "x"
         item_type = HierarchyLevelCode.PRODUCT
+        identifiers = Identifiers(RecordIdentifiers([]))
         dates = Dates(dates=RecordDates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))))
         datestamp = datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC).date()
-        standard = MetadataStandard(name="x", version="x")
 
         xml_href = f"/records/{item_id}.xml"
         html_href = f"/records/{item_id}.html"
         json_href = f"/records/{item_id}.json"
 
         tab = AdditionalInfoTab(
-            item_id=item_id, item_type=item_type, dates=dates, datestamp=datestamp, standard=standard
+            item_id=item_id, item_type=item_type, identifiers=identifiers, dates=dates, datestamp=datestamp, kv={}
         )
 
         assert tab.enabled is True
@@ -350,8 +370,6 @@ class TestAdditionalInfoTab:
         assert tab.item_type_icon == "fa-fw far fa-map"
         assert isinstance(tab.dates, dict)
         assert tab.datestamp == format_date(Date(date=datestamp))
-        assert tab.standard == "x"
-        assert tab.standard_version == "x"
         assert tab.record_link_xml.href == xml_href
         assert tab.record_link_html.href == html_href
         assert tab.record_link_json.href == json_href
@@ -359,6 +377,215 @@ class TestAdditionalInfoTab:
         # cov
         assert tab.title != ""
         assert tab.icon != ""
+
+    @pytest.mark.parametrize(("series", "expected"), [(None, None), (Series(name="x", edition="x"), "x (x)")])
+    def test_series(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
+    ):
+        """Can get descriptive series if set."""
+        fx_lib_item_cat_info_tab_minimal._series = series
+        assert fx_lib_item_cat_info_tab_minimal.series == expected
+
+    @pytest.mark.parametrize(("scale", "expected"), [(None, None), (1, "1:1"), (1234567890, "1:1,234,567,890")])
+    def test_scale(self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, scale: int | None, expected: str | None):
+        """Can get descriptive series if set."""
+        fx_lib_item_cat_info_tab_minimal._scale = scale
+        assert fx_lib_item_cat_info_tab_minimal.scale == expected
+
+    @pytest.mark.parametrize(
+        ("identifier", "expected"),
+        [
+            (None, None),
+            (
+                Identifier(
+                    identifier="EPSG:4326",
+                    href="http://www.opengis.net/def/crs/EPSG/0/4326",
+                    namespace="epsg",
+                ),
+                Link(
+                    value="EPSG:4326",
+                    href="https://spatialreference.org/ref/epsg/4326/",
+                    external=True,
+                ),
+            ),
+        ],
+    )
+    def test_projection(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, identifier: Identifier | None, expected: Link | None
+    ):
+        """Can get projection code if set."""
+        fx_lib_item_cat_info_tab_minimal._projection = identifier
+        assert fx_lib_item_cat_info_tab_minimal.projection == expected
+
+    @pytest.mark.parametrize(
+        ("kv", "expected"),
+        [
+            ({"width": 1}, None),
+            ({"height": 1}, None),
+            ({"width": 1, "height": 1}, "1 x 1 mm (width x height)"),
+            ({"width": 210, "height": 297}, "A4 Portrait"),
+            ({"width": 297, "height": 210}, "A4 Landscape"),
+            ({"width": 420, "height": 594}, "A3 Portrait"),
+            ({"width": 594, "height": 420}, "A3 Landscape"),
+        ],
+    )
+    def test_page_size(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, kv: dict | None, expected: str | None
+    ):
+        """Can get page size if set."""
+        fx_lib_item_cat_info_tab_minimal._kv = kv
+        assert fx_lib_item_cat_info_tab_minimal.page_size == expected
+
+    @pytest.mark.parametrize(
+        ("identifiers", "expected"),
+        [
+            (RecordIdentifiers([]), []),
+            (
+                RecordIdentifiers(
+                    [
+                        Identifier(
+                            identifier="10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                            href="https://doi.org/10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                            namespace="doi",
+                        )
+                    ]
+                ),
+                [
+                    Link(
+                        value="10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                        href="https://doi.org/10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                        external=True,
+                    )
+                ],
+            ),
+        ],
+    )
+    def test_doi(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, identifiers: RecordIdentifiers, expected: list[Link]
+    ):
+        """Can get any DOIs if set."""
+        fx_lib_item_cat_info_tab_minimal._identifiers = Identifiers(identifiers)
+        assert fx_lib_item_cat_info_tab_minimal.doi == expected
+
+    @pytest.mark.parametrize(
+        ("identifiers", "expected"),
+        [
+            (RecordIdentifiers([]), []),
+            (RecordIdentifiers([Identifier(identifier="978-0-85665-230-1", namespace="isbn")]), ["978-0-85665-230-1"]),
+        ],
+    )
+    def test_isbn(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, identifiers: RecordIdentifiers, expected: list[str]
+    ):
+        """Can get any ISBNs if set."""
+        fx_lib_item_cat_info_tab_minimal._identifiers = Identifiers(identifiers)
+        assert fx_lib_item_cat_info_tab_minimal.isbn == expected
+
+    @pytest.mark.parametrize(
+        ("identifiers", "expected"),
+        [
+            (RecordIdentifiers([]), []),
+            (
+                RecordIdentifiers(
+                    [
+                        Identifier(
+                            identifier="https://gitlab.data.bas.ac.uk/MAGIC/foo/-/issues/123",
+                            href="https://gitlab.data.bas.ac.uk/MAGIC/foo/-/issues/123",
+                            namespace="gitlab.data.bas.ac.uk",
+                        )
+                    ]
+                ),
+                ["MAGIC/foo#123"],
+            ),
+        ],
+    )
+    def test_gitlab_issues(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, identifiers: RecordIdentifiers, expected: list[str]
+    ):
+        """Can get any resource GitLab issue references if set."""
+        fx_lib_item_cat_info_tab_minimal._identifiers = Identifiers(identifiers)
+        assert fx_lib_item_cat_info_tab_minimal.gitlab_issues == expected
+
+    @pytest.mark.parametrize(
+        ("maintenance", "expected_progress", "expected_frequency"),
+        [
+            (None, None, None),
+            (
+                Maintenance(RecordMaintenance(progress=ProgressCode.HISTORICAL_ARCHIVE)),
+                "Item has been archived and may be outdated",
+                None,
+            ),
+            (
+                Maintenance(RecordMaintenance(maintenance_frequency=MaintenanceFrequencyCode.IRREGULAR)),
+                None,
+                "Item is updated irregularly",
+            ),
+        ],
+    )
+    def test_maintenance(
+        self,
+        fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab,
+        maintenance: Maintenance,
+        expected_progress: str | None,
+        expected_frequency: str | None,
+    ):
+        """Can get resource maintenance progress and update frequency if set."""
+        fx_lib_item_cat_info_tab_minimal._maintenance = maintenance
+        assert fx_lib_item_cat_info_tab_minimal.status == expected_progress
+        assert fx_lib_item_cat_info_tab_minimal.frequency == expected_frequency
+
+    @pytest.mark.parametrize(
+        ("standard", "expected_standard", "expected_version"),
+        [
+            (None, None, None),
+            (
+                MetadataStandard(),
+                "ISO 19115-2 Geographic Information - Metadata - Part 2: Extensions for Imagery and Gridded Data",
+                "ISO 19115-2:2009(E)",
+            ),
+        ],
+    )
+    def test_standard(
+        self,
+        fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab,
+        standard: MetadataStandard,
+        expected_standard: str | None,
+        expected_version: str | None,
+    ):
+        """Can get metadata standard and standard version if set."""
+        fx_lib_item_cat_info_tab_minimal._standard = standard
+        assert fx_lib_item_cat_info_tab_minimal.standard == expected_standard
+        assert fx_lib_item_cat_info_tab_minimal.standard_version == expected_version
+
+    @pytest.mark.parametrize(
+        ("profiles", "expected"),
+        [
+            ([], []),
+            (
+                [
+                    DomainConsistency(
+                        specification=Citation(
+                            title="x",
+                            dates=RecordDates(creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC))),
+                            href="x",
+                        ),
+                        explanation="x",
+                        result=True,
+                    )
+                ],
+                [Link(value="x", href="x", external=True)],
+            ),
+        ],
+    )
+    def test_profiles(
+        self,
+        fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab,
+        profiles: list[DomainConsistency],
+        expected: list[Link],
+    ):
+        """Can get any data quality profiles if set."""
+        fx_lib_item_cat_info_tab_minimal._profiles = profiles
+        assert fx_lib_item_cat_info_tab_minimal.profiles == expected
 
 
 class TestContactTab:

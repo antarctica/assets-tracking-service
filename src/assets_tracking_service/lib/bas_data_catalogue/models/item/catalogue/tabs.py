@@ -1,3 +1,4 @@
+import locale
 from abc import ABC, abstractmethod
 from datetime import date
 from urllib.parse import parse_qs, urlparse
@@ -14,11 +15,14 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distri
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Aggregations,
     Dates,
+    Identifiers,
     ItemSummaryCatalogue,
+    Maintenance,
     format_date,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence, ResourceTypeIcon
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Series
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import DomainConsistency
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import (
     Distribution as RecordDistribution,
 )
@@ -82,7 +86,7 @@ class ItemsTab(Tab):
     @property
     def icon(self) -> str:
         """Tab icon class."""
-        return "far fa-ball-pile"
+        return "far fa-grip-horizontal"
 
     @property
     def items(self) -> list[ItemSummaryCatalogue]:
@@ -239,16 +243,9 @@ class LicenceTab(Tab):
         return "far fa-file-certificate"
 
     @property
-    def content(self) -> str:
-        """Render licence template."""
-        mapping = {
-            "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/": "licence-ogl-uk-3-0.j2"
-        }
-
-        if self._licence is None:
-            return ""
-
-        return self._jinja.get_template(f"_licences/{mapping[self._licence.href]}").render()
+    def slug(self) -> Licence | None:
+        """Licence reference."""
+        return Licence(self._licence.href) if self._licence is not None else None
 
 
 class LineageTab(Tab):
@@ -294,10 +291,7 @@ class RelatedTab(Tab):
         """Proxy calls to self._aggregations and convert ItemSummaries to Links, if applicable."""
         aggregation = object.__getattribute__(self, "_aggregations")
         if hasattr(aggregation, name):
-            result = getattr(aggregation, name)
-            if isinstance(result, list) and all(isinstance(item, ItemSummaryCatalogue) for item in result):
-                return aggregation.as_links(result)
-            return result
+            return getattr(aggregation, name)
 
         # pass-through
         return object.__getattribute__(self, name)
@@ -324,20 +318,39 @@ class RelatedTab(Tab):
     @property
     def icon(self) -> str:
         """Tab icon class."""
-        return "far fa-network-wired"
+        return "far fa-project-diagram"
 
 
 class AdditionalInfoTab(Tab):
     """Additional Information tab."""
 
     def __init__(
-        self, item_id: str, item_type: HierarchyLevelCode, dates: Dates, datestamp: date, standard: MetadataStandard
+        self,
+        item_id: str,
+        item_type: HierarchyLevelCode,
+        identifiers: Identifiers,
+        dates: Dates,
+        datestamp: date,
+        kv: dict[str, str],
+        series: Series | None = None,
+        scale: str | None = None,
+        projection: Identifier | None = None,
+        maintenance: Maintenance | None = None,
+        standard: MetadataStandard | None = None,
+        profiles: list[DomainConsistency] | None = None,
     ) -> None:
         self._item_id = item_id
         self._item_type = item_type
+        self._series = series
+        self._scale = scale
+        self._projection = projection
+        self._identifiers = identifiers
         self._dates = dates
         self._datestamp = datestamp
+        self._maintenance = maintenance
         self._standard = standard
+        self._profiles = profiles if profiles is not None else []
+        self._kv = kv
 
     @property
     def enabled(self) -> bool:
@@ -375,9 +388,79 @@ class AdditionalInfoTab(Tab):
         return ResourceTypeIcon[self._item_type.name].value
 
     @property
+    def series(self) -> str | None:
+        """Descriptive series if set."""
+        return f"{self._series.name} ({self._series.edition})" if self._series is not None else None
+
+    @property
+    def scale(self) -> str | None:
+        """Formatted scale if set."""
+        locale.setlocale(locale.LC_ALL, "en_GB.UTF-8")
+        return f"1:{locale.format_string('%d', self._scale, grouping=True)}" if self._scale is not None else None
+
+    @property
+    def projection(self) -> Link | None:
+        """Projection if set, formatted with more practical href."""
+        if self._projection is None:
+            return None
+
+        code = self._projection.identifier.split(":")[-1]
+        href = f"https://spatialreference.org/ref/epsg/{code}/"
+        return Link(value=self._projection.identifier, href=href, external=True)
+
+    @property
+    def page_size(self) -> str | None:
+        """
+        Page size / physical dimensions.
+
+        From supplementary information key-values, if set.
+        """
+        mapping = {
+            "210_297": "A4 Portrait",
+            "297_210": "A4 Landscape",
+            "420_594": "A3 Portrait",
+            "594_420": "A3 Landscape",
+        }
+
+        if "width" in self._kv and "height" in self._kv:
+            key = f"{self._kv['width']}_{self._kv['height']}"
+            value = f"{self._kv['width']} x {self._kv['height']} mm (width x height)"
+            return mapping[f"{self._kv['width']}_{self._kv['height']}"] if key in mapping else value
+        return None
+
+    @property
+    def doi(self) -> list[Link]:
+        """DOI identifiers if set."""
+        return self._identifiers.doi
+
+    @property
+    def isbn(self) -> list[str]:
+        """ISBN identifiers if set."""
+        return self._identifiers.isbn
+
+    @property
+    def gitlab_issues(self) -> list[str]:
+        """GitLab issue references if set."""
+        return self._identifiers.gitlab_issues
+
+    @property
     def dates(self) -> dict[str, str]:
         """Dates."""
         return self._dates.as_dict_labeled()
+
+    @property
+    def status(self) -> str | None:
+        """Maintenance status (progress) if set."""
+        if self._maintenance is None:
+            return None
+        return self._maintenance.status
+
+    @property
+    def frequency(self) -> str | None:
+        """Maintenance frequency (update frequency) if set."""
+        if self._maintenance is None:
+            return None
+        return self._maintenance.frequency
 
     @property
     def datestamp(self) -> str:
@@ -385,14 +468,26 @@ class AdditionalInfoTab(Tab):
         return format_date(Date(date=self._datestamp))
 
     @property
-    def standard(self) -> str:
-        """Metadata standard."""
+    def standard(self) -> str | None:
+        """Metadata standard if set."""
+        if self._standard is None:
+            return None
         return self._standard.name
 
     @property
-    def standard_version(self) -> str:
-        """Metadata standard version."""
+    def standard_version(self) -> str | None:
+        """Metadata standard version if set."""
+        if self._standard is None:
+            return None
         return self._standard.version
+
+    @property
+    def profiles(self) -> list[Link]:
+        """Metadata profiles if set."""
+        return [
+            Link(value=profile.specification.title, href=profile.specification.href, external=True)
+            for profile in self._profiles
+        ]
 
     @property
     def record_link_xml(self) -> Link:
@@ -404,7 +499,7 @@ class AdditionalInfoTab(Tab):
     def record_link_html(self) -> Link:
         """Record link (XML HTML)."""
         record = self.item_id
-        return Link(value="View record XML as ISO 19115 HTML", href=f"/records/{record}.html")
+        return Link(value="View record as ISO 19115 HTML", href=f"/records/{record}.html")
 
     @property
     def record_link_json(self) -> Link:

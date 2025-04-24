@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue, ItemInvalidError
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Summary,
 )
@@ -18,31 +18,58 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs i
     RelatedTab,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+    Contacts,
+    Identifiers,
+)
 from tests.conftest import _lib_get_record_summary
 
 
 class TestItemCatalogue:
     """Test catalogue item."""
 
-    def test_init(self, fx_lib_record_minimal_item: Record):
+    def test_init(self, fx_lib_record_minimal_item_catalogue: Record):
         """Can create an ItemCatalogue."""
         item = ItemCatalogue(
-            fx_lib_record_minimal_item,
+            record=fx_lib_record_minimal_item_catalogue,
             embedded_maps_endpoint="x",
             item_contact_endpoint="x",
-            sentry_dsn="x",
             get_record_summary=_lib_get_record_summary,
         )
 
         assert isinstance(item, ItemCatalogue)
-        assert item._record == fx_lib_record_minimal_item
+        assert item._record == fx_lib_record_minimal_item_catalogue
 
-    def test_sentry_dsn(self, fx_lib_item_catalogue: ItemCatalogue):
-        """Can get Sentry DSN."""
-        expected = "x"
-        fx_lib_item_catalogue._sentry_dsn = expected
+    @pytest.mark.parametrize(
+        ("element", "exception_cls"),
+        [
+            ("file_identifier", ValueError),
+            ("self_identifier", ItemInvalidError),
+            ("self_identifier_match", ItemInvalidError),
+            ("self_identifier_namespace", ItemInvalidError),
+            ("point_of_contact", ItemInvalidError),
+        ],
+    )
+    def test_invalid(self, fx_lib_record_minimal_item_catalogue: Record, element: str, exception_cls: type[Exception]):
+        """Cannot create a catalogue item from an invalid record."""
+        if element == "file_identifier":
+            fx_lib_record_minimal_item_catalogue.file_identifier = None
+        elif element == "self_identifier":
+            fx_lib_record_minimal_item_catalogue.identification.identifiers = Identifiers([])
+        elif element == "self_identifier_match":
+            fx_lib_record_minimal_item_catalogue.identification.identifiers[0].identifier = "y"
+        elif element == "self_identifier_namespace":
+            fx_lib_record_minimal_item_catalogue.identification.identifiers[0].namespace = "y"
+        elif element == "point_of_contact":
+            fx_lib_record_minimal_item_catalogue.identification.contacts = Contacts([])
 
-        assert fx_lib_item_catalogue.sentry_dsn == expected
+        with pytest.raises(exception_cls):
+            _ = ItemCatalogue(
+                fx_lib_record_minimal_item_catalogue,
+                embedded_maps_endpoint="x",
+                item_contact_endpoint="x",
+                get_record_summary=_lib_get_record_summary,
+            )
 
     def test_html_title(self, fx_lib_item_catalogue: ItemCatalogue):
         """Can get HTML title."""
@@ -70,14 +97,6 @@ class TestItemCatalogue:
     def test_graphics(self, fx_lib_item_catalogue: ItemCatalogue):
         """Can get list of graphics."""
         assert isinstance(fx_lib_item_catalogue.graphics, list)
-
-    def test_noscript_href(self, fx_lib_item_catalogue: ItemCatalogue):
-        """
-        Can get link for use in noscript element.
-
-        Not a great test but this is effectively static content.
-        """
-        assert fx_lib_item_catalogue.noscript_href is not None
 
     def test_tabs(self, fx_lib_item_catalogue: ItemCatalogue):
         """Can get list of tabs."""

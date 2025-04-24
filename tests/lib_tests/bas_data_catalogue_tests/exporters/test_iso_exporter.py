@@ -93,32 +93,13 @@ class TestIsoXmlHtmlExporter:
         fx_lib_exporter_iso_xml_html._dump_xsl()
         assert expected.exists()
 
-    def test_dump_xsl_exists(self, fx_lib_exporter_iso_xml_html: IsoXmlHtmlExporter):
-        """Can keep existing stylesheets if already copied to output directory."""
-        expected = fx_lib_exporter_iso_xml_html._stylesheets_path / "xml-to-html-ISO.xsl"
-        fx_lib_exporter_iso_xml_html._dump_xsl()
-        modified = expected.stat().st_mtime
-
-        fx_lib_exporter_iso_xml_html._dump_xsl()
-        assert expected.stat().st_mtime == modified
-
     def test_publish_xsl(self, fx_s3_bucket_name: str, fx_lib_exporter_iso_xml_html: IsoXmlHtmlExporter):
         """Can upload stylesheets to S3 bucket."""
         expected = fx_lib_exporter_iso_xml_html._stylesheet_url
         fx_lib_exporter_iso_xml_html._publish_xsl()
 
-        result = fx_lib_exporter_iso_xml_html._s3_client.get_object(Bucket=fx_s3_bucket_name, Key=expected)
+        result = fx_lib_exporter_iso_xml_html._s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key=expected)
         assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
-
-    def test_publish_xsl_exists(self, fx_s3_bucket_name: str, fx_lib_exporter_iso_xml_html: IsoXmlHtmlExporter):
-        """Can keep existing stylesheets if already copied to S3 bucket."""
-        fx_lib_exporter_iso_xml_html._publish_xsl()
-        key = fx_lib_exporter_iso_xml_html._stylesheet_url
-        initial = fx_lib_exporter_iso_xml_html._s3_client.get_object(Bucket=fx_s3_bucket_name, Key=key)
-
-        fx_lib_exporter_iso_xml_html._publish_xsl()
-        repeat = fx_lib_exporter_iso_xml_html._s3_client.get_object(Bucket=fx_s3_bucket_name, Key=key)
-        assert initial["LastModified"] == repeat["LastModified"]
 
     def test_export(self, fx_lib_exporter_iso_xml_html: IsoXmlHtmlExporter):
         """Can copy output and stylesheets to output directory."""
@@ -130,11 +111,12 @@ class TestIsoXmlHtmlExporter:
         """Can copy output and stylesheets to output bucket."""
         fx_lib_exporter_iso_xml_html.publish()
 
-        output = fx_lib_exporter_iso_xml_html._s3_client.get_object(
+        output = fx_lib_exporter_iso_xml_html._s3_utils._s3.get_object(
             Bucket=fx_s3_bucket_name,
-            Key=fx_lib_exporter_iso_xml_html._calc_s3_key(fx_lib_exporter_iso_xml_html._export_path),
+            Key=fx_lib_exporter_iso_xml_html._s3_utils.calc_key(fx_lib_exporter_iso_xml_html._export_path),
         )
         assert output["ResponseMetadata"]["HTTPStatusCode"] == 200
+
         stylesheet = fx_lib_exporter_iso_xml_html._s3_client.get_object(
             Bucket=fx_s3_bucket_name, Key=fx_lib_exporter_iso_xml_html._stylesheet_url
         )

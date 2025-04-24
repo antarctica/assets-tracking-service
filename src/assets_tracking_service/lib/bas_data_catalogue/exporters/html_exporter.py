@@ -44,7 +44,6 @@ class HtmlExporter(Exporter):
             record=self._record,
             embedded_maps_endpoint=self._config.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
             item_contact_endpoint=self._config.EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT,
-            sentry_dsn=self._config.SENTRY_DSN,
             get_record_summary=self._get_summary,
         ).render()
 
@@ -101,4 +100,6 @@ class HtmlAliasesExporter(Exporter):
         """Write redirect pages with redirect headers to S3."""
         location = f"/items/{self._record.file_identifier}/index.html"
         for alias in self._get_aliases():
-            self._put_object(key=f"{alias}/index.html", content_type="text/html", body=self.dumps(), redirect=location)
+            self._s3_utils.upload_content(
+                key=f"{alias}/index.html", content_type="text/html", body=self.dumps(), redirect=location
+            )

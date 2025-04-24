@@ -31,13 +31,23 @@ from assets_tracking_service.db import DatabaseClient, DatabaseError
 from assets_tracking_service.exporters.arcgis import ArcGisExporter, ArcGisExporterLayer
 from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
-from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
+from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import SiteResourcesExporter
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import AdditionalInfoTab, ItemCatalogue
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import Dates as ItemCatDates
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
+    Identifiers as ItemCatIdentifiers,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record as LibRecord
 from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+    Date,
+    Dates,
+    Identifier,
+    Identifiers,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import HierarchyLevelCode
 from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
@@ -50,8 +60,6 @@ from assets_tracking_service.providers.aircraft_tracking import AircraftTracking
 from assets_tracking_service.providers.geotab import GeotabProvider
 from assets_tracking_service.providers.providers_manager import ProvidersManager
 from assets_tracking_service.providers.rvdas import RvdasProvider
-from tests.examples.example_exporter import ExampleExporter
-from tests.examples.example_provider import ExampleProvider
 from tests.pytest_pg_factories import (
     factory_name as postgresql_factory_name,
 )
@@ -61,6 +69,8 @@ from tests.pytest_pg_factories import (  # noqa: F401
     postgresql_noproc_factory,
     postgresql_proc_factory,
 )
+from tests.resources.examples.example_exporter import ExampleExporter
+from tests.resources.examples.example_provider import ExampleProvider
 
 # override `postgresql` fixture with either a local (proc) or remote (noproc) fixture depending on if in CI.
 postgresql = factories.postgresql(postgresql_factory_name)
@@ -832,6 +842,14 @@ def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_ite
     config = deepcopy(fx_lib_record_config_minimal_item)
     config["identification"]["contacts"] = deepcopy(config["metadata"]["contacts"])
     config["identification"]["contacts"][0]["email"] = "x"
+    config["identification"]["identifiers"] = [
+        {
+            "identifier": config["file_identifier"],
+            "href": f"https://data.bas.ac.uk/items/{fx_lib_record_config_minimal_item}",
+            "namespace": "data.bas.ac.uk",
+        }
+    ]
+
     return config
 
 
@@ -877,6 +895,21 @@ def fx_lib_get_record_summary() -> callable:
 
 
 @pytest.fixture()
+def fx_lib_item_cat_info_tab_minimal() -> AdditionalInfoTab:
+    """Minimal ItemCatalogue additional information tab."""
+    dates = ItemCatDates(dates=Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))))
+    identifiers = ItemCatIdentifiers(Identifiers([]))
+    return AdditionalInfoTab(
+        item_id="x",
+        item_type=HierarchyLevelCode.PRODUCT,
+        identifiers=identifiers,
+        dates=dates,
+        datestamp=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC).date(),
+        kv={},
+    )
+
+
+@pytest.fixture()
 def fx_lib_item_catalogue(
     fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
 ) -> ItemCatalogue:
@@ -885,7 +918,6 @@ def fx_lib_item_catalogue(
         fx_lib_record_minimal_item_catalogue,
         embedded_maps_endpoint="x",
         item_contact_endpoint="x",
-        sentry_dsn="x",
         get_record_summary=fx_lib_get_record_summary,
     )
 
@@ -928,6 +960,14 @@ def fx_s3_client(mocker: MockerFixture, fx_s3_bucket_name: str) -> S3Client:
         )
 
         yield client
+
+
+@pytest.fixture()
+def fx_lib_s3_utils(fx_s3_client: S3Client, fx_s3_bucket_name: str) -> S3Utils:
+    """S3Utils with a mocked S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        base_path = Path(tmp_path)
+    return S3Utils(s3=fx_s3_client, s3_bucket=fx_s3_bucket_name, relative_base=base_path)
 
 
 @pytest.fixture()
@@ -995,6 +1035,20 @@ def fx_lib_exporter_html_alias(
     return HtmlAliasesExporter(
         config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item_catalogue, site_base=output_path
     )
+
+
+@pytest.fixture()
+def fx_lib_exporter_site_resources(
+    mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client
+) -> SiteResourcesExporter:
+    """Site resources exporter with a mocked config and S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    return SiteResourcesExporter(config=mock_config, s3_client=fx_s3_client)
 
 
 @pytest.fixture()

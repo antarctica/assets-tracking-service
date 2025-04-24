@@ -370,7 +370,7 @@ class Identifier:
     """
 
     identifier: str
-    href: str
+    href: str | None = None
     namespace: str
 
 
@@ -423,6 +423,22 @@ class Identifiers(list[Identifier]):
 
 
 @dataclass(kw_only=True)
+class Series:
+    """
+    Series (descriptive).
+
+    Schema definition: series [1]
+    ISO element: gmd:CI_Series [2]
+
+    [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L1497
+    [2] https://www.datypic.com/sc/niem21/e-gmd_CI_Series.html
+    """
+
+    name: str | None = None
+    edition: str | None = None
+
+
+@dataclass(kw_only=True)
 class Citation:
     """
     Citation.
@@ -442,6 +458,7 @@ class Citation:
     title: str
     dates: Dates
     edition: str | None = None
+    series: Series = field(default_factory=Series)
     href: str | None = None
     identifiers: Identifiers = field(default_factory=Identifiers)
     other_citation_details: str | None = None

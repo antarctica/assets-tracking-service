@@ -490,6 +490,8 @@ class Identification(Citation):
     character_set: str = "utf8"
     language: str = "eng"
     extents: Extents = field(default_factory=Extents)
+    spatial_resolution: int | None = None
+    supplemental_information: str | None = None
 
     @classmethod
     def structure(cls: type[TIdentification], value: dict) -> "Identification":

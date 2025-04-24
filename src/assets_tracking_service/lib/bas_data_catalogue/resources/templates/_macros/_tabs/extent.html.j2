@@ -1,0 +1,58 @@
+{% import '_macros/common.html.j2' as com %}
+
+{% macro map(value) %}
+  {{ value }}
+{% endmacro %}
+
+{% macro info(data) %}
+  <div class="space-y-8">
+    <section>{{ bbox(data.bounding_box) }}</section>
+    <section>{{ period(start=data.start, end=data.end) }}</section>
+  </div>
+{% endmacro %}
+
+{% macro bbox(data) %}
+  <div class="space-y-8">
+    {% call com.item_title() %}Bounding Coordinates{% endcall %}
+    {% call com.item_border() %}
+      <dl class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-1">
+            {% call com.dl_item(title='Top-right Corner', id='bbox-top') %}
+              North: {{ data[2] }}, East: {{ data[1] }}
+            {% endcall %}
+          </div>
+          <div class="col-span-1">
+            {% call com.dl_item(title='Bottom-left Corner', id='bbox-bottom') %}
+              South: {{ data[3] }}, West: {{ data[0] }}
+            {% endcall %}
+          </div>
+        </div>
+      </dl>
+    </div>
+  {% endcall %}
+{% endmacro %}
+
+{% macro period(start, end) %}
+  {% if start or end %}
+    <div class="space-y-8">
+      {% call com.item_title() %}Temporal Range{% endcall %}
+      {% call com.item_border() %}
+        <dl>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-1">
+              {% call com.dl_item(title='Start', id='period-start') %}
+                {% if start %}{{ start }}{% else %}-{% endif %}
+              {% endcall %}
+            </div>
+            <div class="col-span-1">
+              {% call com.dl_item(title='End', id='period-end') %}
+                {% if end %}{{ end }}{% else %}-{% endif %}
+              {% endcall %}
+            </div>
+          </div>
+        </dl>
+      </div>
+    {% endcall %}
+  {% endif %}
+{% endmacro %}

@@ -11,7 +11,7 @@ from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.models.asset import AssetNew
 from assets_tracking_service.providers.providers_manager import ProvidersManager
-from tests.examples.example_provider import ExampleProvider
+from tests.resources.examples.example_provider import ExampleProvider
 
 creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 

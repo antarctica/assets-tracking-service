@@ -6,7 +6,7 @@ from ulid import parse as ulid_parse
 
 from assets_tracking_service.models.asset import Asset
 from assets_tracking_service.models.label import Label, LabelRelation, Labels
-from tests.examples.example_provider import ExampleProvider
+from tests.resources.examples.example_provider import ExampleProvider
 
 creation_time = datetime(2012, 6, 10, 14, 30, 20, tzinfo=UTC)
 

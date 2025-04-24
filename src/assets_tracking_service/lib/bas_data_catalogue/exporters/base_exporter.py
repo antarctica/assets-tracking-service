@@ -1,10 +1,59 @@
 from mimetypes import guess_type
 from pathlib import Path
+from shutil import copytree
 
+from importlib_resources import as_file as resources_as_file
+from importlib_resources import files as resources_files
 from mypy_boto3_s3 import S3Client
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+
+
+class S3Utils:
+    """Wrapper around Boto S3 client with high-level and/or convenience methods."""
+
+    def __init__(self, s3: S3Client, s3_bucket: str, relative_base: Path) -> None:
+        self._s3 = s3
+        self._bucket = s3_bucket
+        self._relative_base = relative_base
+
+    def calc_key(self, path: Path) -> str:
+        """
+        Calculate `path` relative to `self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`.
+
+        E.g. `/data/site/html/123/index.html` gives `html/123/index.html` where OUTPUT_PATH is `/data/site/`.
+        """
+        return str(path.relative_to(self._relative_base))
+
+    def upload_content(self, key: str, content_type: str, body: str, redirect: str | None = None) -> None:
+        """
+        Upload string as an S3 object.
+
+        Optionally, a redirect can be set to redirect to another object as per [1].
+
+        [1] https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-page-redirect.html#redirect-requests-object-metadata
+        """
+        params = {"Bucket": self._bucket, "Key": key, "Body": body.encode("utf-8"), "ContentType": content_type}
+        if redirect is not None:
+            params["WebsiteRedirectLocation"] = redirect
+        self._s3.put_object(**params)
+
+    def upload_package_resources(self, src_ref: str, base_key: str) -> None:
+        """
+        Upload package resources as S3 objects if they do not already exist.
+
+        `src_ref` MUST be a reference to a directory within a Python package compatible with `importlib_resources.files`.
+        All files within this directory will be uploaded under a `base_key` if it does not already exist.
+        """
+        # abort if base_key already exists in bucket
+        response = self._s3.list_objects_v2(Bucket=self._bucket, Prefix=base_key, MaxKeys=1)
+        if "Contents" in response:
+            return
+
+        with resources_as_file(resources_files(src_ref)) as resources_path:
+            for path in resources_path.glob("*"):
+                self._s3.upload_file(Filename=path, Bucket=self._bucket, Key=base_key + "/" + path.name)
 
 
 class Exporter:
@@ -41,6 +90,11 @@ class Exporter:
 
         self._config = config
         self._s3_client = s3_client
+        self._s3_utils = S3Utils(
+            s3=self._s3_client,
+            s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
+            relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
+        )
         self._record = record
         self._export_path = export_base.joinpath(export_name)
 
@@ -50,31 +104,20 @@ class Exporter:
         with path.open("w") as record_file:
             record_file.write(self.dumps())
 
-    def _put_object(self, key: str, content_type: str, body: str, redirect: str | None = None) -> None:
+    @staticmethod
+    def _dump_package_resources(src_ref: str, dest_path: Path) -> None:
         """
-        Upload dumped output to S3 object.
+        Copy package resources to directory.
 
-        Optionally, a redirect can be set to redirect to another object as per [1].
-
-        [1] https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-page-redirect.html#redirect-requests-object-metadata
+        `src_ref` MUST be a reference to a directory within a Python package compatible with `importlib_resources.files`.
+        All files within this directory will be copied to `dest_path`, any matching existing files will be overwritten.
         """
-        params = {
-            "Bucket": self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
-            "Key": key,
-            "Body": body.encode("utf-8"),
-            "ContentType": content_type,
-        }
-        if redirect is not None:
-            params["WebsiteRedirectLocation"] = redirect
-        self._s3_client.put_object(**params)
+        if dest_path.exists():
+            return
 
-    def _calc_s3_key(self, path: Path) -> str:
-        """
-        Calculate `path` relative to `self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`.
-
-        E.g. `/data/site/html/123/index.html` gives `html/123/index.html` where OUTPUT_PATH is `/data/site/`.
-        """
-        return str(path.relative_to(self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH))
+        with resources_as_file(resources_files(src_ref)) as resources_path:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            copytree(resources_path, dest_path)
 
     def dumps(self) -> str:
         """Encode resource as a particular format."""
@@ -87,5 +130,5 @@ class Exporter:
     def publish(self) -> None:
         """Save dumped output to remote S3 bucket."""
         media_type = guess_type(self._export_path.name)[0] or "application/octet-stream"
-        key = self._calc_s3_key(self._export_path)
-        self._put_object(key=key, content_type=media_type, body=self.dumps())
+        key = self._s3_utils.calc_key(self._export_path)
+        self._s3_utils.upload_content(key=key, content_type=media_type, body=self.dumps())

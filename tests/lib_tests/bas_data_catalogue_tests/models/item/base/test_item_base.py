@@ -16,7 +16,12 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements im
     Extents,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
-from assets_tracking_service.lib.bas_data_catalogue.models.record import DataQuality, Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import (
+    DataQuality,
+    Record,
+    RecordSummary,
+    ReferenceSystemInfo,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contact as RecordContact
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     ContactIdentity,
@@ -47,6 +52,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.ident
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Extents as RecordExtents,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.projection import Code
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
     AggregationInitiativeCode,
@@ -56,6 +62,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     HierarchyLevelCode,
     OnlineResourceFunctionCode,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projections import EPSG_4326
 
 
 class TestMdAsHtml:
@@ -397,6 +404,33 @@ class TestItemBase:
 
         assert item.lineage_html == expected
 
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (None, None),
+            (
+                ReferenceSystemInfo(
+                    code=Code(
+                        value="x",
+                    )
+                ),
+                None,
+            ),
+            (
+                EPSG_4326,
+                Identifier(identifier="EPSG:4326", href="http://www.opengis.net/def/crs/EPSG/0/4326", namespace="epsg"),
+            ),
+        ],
+    )
+    def test_projection(
+        self, fx_lib_record_minimal_item: Record, value: ReferenceSystemInfo | None, expected: str | None
+    ):
+        """Can get projection if present and an EPSG code."""
+        fx_lib_record_minimal_item.reference_system_info = value
+        item = ItemBase(fx_lib_record_minimal_item)
+
+        assert item.projection == expected
+
     def test_resource_id(self, fx_lib_record_minimal_item: Record):
         """Can get resource/file identifier."""
         expected = "x"
@@ -444,6 +478,14 @@ class TestItemBase:
         item = ItemBase(fx_lib_record_minimal_item)
 
         assert item.summary_plain == expected
+
+    @pytest.mark.parametrize(("value", "expected"), [(None, {}), ("", {}), ({}, {}), ('{"x":"x"}', {"x": "x"})])
+    def test_kv(self, fx_lib_record_minimal_item: Record, value: str | None, expected: dict[str, str]):
+        """Can get supplemental information as a key value dict."""
+        fx_lib_record_minimal_item.identification.supplemental_information = value
+        item = ItemBase(fx_lib_record_minimal_item)
+
+        assert item.kv == expected
 
     def test_title_raw(self, fx_lib_record_minimal_item: Record):
         """Can get raw title."""

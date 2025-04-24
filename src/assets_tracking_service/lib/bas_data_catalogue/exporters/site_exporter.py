@@ -1,0 +1,72 @@
+from shutil import copy
+
+from importlib_resources import as_file as resources_as_file
+from importlib_resources import files as resources_files
+from mypy_boto3_s3 import S3Client
+
+from assets_tracking_service.config import Config
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter as BaseExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import S3Utils
+
+
+class SiteResourcesExporter:
+    """
+    Static site resource exporters.
+
+    A non-record specific exporter for static resources used across the static site (CSS, fonts, etc.).
+
+    Due to global nature of this exporter it does subclass the BaseExporter to avoid hacking around its requirements.
+    """
+
+    def __init__(self, config: Config, s3_client: S3Client) -> None:
+        self._s3_utils = S3Utils(
+            s3=s3_client,
+            s3_bucket=config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
+            relative_base=config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
+        )
+        self._fonts_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.fonts"
+        self._css_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.css"
+        self._export_base = config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "static"
+
+    def _dump_css(self) -> None:
+        """
+        Copy CSS to directory if not already present.
+
+        The source CSS file needs generating from `main.css.j2` using the `scripts/recreate-css.py` script.
+        Note: the source `main.css` contains an environment specific output path and MUST NOT be checked into git.
+        """
+        with resources_as_file(resources_files(self._css_src_ref)) as src_base:
+            src_path = src_base / "main.css"
+            dst_path = self._export_base.joinpath("css", "main.css")
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+            copy(src_path, dst_path)
+
+    def _dump_fonts(self) -> None:
+        """Copy fonts to directory if not already present."""
+        BaseExporter._dump_package_resources(src_ref=self._fonts_src_ref, dest_path=self._export_base.joinpath("fonts"))
+
+    def _publish_css(self) -> None:
+        """Upload CSS as an S3 object."""
+        with resources_as_file(resources_files(self._css_src_ref)) as src_base:
+            src_path = src_base / "main.css"
+            with src_path.open("r") as css_file:
+                content = css_file.read()
+
+        key = self._s3_utils.calc_key(self._export_base.joinpath("css", "main.css"))
+        self._s3_utils.upload_content(key=key, content_type="text/css", body=content)
+
+    def _publish_fonts(self) -> None:
+        """Upload fonts as S3 objects if they do not already exist."""
+        self._s3_utils.upload_package_resources(
+            src_ref=self._fonts_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("fonts"))
+        )
+
+    def export(self) -> None:
+        """Copy site resources to their respective directories."""
+        self._dump_css()
+        self._dump_fonts()
+
+    def publish(self) -> None:
+        """Copy site resources to S3 bucket."""
+        self._publish_css()
+        self._publish_fonts()
