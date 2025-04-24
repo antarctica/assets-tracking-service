@@ -302,6 +302,18 @@ Intended as a basic, low level, sanity check of the data model.
 
 Not intended for any particular purpose, or to be used as the basis for other views.
 
+### `v_util_asset_label`
+
+A view returning labels for assets as a table for easier querying and debugging.
+
+Not intended for any particular purpose.
+
+### `v_util_position_label`
+
+A view returning labels for positions as a table for easier querying and debugging.
+
+Not intended for any particular purpose.
+
 ### `v_latest_assets_pos`
 
 A view returning information on the latest position for each asset (based on position time).

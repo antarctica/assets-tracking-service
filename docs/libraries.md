@@ -13,14 +13,18 @@ text for use in HTML titles for example.
 
 ## BAS Data Catalogue / Metadata Library
 
-Package: `assets_tracking_service.lib.markdown`
+**Note:** These are rough/working notes that will be written up properly when this module is extracted.
 
-Classes representing Items and Records within the BAS Data Catalogue and Metadata Library respectively.
+Package: `assets_tracking_service.lib.bas_data_catalogue`
 
-These are essentially prototypes of redesigned classes that will replace core parts of these related projects and will
-be moved out once demonstrated as working by this project.
+Includes classes for:
 
-### Notes for documentation
+- Items and Records within the BAS Data Catalogue and Metadata Library respectively
+- Exporters for publishing representations of Items and Records within the Data Catalogue static site
+
+These redesigned and refactored classes will replace core parts of the BAS Data Catalogue and Metadata Library projects.
+
+### Items and Records
 
 Terms such as 'item', 'record' and 'resource' are widely used across different data/metadata ecosystems with differing
 information models etc. Where context is clear, these terms/classes can and are used directly. Where there's ambiguity,
@@ -67,7 +71,79 @@ For adding a new Record config element:
 	1. amend tests for root-level cattrs hooks if top-level hooks changed (as an integration check)
 	2. amend variants in `test_loop` as needed (include all possible options in complete variant)
 
+### Static site
+
+Structure:
+
+```
+├── collections/
+│      ├── ...
+│      └── abc/
+│          └── index.html  -> redirecting to e.g. /items/123/
+├── datasets/
+│      ├── ...
+│      └── abc/
+│          └── index.html  -> redirecting to e.g. /items/123/
+├── items
+│      ├── ...
+│      └── 123/
+│          └── index.html
+├── maps/
+│      ├── ...
+│      └── abc/
+│          └── index.html  -> redirecting to e.g. /items/123/
+├── records/
+│      ├── ...
+│      ├── 123.html
+│      └── 123.xml
+└── static/
+    ├── css/
+    │   └── main.css
+    ├── fonts/
+    │   ├── open-sans.ttf
+    │   └── open-sans-italic.ttf
+    └── xsl/
+        └── iso-html/
+            ├── ...
+            └── xml-to-text-ISO.xsl
+```
+
+The `main.css` file is generated using the Tailwind CSS CLI from `main.src.css` and scans classes used in templates.
+
+To install Tailwind CLI:
+
+```
+% wget https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
+% chmod +x tailwindcss-macos-arm64
+% mv tailwindcss-macos-arm64 scripts/tailwind
+```
+
+If templates are updated with new classes, run:
+
+```
+% uv run python scripts/recreate-css.py
+```
+
+The prototype site is published to a separate S3 bucket provisioned via Terraform in `provisioning/terraform/main.tf`:
+
+```
+% cd provisioning/terraform/
+% docker compose run --rm terraform
+% terraform init
+% terraform validate
+% terraform apply
+```
+
+Once provisioned:
+
+- create an access key for the `bas-assets-tracking-app` IAM user
+- record credentials and bucket name within 1Password in the *infrastructure* vault
+- update `tpl/.env.tpl` with 1Password entry references
+- update BAS Ansible provisioning vault with 1Password entry references
+
 ## BAS Esri Utilities
+
+**Note:** These are rough/working notes that will be written up properly when this module is extracted.
 
 Package: `assets_tracking_service.lib.bas_esri_utils`
 
@@ -75,6 +151,10 @@ A prototype of a library based on the [ArcGIS Python API](https://developers.arc
 
 - abstracting and simplifying common workflows into high-level methods within ArcGIS Enterprise/Online
 - deriving ArcGIS item metadata from BAS discovery metadata (based on ISO 19115 information model)
+
+### Limitations
+
+- group descriptions cannot contain emoji.
 
 ### ArcGIS system
 
