@@ -2,7 +2,7 @@ import logging
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
-from tests.examples.example_exporter import ExampleExporter
+from tests.resources.examples.example_exporter import ExampleExporter
 
 
 class TestBaseExporter:

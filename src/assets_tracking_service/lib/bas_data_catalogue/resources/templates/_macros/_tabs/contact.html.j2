@@ -1,0 +1,79 @@
+{% import '_macros/common.html.j2' as com %}
+
+{% macro form_input(id, name, value, placeholder, required) %}
+  <div class="space-y-2">
+    <label class="block font-bold" for="{{ id }}">{{ name }}</label>
+    <input class="w-full border-1 border-grey-300" type="text" name="{{ id }}" id="{{ id }}" {% if placeholder %}placeholder="{{ placeholder }}"{% endif %} {% if value %}value="{{ value }}"{% endif %} {% if required %}required{% endif %}>
+  </div>
+{% endmacro %}
+
+{% macro form(data) %}
+  <form action="{{ data.form_action}}">
+    {% for param, value in data.form_params | items %}
+      <input type="hidden" name="{{ param }}" value="{{ value }}">
+    {% endfor %}
+    <div class="space-y-8">
+      {% call com.item_title() %}Contact Us{% endcall %}
+      {% call com.item_border() %}
+        <div class="space-y-4">
+          {{ form_input(id="message-subject", name="Subject", value=data.subject_default, required=True) }}
+          <div class="space-y-2">
+            <label class="block font-bold" for="message-content">Details</label>
+            <textarea class="w-full border-1 border-grey-300" name="message-content" id="message-content" rows="8" required></textarea>
+            <div class="border-l-5 border-l-yellow-500 p-4 pr-0">
+              Do not any include any sensitive information in your message.
+            </div>
+          </div>
+          {{ form_input(id="message-sender-name", name="Your name", placeholder="Connie Watson") }}
+          {{ form_input(id="message-sender-name", name="Your email address", placeholder="conwat@bas.ac.uk", required=True) }}
+          <div>
+            <button class="{{ com.btn_primary_classes() }} p-4" type="submit">
+                Send Message <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      {% endcall %}
+    </div>
+  </form>
+{% endmacro %}
+
+{% macro alternate(data) %}
+  {% if data.address or data.phone or data.email %}
+    <div class="space-y-8">
+      {% call com.item_title() %}Alternative Contact Methods{% endcall %}
+      {% call com.item_border() %}
+        <div class="space-y-4">
+          {% if data.address %}
+            <div class="space-y-2">
+              <h3 class="font-bold"><i class="far fa-envelope"></i> By post</h3>
+              <address>{{ data.address }}</address>
+            </div>
+          {% endif %}
+          {% if data.phone %}
+            <div class="space-y-2">
+              <h3 class="font-bold"><i class="far fa-phone-rotary"></i> By phone</h3>
+              <div>{{ data.phone }}</div>
+            </div>
+          {% endif %}
+          {% if data.email %}
+            <div class="space-y-2">
+              <h3 class="font-bold"><i class="far fa-at"></i> By email</h3>
+              <div><a class="{{ com.link_classes() }}" href="{{ data.email }}">{{ data.email }}</a></div>
+            </div>
+           {% endif %}
+        </div>
+      </div>
+    {% endcall %}
+  {% endif %}
+{% endmacro %}
+
+{% macro privacy_notice() %}
+  <div class="space-y-8">
+    {% call com.item_title() %}Privacy Notice{% endcall %}
+    {% call com.alert(variant='blue', classes="space-y-2") %}
+      <p>If you contact us, your information will be retained for up to 6 months before being deleted.</p>
+      <p>Your message will only be seen by the British Antarctic Survey (BAS) and will only be used to process your enquiry.
+      <p>BAS is part of the Natural Environment Research Council (NERC), within UK Research & Innovation (UKRI). Consult their {{ com.ext_link_a(href="https://www.ukri.org/about-us/privacy-notice/", value="Privacy Notice") }} for more information.</p>
+    {% endcall %}
+  </div>
+{% endmacro %}

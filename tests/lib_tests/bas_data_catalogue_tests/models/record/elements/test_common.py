@@ -15,6 +15,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Identifier,
     Identifiers,
     OnlineResource,
+    Series,
     clean_dict,
     clean_list,
 )
@@ -24,6 +25,11 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     DateTypeCode,
     OnlineResourceFunctionCode,
 )
+
+MIN_CITATION = {
+    "title": "x",
+    "dates": Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))),
+}
 
 
 class TestCleanDict:
@@ -117,35 +123,16 @@ class TestCitation:
     @pytest.mark.parametrize(
         "values",
         [
+            {**MIN_CITATION},
+            {**MIN_CITATION, "edition": "x"},
+            {**MIN_CITATION, "href": "x"},
+            {**MIN_CITATION, "other_citation_details": "x"},
+            {**MIN_CITATION, "identifiers": [Identifier(identifier="x", href="x", namespace="x")]},
             {
-                "title": "x",
-                "dates": Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))),
-            },
-            {
-                "title": "x",
-                "dates": Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))),
-                "edition": "x",
-            },
-            {
-                "title": "x",
-                "dates": Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))),
-                "href": "x",
-            },
-            {
-                "title": "x",
-                "dates": Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))),
-                "other_citation_details": "x",
-            },
-            {
-                "title": "x",
-                "dates": Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))),
-                "identifiers": [Identifier(identifier="x", href="x", namespace="x")],
-            },
-            {
-                "title": "x",
-                "dates": Dates(creation=Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))),
+                **MIN_CITATION,
                 "contacts": [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])],
             },
+            {**MIN_CITATION, "series": Series(name="x", edition="x")},
         ],
     )
     def test_init(self, values: dict):
@@ -181,6 +168,13 @@ class TestCitation:
             assert all(isinstance(contact, Contact) for contact in citation.contacts)
         else:
             assert citation.contacts == []
+
+        if "series" in values:
+            assert citation.series.name == values["series"].name if values["series"].name is not None else None
+            assert citation.series.edition == values["series"].edition if values["series"].edition is not None else None
+        else:
+            assert citation.series.name is None
+            assert citation.series.edition is None
 
     def test_structure_cattrs(self):
         """Can use Cattrs to create a Citation instance from plain types."""
@@ -818,15 +812,21 @@ class TestDates:
 class TestIdentifier:
     """Test Identifier element."""
 
-    def test_init(self):
+    @pytest.mark.parametrize(
+        "values", [{"identifier": "x", "namespace": "x"}, {"identifier": "x", "href": "x", "namespace": "x"}]
+    )
+    def test_init(self, values: dict):
         """Can create an Identifier element from directly assigned properties."""
         expected = "x"
-        values = {"identifier": expected, "href": expected, "namespace": expected}
         identifier = Identifier(**values)
 
         assert identifier.identifier == expected
-        assert identifier.href == expected
         assert identifier.namespace == expected
+
+        if "href" in values:
+            assert identifier.href == expected
+        else:
+            assert identifier.href is None
 
 
 class TestIdentifiers:
@@ -917,3 +917,30 @@ class TestOnlineResource:
             assert online_resource.protocol == expected_str
         else:
             assert online_resource.protocol is None
+
+
+class TestSeries:
+    """Test descriptive Series element."""
+
+    @pytest.mark.parametrize(
+        "values",
+        [
+            {"name": "x", "edition": "x"},
+            {"name": "x"},
+            {"edition": "x"},
+            {},
+        ],
+    )
+    def test_init(self, values: dict):
+        """Can create a Series element from directly assigned properties."""
+        series = Series(**values)
+
+        if "name" in values:
+            assert series.name == values["name"]
+        else:
+            assert series.name is None
+
+        if "edition" in values:
+            assert series.edition == values["edition"]
+        else:
+            assert series.edition is None

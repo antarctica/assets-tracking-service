@@ -21,7 +21,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     Record,
     RecordSummary,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifiers
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Identifiers
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
     Aggregations,
@@ -243,6 +243,32 @@ class ItemBase:
         return self._record.identification.identifiers
 
     @property
+    def kv(self) -> dict:
+        """
+        Optional supplemental information as key values.
+
+        ISO records cannot easily hold information that doesn't fit within the ISO information model (arguably rightly).
+        To avoid (mis)using keywords or adding complex metadata extensions, we use the freetext supplemental
+        information element to hold a set of key-value pairs encoded as a JSON string.
+
+        In Items, we pre-decode any values if possible. If the value cannot be decoded as JSON (perhaps because it's an
+        external record that uses this element another way), an empty dict is returned.
+
+        Known (but optional) keys:
+        - width: width of resource when printed in mm
+        - height: height of resource when printed in mm
+
+        This is not intended to be portable/interoperable across other systems, and is used only within the BAS
+        metadata ecosystem of tools but is human-readable to an extent so could be shown elsewhere.
+        """
+        try:
+            return json.loads(self._record.identification.supplemental_information)
+        except TypeError:
+            return {}
+        except JSONDecodeError:
+            return {}
+
+    @property
     def licence(self) -> Constraint | None:
         """Licence constraint."""
         licences = self.constraints.filter(
@@ -269,6 +295,19 @@ class ItemBase:
     def lineage_html(self) -> str | None:
         """Optional lineage statement with Markdown formatting, if present, encoded as HTML."""
         return md_as_html(self.lineage_md) if self.lineage_md is not None else None
+
+    @property
+    def projection(self) -> Identifier | None:
+        """
+        Optional projection identifier.
+
+        Limited to EPSG projections so we can predictably handle them.
+        """
+        ref = self._record.reference_system_info
+        if ref is None or "urn:ogc:def:crs:EPSG" not in ref.code.value:
+            return None
+        code = ref.code.value.replace("urn:ogc:def:crs:EPSG::", "EPSG:")
+        return Identifier(identifier=code, href=ref.code.href, namespace="epsg")
 
     @property
     def resource_id(self) -> str:

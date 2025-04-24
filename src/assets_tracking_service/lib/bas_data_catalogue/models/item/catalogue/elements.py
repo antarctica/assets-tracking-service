@@ -9,8 +9,14 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums 
 from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+    Identifiers as RecordIdentifiers,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregations as RecordAggregations,
+)
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+    Maintenance as RecordMaintenance,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
@@ -18,6 +24,8 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     DatePrecisionCode,
     DateTypeCode,
     HierarchyLevelCode,
+    MaintenanceFrequencyCode,
+    ProgressCode,
 )
 
 
@@ -130,7 +138,7 @@ class Aggregations:
     """
     Aggregations.
 
-    Container for aggregations formatted as links and grouped by type.
+    Container for ItemBase Aggregations formatted as links and grouped by type.
     """
 
     def __init__(self, aggregations: RecordAggregations, get_summary: Callable[[str], RecordSummary]) -> None:
@@ -238,7 +246,7 @@ class Extent(ItemExtent):
     """
     ItemCatalogue Extent.
 
-    Wrapper around Item Extent adding date formatting and extent map properties.
+    Wrapper around ItemBase Extent adding date formatting and extent map properties.
     """
 
     def __init__(self, extent: ItemExtent, embedded_maps_endpoint: str) -> None:
@@ -263,8 +271,106 @@ class Extent(ItemExtent):
         return f"<iframe src='{self._map_endpoint}/?{params}' width='100%' height='400' frameborder='0'></iframe>"
 
 
+class Identifiers(RecordIdentifiers):
+    """
+    Identifiers.
+
+    Container for Record Identifiers formatted as links and grouped by type.
+    """
+
+    def __init__(self, identifiers: RecordIdentifiers) -> None:
+        # noinspection PyTypeChecker
+        super().__init__(identifiers)
+
+    @staticmethod
+    def _make_gitlab_issue_ref(href: str) -> str:
+        """
+        Create GitLab issue reference.
+
+        E.g. https://gitlab.data.bas.ac.uk/MAGIC/foo/-/issues/123 -> MAGIC/foo#123                                                                                                                                                                              .
+        """
+        return f"{href.split('/')[-5]}/{href.split('/')[-4]}#{href.split('/')[-1]}"
+
+    @property
+    def doi(self) -> list[Link]:
+        """DOIs for Item."""
+        return [
+            Link(value=identifier.identifier, href=identifier.href, external=True) for identifier in self.filter("doi")
+        ]
+
+    @property
+    def isbn(self) -> list[str]:
+        """ISBNs for Item."""
+        # noinspection PyTypeChecker
+        return [identifier.identifier for identifier in self.filter("isbn")]
+
+    @property
+    def gitlab_issues(self) -> list[str]:
+        """
+        GitLab issues for Item.
+
+        Returned as references rather than links to add discourage others viewing issues.
+        """
+        return [self._make_gitlab_issue_ref(identifier.href) for identifier in self.filter("gitlab.data.bas.ac.uk")]
+
+
+class Maintenance(RecordMaintenance):
+    """
+    ItemCatalogue Maintenance.
+
+    Wrapper around Record Maintenance to use more human-readable labels.
+    """
+
+    def __init__(self, maintenance: RecordMaintenance) -> None:
+        # noinspection PyTypeChecker
+        super().__init__(**unpack(maintenance))
+
+    @property
+    def status(self) -> str | None:
+        """Non-None progress as a human-readable status label."""
+        if self.progress is None:
+            return None
+
+        mapping = {
+            ProgressCode.COMPLETED: "Item is complete and recommended for general use",
+            ProgressCode.HISTORICAL_ARCHIVE: "Item has been archived and may be outdated",
+            ProgressCode.OBSOLETE: "Item is obsolete and should be used with caution",
+            ProgressCode.ON_GOING: "Item is being regularly updated and recommended for general use",
+            ProgressCode.PLANNED: "Item is planned and does not yet exist",
+            ProgressCode.REQUIRED: "Required (Contact us for further information)",
+            ProgressCode.UNDER_DEVELOPMENT: "Item is a draft and should not yet be used",
+        }
+        return mapping[self.progress]
+
+    @property
+    def frequency(self) -> str | None:
+        """
+        Non-None maintenance frequency as a human-readable frequency label.
+
+        Values should complete 'Item is updated ...'.
+        """
+        if self.maintenance_frequency is None:
+            return None
+
+        mapping = {
+            MaintenanceFrequencyCode.CONTINUAL: "Item is updated more than once a day",
+            MaintenanceFrequencyCode.DAILY: "Item is updated every day",
+            MaintenanceFrequencyCode.WEEKLY: "Item is updated every week",
+            MaintenanceFrequencyCode.FORTNIGHTLY: "Item is updated every fortnight",
+            MaintenanceFrequencyCode.MONTHLY: "Item is updated every month",
+            MaintenanceFrequencyCode.QUARTERLY: "Item is updated every four months",
+            MaintenanceFrequencyCode.BIANNUALLY: "Item is updated twice a year",
+            MaintenanceFrequencyCode.ANNUALLY: "Item is updated every year",
+            MaintenanceFrequencyCode.AS_NEEDED: "Item may be updated if needed",
+            MaintenanceFrequencyCode.IRREGULAR: "Item is updated irregularly",
+            MaintenanceFrequencyCode.NOT_PLANNED: "No updates are planned for this item",
+            MaintenanceFrequencyCode.UNKNOWN: "Unknown",
+        }
+        return mapping[self.maintenance_frequency]
+
+
 class PageHeader:
-    """Page header information."""
+    """Item Page header information."""
 
     def __init__(self, title: str, item_type: HierarchyLevelCode) -> None:
         self._title = title

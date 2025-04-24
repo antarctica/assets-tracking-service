@@ -1114,6 +1114,8 @@ class TestIdentification:
                     )
                 ],
             },
+            {**MIN_IDENTIFICATION, "supplemental_information": "x"},
+            {**MIN_IDENTIFICATION, "spatial_resolution": 1},
         ],
     )
     def test_init(self, values: dict):
@@ -1162,6 +1164,16 @@ class TestIdentification:
             assert all(isinstance(extent, Extent) for extent in identification.extents)
         else:
             assert identification.extents == []
+
+        if "supplemental_information" in values:
+            assert identification.supplemental_information == values["supplemental_information"]
+        else:
+            assert identification.supplemental_information is None
+
+        if "spatial_resolution" in values:
+            assert identification.spatial_resolution == values["spatial_resolution"]
+        else:
+            assert identification.spatial_resolution is None
 
     def test_structure_cattrs(self):
         """Can use Cattrs to create an Identification instance from plain types."""

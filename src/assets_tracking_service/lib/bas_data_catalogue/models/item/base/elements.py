@@ -118,6 +118,12 @@ class Link:
 
     value: str
     href: str | None = None
+    external: bool = False
+
+    def __post_init__(self) -> None:
+        """Process defaults."""
+        if self.external is None:
+            self.external = False
 
 
 def unpack(value: Any) -> dict[str, Any]:  # noqa: ANN401

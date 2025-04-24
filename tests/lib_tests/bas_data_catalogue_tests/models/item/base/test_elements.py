@@ -193,7 +193,11 @@ class TestExtents:
 class TestLink:
     """Test HTML anchor representation."""
 
-    @pytest.mark.parametrize("href", ["x", None])
-    def test_init(self, href: str | None):
+    @pytest.mark.parametrize(
+        ("href", "external", "expected_href", "expected_external"), [("x", True, "x", True), (None, None, None, False)]
+    )
+    def test_init(self, href: str | None, external: bool | None, expected_href: str | None, expected_external: bool):
         """Creates a Link."""
-        Link(href=href, value="x")
+        link = Link(value="x", href=href, external=external)
+        assert link.href == expected_href
+        assert link.external == expected_external

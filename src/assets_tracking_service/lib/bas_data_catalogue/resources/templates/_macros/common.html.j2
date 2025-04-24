@@ -1,0 +1,81 @@
+{% macro container_classes() %}container mx-auto{% endmacro %}
+
+{% macro link_classes() %}text-sky-blue-500 hover:underline{% endmacro %}
+
+{% macro btn_base_classes() %}font-bold cursor-pointer{% endmacro %}
+
+{% macro btn_default_classes() %}{{ btn_base_classes() }} bg-grey-500 text-black hover:bg-grey-700{% endmacro %}
+
+{% macro btn_primary_classes() %}{{ btn_base_classes() }} bg-turquoise-500 text-white hover:bg-turquoise-700{% endmacro %}
+
+{% macro footer_link_classes() %}text-sky-blue-300 hover:underline{% endmacro %}
+
+
+{% macro back_to_top_id() %}site_top{% endmacro %}
+
+{% macro sentry_trigger() %}site-feedback-trigger{% endmacro %}
+
+{% macro prose(value) %}
+  <div class="max-w-none prose prose-base prose-headings:font-bold">{{ value }}</div>
+{% endmacro %}
+
+{% macro dl_item(title, id) %}
+  <div class="space-y-2">
+    <dt class="font-bold">{{ title }}</dt>
+    <dd id="{{ id }}">{{ caller() }}</dd>
+  </div>
+{% endmacro %}
+
+{% macro ext_link_i() %}<i class="far fa-external-link"></i>{% endmacro %}
+
+{% macro ext_link_a(href, value) %}
+  <a class="{{ link_classes() }}" href="{{ href }}" target="_blank">{{ value }} {{ ext_link_i() }}</a>
+{% endmacro %}
+
+{% macro item_border(classes="") %}
+  <div class="border-1 border-grey-100 p-2 {{ classes }}">
+    {{ caller() }}
+  </div>
+{% endmacro %}
+
+{% macro item_title() %}
+  <h2 class="text-2xl">{{ caller() }}</h2>
+{% endmacro %}
+
+{% macro item_summary(item) %}
+  {% call item_border(classes="flex items-center space-x-2") %}
+    <div class="w-1/6">
+      <img class="w-full h-auto object-contain" src="{{ item.href_graphic }}" alt="thumbnail for {{ item.title_plain }}">
+    </div>
+    <div class="w-5/6 space-y-2">
+      <header><a class="text-lg {{ link_classes() }}" href="{{item.href}}">{{ item.title_html }}</a></header>
+      <article>{{ prose(item.summary_html) }}</article>
+      <div class="flex items-center space-x-2 text-sm text-grey-500">
+        {% for fragment in item.fragments %}
+          {% if fragment[0] %}
+            <span><i class="{{ fragment[0] }}"></i> {{ fragment[2] }}</span>
+          {% else %}
+            <span>{{ fragment[1] }}: {{ fragment[2] }}</span>
+          {% endif %}
+          {% if not loop.last %}<span class="text-grey-100">|</span>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endcall %}
+{% endmacro %}
+
+{% macro alert(variant, classes="") %}
+  {% set variant_colour = "grey-500" %}
+  {% if variant == "green" %}
+    {% set variant_colour = "green-500" %}
+  {% elif variant == "yellow" %}
+    {% set variant_colour = "yellow-500" %}
+  {% elif variant == "red" %}
+    {% set variant_colour = "red-500" %}
+  {% elif variant == "blue" %}
+    {% set variant_colour = "sky-blue-500" %}
+  {% endif %}
+  <div class="p-4 pr-0 border-l-5 border-l-{{ variant_colour }} {{ classes }}">
+    {{ caller() }}
+  </div>
+{% endmacro %}

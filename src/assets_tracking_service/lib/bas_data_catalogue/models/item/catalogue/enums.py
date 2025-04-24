@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class ResourceTypeIcon(Enum):
-    """Partial mapping of Hierarchical Level code list terms to Font Awesome icon classes."""
+    """Partial mapping of Hierarchy Level code list terms against Font Awesome icon classes."""
 
     COLLECTION = "fa-fw far fa-shapes"
     DATASET = "fa-fw far fa-cube"
@@ -14,3 +14,12 @@ class DistributionType(Enum):
 
     ARCGIS_FEATURE_LAYER = "ArcGIS Feature Layer"
     ARCGIS_OGC_FEATURE_LAYER = "OGC API Features (ArcGIS)"
+
+
+class Licence(Enum):
+    """Supported catalogue licences."""
+
+    OGL_UK_3_0 = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+    CC_BY_4_0 = "https://creativecommons.org/licenses/by/4.0/"
+    X_ALL_RIGHTS_RESERVED_1 = "https://metadata-resources.data.bas.ac.uk/licences/all-rights-reserved-v1/"
+    X_OPERATIONS_MAPPING_1 = "https://metadata-resources.data.bas.ac.uk/licences/operations-mapping-v1/"

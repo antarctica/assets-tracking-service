@@ -1,82 +1,45 @@
-{% import '_macros/bsk.html.j2' as bsk %}
+{% import '_macros/common.html.j2' as com %}
 
-{% macro html_meta(value) %}
+{% macro html_head(title) %}
+  <head>
+    {{ head_meta() }}
+    {{ head_title(title) }}
+    {{ head_styles() }}
+    {{ head_scripts() }}
+  </head>
+{% endmacro %}
+
+{% macro head_meta(value) %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endmacro %}
 
-{% macro html_head(title) %}
-  <head>
-    {{ html_meta() }}
-    {{ html_title(title) }}
-    {{ site_styles() }}
-  </head>
-{% endmacro %}
-
-{% macro html_title(value) %}
+{% macro head_title(value) %}
   <title>{{ value }}</title>
 {% endmacro %}
 
-{% macro local_styles() %}
-  <style>
-    .x-mt-0 { margin-top: 0; }
-    .x-mt-2 { margin-top: 8px; }
-    .x-mb-0 { margin-bottom: 0; }
-    .x-mb-1 { margin-bottom: 4px; }
-    .x-mb-2 { margin-bottom: 8px; }
-    .x-mb-6 { margin-bottom: 24px !important; }
-    .x-mb-12 { margin-bottom: 48px; }
-    .x-ml-2 { margin-left: 8px;}
-    .x-pt-1 { padding-top: 4px; }
-    .x-pt-2 { padding-top: 8px; }
-    .x-pt-3 { padding-top: 12px; }
-    .x-pl-6 { padding-left: 24px; }
-    .x-pl-7 { padding-left: 28px; }
-    .x-py-2 { padding-top: 8px; padding-bottom: 8px; }
-    .x-py-3 { padding-top: 12px; padding-bottom: 12px; }
-    .x-py-6 { padding-top: 24px; padding-bottom: 24px; }
-    .x-p-2 { padding: 8px; }
-    .x-text-left { text-align: left !important;}
-    .x-text-black { color: #000; }
-    .x-text-orcid { color: #A6CE39; }
-    .x-border-1-eee { border: 1px solid #eee; }
-    .x-border-b-2-999 { border-bottom: 2px solid #999; }
-
-    #sentry-feedback {
-      --font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --font-size: 16px;
-      --foreground: #333;
-      --background: #eee;
-      --accent-background: #28a197;
-      --success-color: #379245;
-      --error-color: #b10e1e;
-      --dialog-border-radius: 0;
-      --input-border-radius: 0;
-      --button-border-radius: 0;
-      --button-primary-border-radius: 0;
-    }
-  </style>
-{% endmacro %}
-
-{% macro site_styles() %}
-  <link rel="stylesheet" href="https://cdn.web.bas.ac.uk/bas-style-kit/0.6.1/css/bas-style-kit.min.css" integrity="sha256-k05vjok9IGTMBJ8KYnQYX9sEc7A9eGWsTM8tQ2XqE8A=" crossorigin="anonymous">
+{% macro head_styles() %}
   <link rel="stylesheet" href="https://cdn.web.bas.ac.uk/libs/font-awesome-pro/5.13.0/css/all.min.css" integrity="sha256-DjbUjEiuM4tczO997cVF1zbf91BC9OzycscGGk/ZKks=" crossorigin="anonymous">
-  {{ local_styles() }}
+  <link rel="stylesheet" href="/static/css/main.css" />
 {% endmacro %}
 
-{% macro sticky_tabs() %}
-  <script src="https://cdn.web.bas.ac.uk/libs/jquery-sticky-tabs/1.2.0/jquery.stickytabs.js" integrity="sha256-JjbqQErDTc0GyOlDQLEgyqoC6XR6puR0wIJFkoHp9Fo=" crossorigin="anonymous"></script>
-  <script>$(function() {$('.bsk-nav-tabs').stickyTabs();});</script>
+{% macro head_scripts(data) %}
+  {{ script_sentry() }}
+  {{ script_sticky_tabs() }}
+  {{ script_collapsible() }}
 {% endmacro %}
 
-{% macro sentry(dsn) %}
-  <script src="https://browser.sentry-cdn.com/9.11.0/bundle.feedback.min.js" integrity="sha384-eQ9i5YvdXwuMs+xY/vAk0IvOsLgNnxnXLqLGc5gUeBQMapgH/lOcMTWe4rLa4Hte" crossorigin="anonymous"></script>
+{% macro script_sentry() %}
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    window.sentryOnLoad = function() {
       Sentry.init({
-        dsn: "{{ dsn }}",
-        integrations: [
-          Sentry.feedbackIntegration({
+        tracesSampleRate: 0,
+        replaysSessionSampleRate: 0,
+        replaysOnErrorSampleRate: 0,
+      });
+      Sentry.lazyLoadIntegration("feedbackIntegration").then(
+        (integration) => {
+          Sentry.addIntegration(integration({
             autoInject: false,
             showBranding: false,
             colorScheme: "light",
@@ -84,38 +47,120 @@
             submitButtonLabel: "Send Feedback",
             messagePlaceholder: "",
             successMessageText: "Thank you for your feedback.",
-          }),
-        ],
-      });
+          }));
 
-      const feedback = Sentry.getFeedback();
-      if (feedback) {
-        const triggers = document.querySelectorAll(".site-feedback-trigger");
-        triggers.forEach(trigger => {
-          feedback.attachTo(trigger, {});
+          const feedback = Sentry.getFeedback();
+          if (feedback) {
+            const triggers = document.querySelectorAll(".{{ com.sentry_trigger() }}");
+            triggers.forEach(trigger => {
+              feedback.attachTo(trigger, {});
+            });
+          }
+        }
+      );
+    };
+  </script>
+  <script src="https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js" crossorigin="anonymous"></script>
+{% endmacro %}
+
+{% macro script_sticky_tabs() %}
+  <script>
+    /* Based on jQuery Plugin Sticky Tabs by Aidan Lister <aidan@php.net> */
+    (function () {
+      const selectTab = (tabId) => {
+        const input = document.getElementById(tabId);
+        if (input && input.type === "radio") {
+          input.checked = true;
+          window.history.pushState(null, null, `#${tabId}`);
+        }
+      };
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const hash = window.location.hash;
+        if (hash) {
+          selectTab(hash.substring(1)); // Remove '#' from hash
+        }
+
+        const tabLabels = document.querySelectorAll('label[for^="tab-"]');
+        tabLabels.forEach((label) => {
+          label.addEventListener("click", () => {
+            const tabId = label.getAttribute("for");
+            selectTab(tabId);
+          });
         });
-      }
+      });
+    })();
+  </script>
+{% endmacro %}
+
+{% macro script_collapsible() %}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Find all elements with the `data-target` attribute and add click event listeners to hide/show a target element
+      const toggles = document.querySelectorAll('[data-target]');
+
+      toggles.forEach(toggle => {
+        toggle.addEventListener('click', () => {
+          const targetSelector = toggle.getAttribute('data-target');
+          const targetElement = document.querySelector(targetSelector);
+          if (targetElement) {
+            targetElement.classList.toggle('hidden');
+          }
+        });
+      });
     });
   </script>
 {% endmacro %}
 
-{% macro scripts(data) %}
-  {{ sentry(dsn=data.sentry_dsn) }}
-  <script src="https://cdn.web.bas.ac.uk/libs/jquery/3.6.0/js/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-  <script src="https://cdn.web.bas.ac.uk/libs/js-cookie/2.2.1/js/js.cookie-2.2.1.min.js" integrity="sha256-MdF5lmO7tgKSFNkLp9uc3HJfoCwW1LCQrdNyHkQji2s=" crossorigin="anonymous"></script>
-  <script src="https://cdn.web.bas.ac.uk/bas-style-kit/0.6.1/js/bas-style-kit.min.js" integrity="sha256-cW+jowQERFqjJwdZ1VSZgG7dXQly19ykM5kVIONXmFg=" crossorigin="anonymous"></script>
-  {{ sticky_tabs() }}
+{% macro top_anchor() %}
+  <div id="{{ com.back_to_top_id() }}"></div>
 {% endmacro %}
 
-{% macro site_top_anchor() %}
-  {{ bsk.site_top_anchor() }}
+{% macro header() %}
+  <header id="site-header" class="space-y-4">
+    {{ navbar() }}
+    {{ dev_phase() }}
+  </header>
 {% endmacro %}
 
-{% macro main_nav(title) %}
-  {{ bsk.navbar(title) }}
-  {{ bsk.dev_phase('alpha') }}
+{% macro navbar() %}
+  <nav id="site-nav" class="bg-grey-950 text-white">
+    <div class="{{ com.container_classes() }} py-4">
+      <div class="flex items-center justify-between">
+        <a id="site-title" class="font-bold text-lg" href="/">BAS Data Catalogue</a>
+      </div>
+    </div>
+  </nav>
+{% endmacro %}
+
+{% macro dev_phase() %}
+  <div id="site-dev" class="{{ com.container_classes() }} space-x-2">
+    <span id="site-dev-phase" class="uppercase text-sm font-bold bg-pink-500 text-white px-2">alpha</span>
+    <span>
+      This is a new website, your
+      <button class="{{ com.sentry_trigger() }} {{ com.link_classes() }}">feedback</button> will help us to improve it.
+    </span>
+  </div>
 {% endmacro %}
 
 {% macro footer(current_year) %}
-  {{ bsk.footer(copyright_year=current_year) }}
+  <footer id="site-footer" class="font-light bg-grey-950 text-grey-100">
+    <div class="{{ com.container_classes() }} py-8 space-y-8">
+      <div class="flex justify-between items-center">
+        <button class="{{ com.sentry_trigger() }} {{ com.footer_link_classes() }} cursor-pointer">Is something wrong with this page?</button>
+        <a class="{{ com.footer_link_classes() }}" href="#{{ com.back_to_top_id() }}">Back to top</a>
+      </div>
+      <div class="flex justify-between">
+        <div>
+          © <a class="{{ com.footer_link_classes() }}" href="https://www.bas.ac.uk">British Antarctic Survey</a> (BAS) {{ current_year }}.
+          BAS is part of <a class="{{ com.footer_link_classes() }}" href="https://www.ukri.org">UK Research and Innovation</a> (UKRI)
+        </div>
+        <ul class="flex space-x-2">
+          <li><a class="{{ com.footer_link_classes() }}" href="#">Cookies</a></li>
+          <li><a class="{{ com.footer_link_classes() }}" href="#">Copyright</a></li>
+          <li><a class="{{ com.footer_link_classes() }}" href="#">Privacy</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
 {% endmacro %}

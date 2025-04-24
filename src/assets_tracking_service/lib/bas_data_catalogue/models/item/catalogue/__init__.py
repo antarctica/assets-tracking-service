@@ -10,6 +10,8 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Aggregations,
     Dates,
     Extent,
+    Identifiers,
+    Maintenance,
     PageHeader,
     Summary,
 )
@@ -29,6 +31,13 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import Record,
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import ContactRoleCode
 
 
+class ItemInvalidError(Exception):
+    """Raised when a item is based on an invalid record."""
+
+    def __init__(self, validation_error: Exception) -> None:
+        self.validation_error = validation_error
+
+
 class ItemCatalogue(ItemBase):
     """
     Representation of a resource within the BAS Data Catalogue.
@@ -46,6 +55,7 @@ class ItemCatalogue(ItemBase):
     Supported properties:
     - file_identifier
     - hierarchy_level
+    - reference_system_info
     - identification.citation.title
     - identification.citation.dates
     - identification.citation.edition
@@ -53,25 +63,29 @@ class ItemCatalogue(ItemBase):
     - identification.abstract
     - identification.aggregations ('collections' and 'items' only)
     - identification.constraints ('licence' only)
+    - identification.citation.series
+    - identification.citation.identifiers[namespace='doi']
+    - identification.citation.identifiers[namespace='isbn']
+    - identification.citation.identifiers[namespace='gitlab.data.bas.ac.uk'] (as references only)
+    - identification.maintenance
     - identification.extent (single bounding temporal and geographic bounding box extent only)
     - identification.other_citation_details
+    - identification.graphic_overviews
+    - identification.spatial_resolution
     - data_quality.lineage.statement
     - distributor.format (`format` and `href` only)
     - distributor.transfer_option (except `online_resource.protocol`)
 
     Unsupported properties:
-    - identification.citation.identifiers
-    - identification.aggregations (except 'collections' and 'items')
-    - identification.constraints (except 'licence')
-    - identification.graphic_overviews
-    - identification.maintenance
-    - identification.purpose
+    - identification.purpose (except as used in ItemSummaries)
     - data_quality.domain_consistency
 
     Intentionally omitted properties:
     - *.character_set (not useful to end-users, present in underlying record)
     - *.language (not useful to end-users, present in underlying record)
     - *.online_resource.protocol (not useful to end-users, present in underlying record)
+    - identification.citation.identifiers[namespace='data.bas.ac.uk'] (maybe shown in citation, otherwise intended for external use)
+    - identification.citation.identifiers[namespace='alias.data.bas.ac.uk'] (maybe shown in citation, otherwise consumed internally)
     - distribution.distributor
     """
 
@@ -80,17 +94,46 @@ class ItemCatalogue(ItemBase):
         record: Record,
         embedded_maps_endpoint: str,
         item_contact_endpoint: str,
-        sentry_dsn: str,
         get_record_summary: Callable[[str], RecordSummary],
     ) -> None:
         super().__init__(record)
+        self.validate(record)
+
         self._embedded_maps_endpoint = embedded_maps_endpoint
         self._item_contact_endpoint = item_contact_endpoint
-        self._sentry_dsn = sentry_dsn
         self._get_summary = get_record_summary
 
         _loader = PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates")
         self._jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
+
+    @staticmethod
+    def validate(record: Record) -> None:
+        """
+        Validate underlying record against Data Catalogue requirements.
+
+        Validation based on [1]. Failed validation will raise a `RecordInvalidError` exception.
+
+        Note: The requirement for a file_identifier is already checked in ItemBase.
+
+        [1] https://gitlab.data.bas.ac.uk/MAGIC/add-metadata-toolbox/-/blob/v0.7.5/docs/implementation.md#minimum-record-requirements
+        """
+        record.validate()
+
+        self_identifiers = record.identification.identifiers.filter(namespace="data.bas.ac.uk")
+        if not self_identifiers:
+            msg = "Record must include an identification identifier with the 'data.bas.ac.uk' namespace."
+            exp = ValueError(msg)
+            raise ItemInvalidError(validation_error=exp)
+        if self_identifiers[0].identifier != record.file_identifier:
+            msg = "Record 'data.bas.ac.uk' identifier must match file identifier."
+            exp = ValueError(msg)
+            raise ItemInvalidError(validation_error=exp)
+
+        pocs = record.identification.contacts.filter(roles=ContactRoleCode.POINT_OF_CONTACT)
+        if not pocs:
+            msg = "Record must include an identification contact with the Point of Contact role."
+            exp = ValueError(msg)
+            raise ItemInvalidError(validation_error=exp)
 
     @staticmethod
     def _prettify_html(html: str) -> str:
@@ -111,6 +154,16 @@ class ItemCatalogue(ItemBase):
     def _dates(self) -> Dates:
         """Formatted dates."""
         return Dates(self._record.identification.dates)
+
+    @property
+    def _identifiers(self) -> Identifiers:
+        """Identifiers."""
+        return Identifiers(self._record.identification.identifiers)
+
+    @property
+    def _maintenance(self) -> Maintenance | None:
+        """Formatted dates."""
+        return Maintenance(self._record.identification.maintenance)
 
     @property
     def _items(self) -> ItemsTab:
@@ -155,9 +208,16 @@ class ItemCatalogue(ItemBase):
         return AdditionalInfoTab(
             item_id=self.resource_id,
             item_type=self.resource_type,
+            identifiers=self._identifiers,
             dates=self._dates,
+            series=self._record.identification.series,
+            scale=self._record.identification.spatial_resolution,
             datestamp=self._record.metadata.date_stamp,
+            projection=self.projection,
+            maintenance=self._maintenance,
             standard=self._record.metadata.metadata_standard,
+            profiles=self._record.data_quality.domain_consistency if self._record.data_quality else None,
+            kv=self.kv,
         )
 
     @property
@@ -167,11 +227,6 @@ class ItemCatalogue(ItemBase):
         return ContactTab(
             contact=poc, item_id=self.resource_id, item_title=self.title_plain, form_action=self._item_contact_endpoint
         )
-
-    @property
-    def sentry_dsn(self) -> str:
-        """Sentry DSN."""
-        return self._sentry_dsn
 
     @property
     def html_title(self) -> str:
@@ -200,11 +255,6 @@ class ItemCatalogue(ItemBase):
     def graphics(self) -> list[Link]:
         """Item graphics."""
         return [Link(href=graphic.href, value=graphic.description) for graphic in super().graphics]
-
-    @property
-    def noscript_href(self) -> str:
-        """URL for alternate item representation in cases where JavaScript is unavailable."""
-        return self._additional_info.record_link_html.href
 
     @property
     def tabs(self) -> list[Tab]:

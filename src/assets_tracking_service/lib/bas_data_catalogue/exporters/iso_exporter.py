@@ -1,10 +1,7 @@
 from pathlib import Path
-from shutil import copytree
 
 from bas_metadata_library.standards.iso_19115_2 import MetadataRecord, MetadataRecordConfigV4
 from bas_metadata_library.standards.iso_19115_common.utils import _decode_date_properties
-from importlib_resources import as_file as resources_as_file
-from importlib_resources import files as resources_files
 from lxml.etree import ElementTree, ProcessingInstruction, fromstring, tostring
 from mypy_boto3_s3 import S3Client
 
@@ -74,41 +71,18 @@ class IsoXmlHtmlExporter(Exporter):
         super().__init__(
             config=config, s3_client=s3_client, record=record, export_base=export_base, export_name=export_name
         )
+        self._stylesheets_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl.iso-html"
         self._stylesheets_path = stylesheets_base
-        self._stylesheets_url = self._calc_s3_key(stylesheets_base)
-        self._stylesheet_url = f"{self._stylesheets_url}/xml-to-html-ISO.xsl"
+        self._stylesheets_base_key = self._s3_utils.calc_key(stylesheets_base)
+        self._stylesheet_url = f"{self._stylesheets_base_key}/xml-to-html-ISO.xsl"
 
     def _dump_xsl(self) -> None:
         """Copy XML stylesheets to directory if not already present."""
-        if self._stylesheets_path.exists():
-            return
-
-        resources_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl"
-        with resources_as_file(resources_files(resources_ref)) as resources_path:
-            self._stylesheets_path.parent.mkdir(parents=True, exist_ok=True)
-            xsl_path = resources_path / "iso-html"
-            copytree(xsl_path, self._stylesheets_path)
+        self._dump_package_resources(src_ref=self._stylesheets_src_ref, dest_path=self._stylesheets_path)
 
     def _publish_xsl(self) -> None:
         """Upload stylesheets as S3 objects if they do not already exist."""
-        base_key = self._stylesheets_url
-
-        # abort if base_key already exists in bucket
-        response = self._s3_client.list_objects_v2(
-            Bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET, Prefix=base_key, MaxKeys=1
-        )
-        if "Contents" in response:
-            return
-
-        resources_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl"
-        with resources_as_file(resources_files(resources_ref)) as resources_path:
-            xsl_base = resources_path / "iso-html"
-            for xsl_path in xsl_base.glob("*"):
-                self._s3_client.upload_file(
-                    Filename=xsl_path,
-                    Bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
-                    Key=base_key + "/" + xsl_path.name,
-                )
+        self._s3_utils.upload_package_resources(src_ref=self._stylesheets_src_ref, base_key=self._stylesheets_base_key)
 
     def dumps(self) -> str:
         """
@@ -136,5 +110,7 @@ class IsoXmlHtmlExporter(Exporter):
 
         `BaseExporter.publish()` not used for encoded record so we can override content type.
         """
-        self._put_object(key=self._calc_s3_key(self._export_path), content_type="application/xml", body=self.dumps())
+        self._s3_utils.upload_content(
+            key=self._s3_utils.calc_key(self._export_path), content_type="application/xml", body=self.dumps()
+        )
         self._publish_xsl()

@@ -12,13 +12,18 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import
     Summary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
+    Identifiers,
     ItemSummaryCatalogue,
+    Maintenance,
     format_date,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
 from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+    Identifiers as RecordIdentifiers,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
     BoundingBox,
@@ -30,12 +35,17 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.ident
     Aggregations as RecordAggregations,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Extent as RecordExtent
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+    Maintenance as RecordMaintenance,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
     AggregationInitiativeCode,
     DatePrecisionCode,
     DateTypeCode,
     HierarchyLevelCode,
+    MaintenanceFrequencyCode,
+    ProgressCode,
 )
 from tests.conftest import _lib_get_record_summary
 
@@ -68,7 +78,7 @@ class TestFormatDate:
 
 
 class TestAggregations:
-    """Test Catalogue aggregations."""
+    """Test Catalogue Item aggregations."""
 
     def test_init(self):
         """Can create an Aggregations collection."""
@@ -127,7 +137,7 @@ class TestAggregations:
 
 
 class TestDates:
-    """Test Catalogue dates."""
+    """Test Catalogue Item dates."""
 
     def test_init(self):
         """Can create a Dates collection."""
@@ -166,7 +176,7 @@ class TestDates:
 
 
 class TestExtent:
-    """Test extent."""
+    """Test Catalogue Item extent."""
 
     def test_init(self):
         """Can create an Extent element."""
@@ -226,7 +236,11 @@ class TestExtent:
 
 
 class TestItemSummaryCatalogue:
-    """Test catalogue item summary."""
+    """
+    Test Catalogue Item summary.
+
+    Used for showing summaries of other items.
+    """
 
     def test_init(self, fx_lib_record_summary_minimal_item: RecordSummary):
         """Can create an ItemSummaryCatalogue."""
@@ -316,8 +330,114 @@ class TestItemSummaryCatalogue:
             assert summary.href_graphic.startswith(expected)
 
 
+class TestIdentifiers:
+    """Test Catalogue Item identifiers."""
+
+    def test_init(self):
+        """Can create an Identifiers element."""
+        identifiers = Identifiers(RecordIdentifiers([]))
+        assert isinstance(identifiers, Identifiers)
+
+    def test_make_gitlab_issue_ref(self):
+        """Can compute GitLab issue reference."""
+        value = "https://gitlab.data.bas.ac.uk/MAGIC/foo/-/issues/123"
+        expected = "MAGIC/foo#123"
+
+        result = Identifiers._make_gitlab_issue_ref(value)
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("identifiers", "expected"),
+        [
+            ([], []),
+            (
+                [
+                    Identifier(
+                        identifier="10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                        href="https://doi.org/10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                        namespace="doi",
+                    )
+                ],
+                [
+                    Link(
+                        value="10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                        href="https://doi.org/10.123/30825673-6276-4e5a-8a97-f97f2094cd25",
+                        external=True,
+                    )
+                ],
+            ),
+        ],
+    )
+    def test_doi(self, identifiers: list[Identifier], expected: list[str]):
+        """Can get any DOIs."""
+        identifiers = Identifiers(RecordIdentifiers(identifiers))
+        result = identifiers.doi
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("identifiers", "expected"),
+        [([], []), ([Identifier(identifier="978-0-85665-230-1", namespace="isbn")], ["978-0-85665-230-1"])],
+    )
+    def test_isbn(self, identifiers: list[Identifier], expected: list[str]):
+        """Can get any ISBNs."""
+        identifiers = Identifiers(RecordIdentifiers(identifiers))
+        result = identifiers.isbn
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("identifiers", "expected"),
+        [
+            ([], []),
+            (
+                [
+                    Identifier(
+                        identifier="https://gitlab.data.bas.ac.uk/MAGIC/foo/-/issues/123",
+                        href="https://gitlab.data.bas.ac.uk/MAGIC/foo/-/issues/123",
+                        namespace="gitlab.data.bas.ac.uk",
+                    )
+                ],
+                ["MAGIC/foo#123"],
+            ),
+        ],
+    )
+    def test_gitlab_issues(self, identifiers: list[Identifier], expected: list[str]):
+        """Can compute GitLab issue reference."""
+        identifiers = Identifiers(RecordIdentifiers(identifiers))
+        result = identifiers.gitlab_issues
+        assert result == expected
+
+
+class TestMaintenance:
+    """Test Catalogue Item maintenance."""
+
+    def test_init(self):
+        """Can create a maintenance element."""
+        maintenance = Maintenance(RecordMaintenance())
+        assert isinstance(maintenance, Maintenance)
+
+    @pytest.mark.parametrize(
+        ("progress", "expected"),
+        [
+            (None, None),
+            (ProgressCode.HISTORICAL_ARCHIVE, "Item has been archived and may be outdated"),
+        ],
+    )
+    def test_status(self, progress: ProgressCode | None, expected: ProgressCode | None):
+        """Can get formatted progress code as status if set."""
+        maintenance = Maintenance(RecordMaintenance(progress=progress))
+        assert maintenance.status == expected
+
+    @pytest.mark.parametrize(
+        ("frequency", "expected"), [(None, None), (MaintenanceFrequencyCode.IRREGULAR, "Item is updated irregularly")]
+    )
+    def test_frequency(self, frequency: MaintenanceFrequencyCode | None, expected: ProgressCode | None):
+        """Can get formatted update frequency code as frequency if set."""
+        maintenance = Maintenance(RecordMaintenance(maintenance_frequency=frequency))
+        assert maintenance.frequency == expected
+
+
 class TestPageHeader:
-    """Test page header."""
+    """Test Catalogue Item page header."""
 
     def test_init(self):
         """Can create a page header element."""
@@ -334,7 +454,7 @@ class TestPageHeader:
 
 
 class TestSummary:
-    """Test summary panel."""
+    """Test Catalogue Item summary panel."""
 
     @pytest.mark.parametrize(
         ("item_type", "edition", "published", "aggregations", "citation"),

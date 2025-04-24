@@ -713,6 +713,7 @@ class TestRecord:
                             "validityExpires": "2014-06-30",
                         },
                         "edition": "x",
+                        "series": {"name": "x", "edition": "x"},
                         "identifiers": [{"identifier": "x", "href": "x", "namespace": "x"}],
                         "other_citation_details": "x",
                         "abstract": "x",
@@ -773,6 +774,8 @@ class TestRecord:
                                 },
                             }
                         ],
+                        "spatial_resolution": 1,
+                        "supplemental_information": "x",
                         "lineage": {"statement": "x"},
                         "domain_consistency": [
                             {
