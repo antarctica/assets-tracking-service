@@ -174,6 +174,15 @@ class TestRecord:
 
         assert config == expected
 
+    @pytest.mark.parametrize("supported", [True, False])
+    def test_config_supported(self, fx_lib_record_config_minimal_iso: dict, supported: bool):
+        """Can determine if a record config is supported or not."""
+        if not supported:
+            fx_lib_record_config_minimal_iso["hierarchy_level"] = HierarchyLevelCode.SERIES
+
+        result = Record.config_supported(fx_lib_record_config_minimal_iso)
+        assert result == supported
+
     def test_validate_min_iso(self):
         """A minimally valid ISO record can be validated."""
         record = Record(
@@ -880,15 +889,7 @@ class TestRecord:
         expected = values
 
         if run == "minimal-iso" or run == "minimal-magic":
-            # add properties that will be set by default to allow for accurate comparison
-            expected["metadata"]["character_set"] = "utf8"
-            expected["metadata"]["language"] = "eng"
-            expected["metadata"]["metadata_standard"] = {
-                "name": "ISO 19115-2 Geographic Information - Metadata - Part 2: Extensions for Imagery and Gridded Data",
-                "version": "ISO 19115-2:2009(E)",
-            }
-            expected["identification"]["character_set"] = "utf8"
-            expected["identification"]["language"] = "eng"
+            expected = Record._add_static_config_values(expected)
 
         assert result == expected
 

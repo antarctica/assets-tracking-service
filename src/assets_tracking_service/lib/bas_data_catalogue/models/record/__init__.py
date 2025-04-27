@@ -207,6 +207,20 @@ class Record:
         return converter.unstructure(self)
 
     @staticmethod
+    def _add_static_config_values(value: dict) -> dict:
+        """Add properties that will be set by default to allow for accurate config comparisons."""
+        updated = deepcopy(value)
+        updated["metadata"]["character_set"] = "utf8"
+        updated["metadata"]["language"] = "eng"
+        updated["metadata"]["metadata_standard"] = {
+            "name": "ISO 19115-2 Geographic Information - Metadata - Part 2: Extensions for Imagery and Gridded Data",
+            "version": "ISO 19115-2:2009(E)",
+        }
+        updated["identification"]["character_set"] = "utf8"
+        updated["identification"]["language"] = "eng"
+        return updated
+
+    @staticmethod
     def _get_resource_contents(file: str) -> dict:
         """Get contents of package resource file."""
         package_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.schemas"
