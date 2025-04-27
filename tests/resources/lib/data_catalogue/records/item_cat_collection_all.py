@@ -252,6 +252,15 @@ the same. Well excuse me, Judge Reinhold!
                 ),
                 Aggregation(
                     identifier=Identifier(
+                        identifier="f90013f6-2893-4c72-953a-a1a6bc1919d7",
+                        href="https://data.bas.ac.uk/items/f90013f6-2893-4c72-953a-a1a6bc1919d7",
+                        namespace="data.bas.ac.uk",
+                    ),
+                    association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                    initiative_type=AggregationInitiativeCode.COLLECTION,
+                ),
+                Aggregation(
+                    identifier=Identifier(
                         identifier="e0df252c-fb8b-49ff-9711-f91831b66ea2",
                         href="https://data.bas.ac.uk/items/e0df252c-fb8b-49ff-9711-f91831b66ea2",
                         namespace="data.bas.ac.uk",

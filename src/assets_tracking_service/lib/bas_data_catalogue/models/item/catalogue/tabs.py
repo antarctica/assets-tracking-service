@@ -11,6 +11,12 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distri
     ArcGisFeatureLayer,
     ArcGisOgcApiFeatures,
     Distribution,
+    GeoJson,
+    GeoPackage,
+    Jpeg,
+    Pdf,
+    Png,
+    Shapefile,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Aggregations,
@@ -99,7 +105,16 @@ class DataTab(Tab):
 
     def __init__(self, distributions: list[RecordDistribution]) -> None:
         self._resource_distributions = distributions
-        self._supported_distributions = [ArcGisFeatureLayer, ArcGisOgcApiFeatures]
+        self._supported_distributions = [
+            ArcGisFeatureLayer,
+            ArcGisOgcApiFeatures,
+            GeoPackage,
+            GeoJson,
+            Jpeg,
+            Pdf,
+            Png,
+            Shapefile,
+        ]
         self._processed_distributions = self._process_distributions()
 
     def _process_distributions(self) -> list[Distribution]:
