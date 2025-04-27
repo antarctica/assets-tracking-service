@@ -15,7 +15,7 @@
     {% set classes = com.btn_primary_classes() %}
   {% endif %}
 
-  {% if data.href %}
+  {% if data.action.href %}
     <a class="{{ classes }} p-2" href="{{ data.action.href }}">{{ data.action.value }}</a>
   {% else %}
     <button class="{{ classes }} p-2" data-target="{{ data.access_target}}">
