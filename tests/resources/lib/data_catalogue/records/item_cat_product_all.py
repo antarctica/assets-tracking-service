@@ -210,7 +210,7 @@ medical marijuana. Primo bud. Real sticky weed. So, what do you say? We got a ba
 What's Kama Sutra oil? Maybe it's not for us. He… she… what's the difference? Oh hear, hear. In the dark, it all looks
 the same. Well excuse me, Judge Reinhold!
         """,
-        purpose="""I shall hide behind the couch. _(Guy's a pro.)_ No, I was ashamed to be **SEEN** with you. I like being **WITH** you!""",
+        purpose="""Item to test all supported Product properties are recognised and presented correctly.""",
         spatial_resolution=1_234_567_890,
         contacts=Contacts(
             [

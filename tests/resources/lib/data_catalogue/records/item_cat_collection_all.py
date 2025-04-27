@@ -216,7 +216,7 @@ the same. Well excuse me, Judge Reinhold!
                 GraphicOverview(
                     identifier="overview",
                     description="Overview",
-                    href="https://cdn.web.bas.ac.uk/add-catalogue/0.0.0/img/items/e46046cc-7375-444a-afaa-3356c278d446/1005-thumbnail.png",
+                    href="https://images.unsplash.com/photo-1603738397364-e89b419504d0?q=80&w=720&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     mime_type="image/png",
                 )
             ]
