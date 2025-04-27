@@ -5,7 +5,9 @@
     <div class="text-left">{{ data.format_type.value }}</div>
     <div class="text-center">{{ data.size }}</div>
     <div class="text-right">{{ action(data) }}</div>
-    <div class="col-span-3">{{ content(data) }}</div>
+    {% if data.access_target %}
+      <div class="col-span-3">{{ content(data) }}</div>
+    {% endif %}
   {% endcall %}
 {% endmacro %}
 
