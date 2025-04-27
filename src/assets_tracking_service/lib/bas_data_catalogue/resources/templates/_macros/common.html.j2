@@ -2,14 +2,13 @@
 
 {% macro link_classes() %}text-sky-blue-500 hover:underline{% endmacro %}
 
-{% macro btn_base_classes() %}font-bold cursor-pointer{% endmacro %}
+{% macro btn_base_classes() %}cursor-pointer{% endmacro %}
 
-{% macro btn_default_classes() %}{{ btn_base_classes() }} bg-grey-500 text-black hover:bg-grey-700{% endmacro %}
+{% macro btn_default_classes() %}{{ btn_base_classes() }} bg-grey-100 text-black hover:bg-grey-300{% endmacro %}
 
 {% macro btn_primary_classes() %}{{ btn_base_classes() }} bg-turquoise-500 text-white hover:bg-turquoise-700{% endmacro %}
 
 {% macro footer_link_classes() %}text-sky-blue-300 hover:underline{% endmacro %}
-
 
 {% macro back_to_top_id() %}site_top{% endmacro %}
 

@@ -16,7 +16,9 @@
   {% endif %}
 
   {% if data.action.href %}
-    <a class="{{ classes }} p-2" href="{{ data.action.href }}">{{ data.action.value }}</a>
+    <a class="{{ classes }} inline-block p-2" href="{{ data.action.href }}">
+      {{ data.action.value }} <i class="{{ data.action_btn_icon }}"></i>
+    </a>
   {% else %}
     <button class="{{ classes }} p-2" data-target="{{ data.access_target}}">
       {{ data.action.value }} <i class="{{ data.action_btn_icon }}"></i>

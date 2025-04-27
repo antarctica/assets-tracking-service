@@ -26,7 +26,6 @@
     --color-grey-100: #EEEEEE;
     --color-grey-300: #999999;
     --color-grey-500: #777777;
-    --color-grey-700: #555555;
     --color-grey-900: #333333;
     --color-grey-950: #222222;
     --color-yellow-500: #FFBF47;
@@ -859,6 +858,9 @@
   .hidden {
     display: none;
   }
+  .inline-block {
+    display: inline-block;
+  }
   .table {
     display: table;
   }
@@ -999,9 +1001,6 @@
   }
   .bg-grey-100 {
     background-color: var(--color-grey-100);
-  }
-  .bg-grey-300 {
-    background-color: var(--color-grey-300);
   }
   .bg-grey-950 {
     background-color: var(--color-grey-950);
@@ -1328,10 +1327,10 @@
       }
     }
   }
-  .hover\:bg-grey-700 {
+  .hover\:bg-grey-300 {
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-grey-700);
+        background-color: var(--color-grey-300);
       }
     }
   }
