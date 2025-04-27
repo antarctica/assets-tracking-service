@@ -540,6 +540,108 @@ class TestSummary:
             assert summary.citation is None
 
     @pytest.mark.parametrize(
+        ("item_type", "edition", "published", "aggregations", "expected"),
+        [
+            (
+                HierarchyLevelCode.PRODUCT,
+                "1",
+                "x",
+                # add collection and item aggregations
+                Aggregations(
+                    aggregations=RecordAggregations(
+                        [
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            ),
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            ),
+                        ]
+                    ),
+                    get_summary=_lib_get_record_summary,
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                "1",
+                None,
+                # add collection aggregation
+                Aggregations(
+                    aggregations=RecordAggregations(
+                        [
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            )
+                        ]
+                    ),
+                    get_summary=_lib_get_record_summary,
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                None,
+                "x",
+                # add item aggregation
+                Aggregations(
+                    aggregations=RecordAggregations(
+                        [
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            )
+                        ]
+                    ),
+                    get_summary=_lib_get_record_summary,
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                None,
+                None,
+                Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                False,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                "1",
+                "x",
+                Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                False,
+            ),
+        ],
+    )
+    def test_grid_enabled(
+        self,
+        item_type: HierarchyLevelCode,
+        edition: str | None,
+        published: str | None,
+        aggregations: Aggregations,
+        expected: bool,
+    ):
+        """Can show combination of publication and revision date if relevant."""
+        summary = Summary(
+            item_type=item_type,
+            edition=edition,
+            published_date=published,
+            revision_date=None,
+            aggregations=aggregations,
+            citation=None,
+            abstract="x",
+        )
+
+        assert summary.grid_enabled == expected
+
+    @pytest.mark.parametrize(
         ("item_type", "published", "revision", "expected"),
         [
             (HierarchyLevelCode.PRODUCT, None, None, None),

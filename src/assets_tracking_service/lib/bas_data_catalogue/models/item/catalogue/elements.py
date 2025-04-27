@@ -78,7 +78,7 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return format_date(self.date) if self.date else None
 
     @property
-    def fragments(self) -> list[tuple[str | None, str | None, str]]:
+    def fragments(self) -> list[tuple[str | None, str | None, str | None]]:
         """UI fragments (icons and labels) for item summary."""
         fragments = [(self._resource_type_icon, None, self.resource_type.value.capitalize())]
         if self.edition and self.resource_type != HierarchyLevelCode.COLLECTION:
@@ -407,6 +407,19 @@ class Summary:
         self._aggregations = aggregations
         self._citation = citation
         self._abstract = abstract
+
+    @property
+    def grid_enabled(self) -> bool:
+        """
+        Whether to show summary grid section in UI.
+
+        The grid consists of all properties except the abstract/purpose and citation.
+        """
+        if self._item_type == HierarchyLevelCode.COLLECTION:
+            return False
+        return (
+            self.edition is not None or self.published is not None or len(self.collections) > 0 or self.items_count > 0
+        )
 
     @property
     def edition(self) -> str | None:
