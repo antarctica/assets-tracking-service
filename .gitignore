@@ -25,7 +25,6 @@ htmlcov/
 
 # Terraform generated files
 /provisioning/terraform/.terraform
-/provisioning/terraform/.terraform.lock.hcl
 
 # Tailwind generated files
 scripts/tailwind
