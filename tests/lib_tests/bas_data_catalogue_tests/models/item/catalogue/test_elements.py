@@ -227,7 +227,7 @@ class TestExtent:
                 ),
             )
         )
-        expected_bbox = "[1.0,2.0,4.0,3.0]"
+        expected_bbox = "[1.0,3.0,2.0,4.0]"
         expected_url = f"https://example.com/?bbox={expected_bbox}&globe-overview"
         expected = f"<iframe src='{expected_url}' width='100%' height='400' frameborder='0'></iframe>"
 

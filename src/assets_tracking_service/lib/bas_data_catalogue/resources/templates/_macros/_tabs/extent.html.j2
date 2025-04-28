@@ -18,13 +18,13 @@
       <dl class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div class="col-span-1">
-            {% call com.dl_item(title='Top-right Corner', id='bbox-top') %}
-              North: {{ data[2] }}, East: {{ data[1] }}
+            {% call com.dl_item(title='South-West Corner (min x/y)', id='bbox-min') %}
+              South: {{ data[1] }}, West: {{ data[0] }}
             {% endcall %}
           </div>
           <div class="col-span-1">
-            {% call com.dl_item(title='Bottom-left Corner', id='bbox-bottom') %}
-              South: {{ data[3] }}, West: {{ data[0] }}
+            {% call com.dl_item(title='North-East Corner (max x/y)', id='bbox-max') %}
+              North: {{ data[3] }}, East: {{ data[2] }}
             {% endcall %}
           </div>
         </div>
