@@ -11,7 +11,7 @@
 {% endmacro %}
 
 {% macro top_bit(data) %}
-  <div class="grid grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-y-4 lg:gap-x-4">
     {{ summary(data.summary) }}
     {{ graphics(data.graphics) }}
   </div>
@@ -30,7 +30,7 @@
 {% endmacro %}
 
 {% macro summary_grid(data) %}
-  <section class="grid grid-cols-2 gap-4">
+  <section class="grid grid-cols-1 gap-y-4 lg:gap-x-8 lg:grid-cols-[auto_1fr]">
     {% if data.collections %}
       {{ collections(data.collections) }}
     {% endif %}

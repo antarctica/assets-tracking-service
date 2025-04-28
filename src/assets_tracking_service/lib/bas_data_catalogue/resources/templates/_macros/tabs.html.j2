@@ -6,7 +6,7 @@
 {% import '_macros/_tabs/contact.html.j2' as contact_tab %}
 
 {% macro items(data) %}
-  <section id="tab-content-items" class="grid grid-cols-2 gap-4">
+  <section id="tab-content-items" class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
     {% for item in data.items %}
       {{ com.item_summary(item) }}
     {% endfor %}
@@ -15,7 +15,7 @@
 
 {% macro data(data) %}
   <section id="tab-content-data">
-    <div class="w-2/3">
+    <div class="lg:w-2/3">
       <div class="grid grid-cols-3 gap-4">
         <div class="font-bold text-left">Format</div>
         <div class="font-bold text-center">Size</div>
@@ -30,7 +30,7 @@
 {% endmacro %}
 
 {% macro authors(data) %}
-  <section id="tab-content-authors" class="grid grid-cols-2 gap-4">
+  <section id="tab-content-authors" class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
     {% for item in data.items %}
       {{ author(item) }}
     {% endfor %}
@@ -59,7 +59,7 @@
 
 {% macro extent(data) %}
   <section id="tab-content-extent">
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
       <div class="col-span-1">{{ extent_tab.map(data.map_iframe) }}</div>
       <div class="col-span-1">{{ extent_tab.info(data) }}</div>
     </div>
@@ -68,7 +68,7 @@
 
 {% macro lineage(data) %}
   <section id="tab-content-lineage">
-    <div class="w-2/3">
+    <div class="lg:w-2/3">
       <div class="p-2 space-y-8">
         {% call com.item_title() %}Lineage Statement{% endcall %}
         {% call com.item_border() %}
@@ -81,7 +81,7 @@
 
 {% macro related(data) %}
   <section id="tab-content-related">
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
       {% if data.collections %}
         <div class="p-2 col-span-1 space-y-8">
           {% call com.item_title() %}Collections this Item is part of{% endcall %}
@@ -98,7 +98,7 @@
 
 {% macro info(data) %}
   <section id="tab-content-info">
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
       <div class="p-2 col-span-1 space-y-8">
         {{ info_tab.item(data) }}
       </div>
@@ -114,7 +114,7 @@
     <div class="border-l-5 border-l-sky-blue-500 p-4 pr-0">
       Contact the <strong>{{ data.team }}</strong> with any questions or comments about this item.
     </div>
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
       <div class="p-2 col-span-1 space-y-8">
         {{ contact_tab.form(data) }}
       </div>
