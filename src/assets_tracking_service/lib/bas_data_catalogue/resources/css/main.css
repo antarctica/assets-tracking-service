@@ -1078,6 +1078,9 @@
     --tw-font-weight: var(--font-weight-light);
     font-weight: var(--font-weight-light);
   }
+  .text-\[\#A6CE39\] {
+    color: #A6CE39;
+  }
   .text-black {
     color: var(--color-black);
   }
