@@ -207,8 +207,8 @@ class Record:
         return converter.unstructure(self)
 
     @staticmethod
-    def _add_static_config_values(value: dict) -> dict:
-        """Add properties that will be set by default to allow for accurate config comparisons."""
+    def _normalise_static_config_values(value: dict) -> dict:
+        """Adjust properties that will be set by default to allow for accurate config comparisons."""
         updated = deepcopy(value)
         updated["metadata"]["character_set"] = "utf8"
         updated["metadata"]["language"] = "eng"
@@ -218,7 +218,23 @@ class Record:
         }
         updated["identification"]["character_set"] = "utf8"
         updated["identification"]["language"] = "eng"
+
+        if "maintenance" in updated["metadata"]:
+            del updated["metadata"]["maintenance"]
+
         return updated
+
+    @staticmethod
+    def config_supported(config: dict) -> bool:
+        """
+        Check if the record configuration is supported by this class.
+
+        To ensure an accurate comparison, default/hard-coded values are added to a copy of the config before comparison.
+        """
+        record = Record.loads(config)
+        check = record.dumps()
+        normalised = Record._normalise_static_config_values(config)
+        return normalised == check
 
     @staticmethod
     def _get_resource_contents(file: str) -> dict:

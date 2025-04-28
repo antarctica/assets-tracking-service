@@ -889,7 +889,7 @@ class TestRecord:
         expected = values
 
         if run == "minimal-iso" or run == "minimal-magic":
-            expected = Record._add_static_config_values(expected)
+            expected = Record._normalise_static_config_values(expected)
 
         assert result == expected
 

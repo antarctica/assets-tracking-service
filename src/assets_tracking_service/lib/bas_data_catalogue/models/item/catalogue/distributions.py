@@ -141,7 +141,7 @@ class ArcGisFeatureLayer(Distribution):
         item_hrefs = [
             option.format.href
             for option in [option, *other_options]
-            if hasattr(option, "format") and hasattr(option.format, "href")
+            if option.format is not None and option.format.href is not None
         ]
 
         match = all(href in item_hrefs for href in target_hrefs)
@@ -223,7 +223,7 @@ class ArcGisOgcApiFeatures(Distribution):
         item_hrefs = [
             option.format.href
             for option in [option, *other_options]
-            if hasattr(option, "format") and hasattr(option.format, "href")
+            if option.format is not None and option.format.href is not None
         ]
 
         match = all(href in item_hrefs for href in target_hrefs)
@@ -288,7 +288,10 @@ class GeoJson(FileDistribution):
     @classmethod
     def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
         """Whether this class matches the distribution option."""
-        return option.format.href == "https://www.iana.org/assignments/media-types/application/geo+json"
+        return (
+            option.format is not None
+            and option.format.href == "https://www.iana.org/assignments/media-types/application/geo+json"
+        )
 
     @property
     def format_type(self) -> DistributionType:
@@ -314,7 +317,7 @@ class GeoPackage(FileDistribution):
             "https://www.iana.org/assignments/media-types/application/geopackage+sqlite3",
             "https://metadata-resources.data.bas.ac.uk/media-types/application/geopackage+sqlite3+zip",
         ]
-        return option.format.href in target_hrefs
+        return option.format is not None and option.format.href in target_hrefs
 
     @staticmethod
     def _is_compressed(option: RecordDistribution) -> bool:
@@ -336,7 +339,10 @@ class Jpeg(FileDistribution):
     @classmethod
     def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
         """Whether this class matches the distribution option."""
-        return option.format.href == "https://jpeg.org/jpeg/"
+        return (
+            option.format is not None
+            and option.format.href == "https://www.iana.org/assignments/media-types/image/jpeg"
+        )
 
     @property
     def format_type(self) -> DistributionType:
@@ -362,7 +368,7 @@ class Pdf(FileDistribution):
             "https://www.iana.org/assignments/media-types/application/pdf",
             "https://metadata-resources.data.bas.ac.uk/media-types/application/pdf+geo",
         ]
-        return option.format.href in target_hrefs
+        return option.format is not None and option.format.href in target_hrefs
 
     @staticmethod
     def _is_georeferenced(option: RecordDistribution) -> bool:
@@ -384,7 +390,9 @@ class Png(FileDistribution):
     @classmethod
     def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
         """Whether this class matches the distribution option."""
-        return option.format.href == "https://www.iana.org/assignments/media-types/image/png"
+        return (
+            option.format is not None and option.format.href == "https://www.iana.org/assignments/media-types/image/png"
+        )
 
     @property
     def format_type(self) -> DistributionType:
@@ -402,7 +410,10 @@ class Shapefile(FileDistribution):
     @classmethod
     def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
         """Whether this class matches the distribution option."""
-        return option.format.href == "https://metadata-resources.data.bas.ac.uk/media-types/application/shapefile+zip"
+        return (
+            option.format is not None
+            and option.format.href == "https://metadata-resources.data.bas.ac.uk/media-types/application/shapefile+zip"
+        )
 
     @property
     def format_type(self) -> DistributionType:
