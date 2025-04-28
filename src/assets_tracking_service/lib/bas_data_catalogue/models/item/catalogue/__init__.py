@@ -60,25 +60,26 @@ class ItemCatalogue(ItemBase):
     - identification.citation.dates
     - identification.citation.edition
     - identification.citation.contacts ('author' roles and a single 'point of contact' role only, and except `contact.position`)
-    - identification.abstract
-    - identification.aggregations ('collections' and 'items' only)
-    - identification.constraints ('licence' only)
     - identification.citation.series
     - identification.citation.identifiers[namespace='doi']
     - identification.citation.identifiers[namespace='isbn']
     - identification.citation.identifiers[namespace='gitlab.data.bas.ac.uk'] (as references only)
+    - identification.abstract
+    - identification.aggregations ('collections' and 'items' only)
+    - identification.constraints ('licence' only)
     - identification.maintenance
     - identification.extent (single bounding temporal and geographic bounding box extent only)
     - identification.other_citation_details
     - identification.graphic_overviews
     - identification.spatial_resolution
+    - identification.supplemental_information (for physical dimensions only)
     - data_quality.lineage.statement
+    - data_quality.domain_consistency
     - distributor.format (`format` and `href` only)
     - distributor.transfer_option (except `online_resource.protocol`)
 
     Unsupported properties:
     - identification.purpose (except as used in ItemSummaries)
-    - data_quality.domain_consistency
 
     Intentionally omitted properties:
     - *.character_set (not useful to end-users, present in underlying record)
