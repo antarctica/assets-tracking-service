@@ -10,10 +10,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Aggregations,
     Dates,
     Extent,
+    FormattedDate,
     Identifiers,
     ItemSummaryCatalogue,
     Maintenance,
-    format_date,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
@@ -369,7 +369,7 @@ class TestAdditionalInfoTab:
         assert tab.item_type == item_type.value
         assert tab.item_type_icon == "fa-fw far fa-map"
         assert isinstance(tab.dates, dict)
-        assert tab.datestamp == format_date(Date(date=datestamp))
+        assert tab.datestamp == FormattedDate.from_rec_date(Date(date=datestamp))
         assert tab.record_link_xml.href == xml_href
         assert tab.record_link_html.href == html_href
         assert tab.record_link_json.href == json_href

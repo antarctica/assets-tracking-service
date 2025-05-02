@@ -64,9 +64,9 @@
   <div id="summary-edition">{{ value }}</div>
 {% endmacro %}
 
-{% macro published(value) %}
+{% macro published(data) %}
   <div class="font-bold">Published</div>
-  <div><time id="summary-publication">{{ value }}</time></div>
+  <div>{{ com.time(data, id='summary-publication') }}</div>
 {% endmacro %}
 
 {% macro citation(value) %}

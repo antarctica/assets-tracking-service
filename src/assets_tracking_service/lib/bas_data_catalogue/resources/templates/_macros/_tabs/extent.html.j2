@@ -42,12 +42,12 @@
           <div class="grid grid-cols-2 gap-4">
             <div class="col-span-1">
               {% call com.dl_item(title='Start', id='period-start') %}
-                {% if start %}{{ start }}{% else %}-{% endif %}
+                {% if start %}{{ com.time(start, id='period-start') }}{% else %}-{% endif %}
               {% endcall %}
             </div>
             <div class="col-span-1">
-              {% call com.dl_item(title='End', id='period-end') %}
-                {% if end %}{{ end }}{% else %}-{% endif %}
+              {% call com.dl_item(title='End') %}
+                {% if end %}{{ com.time(end, id='period-end') }}{% else %}-{% endif %}
               {% endcall %}
             </div>
           </div>

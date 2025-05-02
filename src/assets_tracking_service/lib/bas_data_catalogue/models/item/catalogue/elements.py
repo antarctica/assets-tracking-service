@@ -1,6 +1,8 @@
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from typing import TypeVar
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemSummaryBase, md_as_html
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
@@ -28,27 +30,50 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ProgressCode,
 )
 
+TFormattedDate = TypeVar("TFormattedDate", bound="FormattedDate")
 
-def format_date(value: Date, relative_to: datetime | None = None) -> str:
-    """
-    Format date to string.
 
-    Uses the 'DD MMM YYYY' (e.g. 01 Oct 2023) format for dates where precision allows.
-    Date times within 24 hours of now (or other specified time) return the date and time, otherwise the time is omitted.
-    """
-    relative_to = relative_to or datetime.now(tz=UTC)
+@dataclass(kw_only=True)
+class FormattedDate:
+    """Represents a HTML time element."""
 
-    if not isinstance(value, Date):
-        msg = "Value must be a record Date object."
-        raise TypeError(msg) from None
+    value: str
+    datetime: str
 
-    if isinstance(value.date, datetime) and not relative_to - value.date > timedelta(hours=24):
-        return value.date.strftime("%d %B %Y %H:%M:%S %Z")
-    if isinstance(value.date, date) and value.precision is DatePrecisionCode.YEAR:
-        return value.date.strftime("%Y")
-    if isinstance(value.date, date) and value.precision is DatePrecisionCode.MONTH:
-        return value.date.strftime("%B %Y")
-    return value.date.strftime("%d %B %Y")
+    @classmethod
+    def from_rec_date(cls: type[TFormattedDate], value: Date, relative_to: datetime | None = None) -> "FormattedDate":
+        """
+        Format a Record date for use in HTML time elements.
+
+        Time elements consist of human-readable value and a machine-readable 'datetime' attribute.
+
+        For time values:
+        - uses a 'DD MMM YYYY' (e.g. 01 Oct 2023) representation where precision allows
+        - Date times within 24 hours of a reference point (defaults to now) returns the date and time (otherwise omitted)
+
+        For time 'datetime' attributes:
+        - uses the relevant ISO 8601 representation (e.g. 2023-10-01T12:00:00+00:00)
+        """
+        if not isinstance(value, Date):
+            msg = "Value must be a record Date object."
+            raise TypeError(msg) from None
+
+        dt = value.date.strftime("%Y-%m-%d")
+        val = value.date.strftime("%d %B %Y")
+        relative_to = relative_to or datetime.now(tz=UTC)
+
+        if isinstance(value.date, datetime) and not relative_to - value.date > timedelta(hours=24):
+            val = value.date.strftime("%d %B %Y %H:%M:%S %Z")
+            dt = value.date.isoformat()
+        if isinstance(value.date, date) and value.precision is DatePrecisionCode.YEAR:
+            val = value.date.strftime("%Y")
+            dt = str(value.date.year)
+        if isinstance(value.date, date) and value.precision is DatePrecisionCode.MONTH:
+            val = value.date.strftime("%B %Y")
+            dt = value.date.strftime("%Y-%m")
+
+        return cls(value=val, datetime=dt)
+
 
 
 class ItemSummaryCatalogue(ItemSummaryBase):
@@ -73,9 +98,9 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return ResourceTypeIcon[self.resource_type.name].value
 
     @property
-    def _date(self) -> str | None:
+    def _date(self) -> FormattedDate | None:
         """Formatted date."""
-        return format_date(self.date) if self.date else None
+        return FormattedDate.from_rec_date(self.date) if self.date else None
 
     @property
     def fragments(self) -> list[tuple[str | None, str | None, str | None]]:
@@ -204,7 +229,7 @@ class Dates(RecordDates):
         # noinspection PyTypeChecker
         super().__init__(**unpack(dates))
 
-    def __getattribute__(self, name: str) -> str | None:
+    def __getattribute__(self, name: str) -> FormattedDate | None:
         """Get formatted date by name."""
         if name not in object.__getattribute__(self, "__dataclass_fields__"):
             return object.__getattribute__(self, name)
@@ -212,7 +237,7 @@ class Dates(RecordDates):
         val: Date = super().__getattribute__(name)
         if val is None:
             return None
-        return format_date(val)
+        return FormattedDate.from_rec_date(val)
 
     def as_dict_enum(self) -> dict[DateTypeCode, str]:
         """Non-None values as a dictionary with DateTypeCode enum keys."""
@@ -256,12 +281,12 @@ class Extent(ItemExtent):
     @property
     def start(self) -> str | None:
         """Temporal period start."""
-        return format_date(super().start) if super().start else None
+        return FormattedDate.from_rec_date(super().start) if super().start else None
 
     @property
     def end(self) -> str | None:
         """Temporal period end."""
-        return format_date(super().end) if super().end else None
+        return FormattedDate.from_rec_date(super().end) if super().end else None
 
     @property
     def map_iframe(self) -> str:

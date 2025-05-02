@@ -69,7 +69,7 @@
       {% endif %}
 
       {% for term, value in data.dates.items() %}
-        {% call com.dl_item(title=term, id='info-'+term) %}{{ value }}{% endcall %}
+        {% call com.dl_item(title=term) %}{{ com.time(value, id='info-'+term) }}{% endcall %}
       {% endfor %}
 
       {% if data.status %}
@@ -87,7 +87,7 @@
   {% call com.item_title() %}Metadata Information{% endcall %}
   {% call com.item_border() %}
     <dl class="space-y-4">
-      {% call com.dl_item(title='Last updated', id='info-datestamp') %}{{ data.datestamp }}{% endcall %}
+      {% call com.dl_item(title='Last updated') %}{{ com.time(data.datestamp, id='info-datestamp') }}{% endcall %}
 
       {% if data.standard %}
         {% call com.dl_item(title='Metadata Standard', id='info-standard') %}{{ data.standard }}{% endcall %}

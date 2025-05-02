@@ -25,6 +25,10 @@
   </div>
 {% endmacro %}
 
+{% macro time(data, id=None) %}
+  <time {% if id %}id="{{ id }}"{% endif %} datetime="{{ data.datetime }}">{{ data.value }}</time>
+{% endmacro %}
+
 {% macro ext_link_i() %}<i class="far fa-external-link"></i>{% endmacro %}
 
 {% macro ext_link_a(href, value) %}

@@ -21,10 +21,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distri
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Aggregations,
     Dates,
+    FormattedDate,
     Identifiers,
     ItemSummaryCatalogue,
     Maintenance,
-    format_date,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence, ResourceTypeIcon
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Series
@@ -478,9 +478,9 @@ class AdditionalInfoTab(Tab):
         return self._maintenance.frequency
 
     @property
-    def datestamp(self) -> str:
+    def datestamp(self) -> FormattedDate:
         """Metadata datestamp."""
-        return format_date(Date(date=self._datestamp))
+        return FormattedDate.from_rec_date(Date(date=self._datestamp))
 
     @property
     def standard(self) -> str | None:

@@ -12,10 +12,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import
     Summary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
+    FormattedDate,
     Identifiers,
     ItemSummaryCatalogue,
     Maintenance,
-    format_date,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
 from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
@@ -50,31 +50,44 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
 from tests.conftest import _lib_get_record_summary
 
 
-class TestFormatDate:
-    """Test `format_date` util function."""
+class TestFormattedDate:
+    """Test Catalogue Item formatted dates."""
+
+    def test_init(self):
+        """Can create a FormattedDate element."""
+        fd = FormattedDate(datetime="x", value="x")
+
+        assert fd.datetime == "x"
+        assert fd.value == "x"
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
+        ("value", "exp_value", "exp_dt"),
         [
-            (Date(date=date(2014, 1, 1), precision=DatePrecisionCode.YEAR), "2014"),
-            (Date(date=date(2014, 6, 1), precision=DatePrecisionCode.MONTH), "June 2014"),
-            (Date(date=date(2014, 6, 30)), "30 June 2014"),
-            (Date(date=datetime(2014, 6, 30, 13, tzinfo=UTC)), "30 June 2014 13:00:00 UTC"),
-            (Date(date=datetime(2014, 6, 29, 1, tzinfo=UTC)), "29 June 2014"),
+            (Date(date=date(2014, 1, 1), precision=DatePrecisionCode.YEAR), "2014", "2014"),
+            (Date(date=date(2014, 6, 1), precision=DatePrecisionCode.MONTH), "June 2014", "2014-06"),
+            (Date(date=date(2014, 6, 30)), "30 June 2014", "2014-06-30"),
+            (
+                Date(date=datetime(2014, 6, 30, 13, tzinfo=UTC)),
+                "30 June 2014 13:00:00 UTC",
+                "2014-06-30T13:00:00+00:00",
+            ),
+            (Date(date=datetime(2014, 6, 29, 1, tzinfo=UTC)), "29 June 2014", "2014-06-29"),
         ],
     )
-    def test_format(self, value: Date, expected: str):
-        """Can format a date(time) as a string."""
+    def test_from_record_date(self, value: Date, exp_value: str, exp_dt: str):
+        """Can create a FormattedDate from a Record Date."""
         now = datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC)
-        result = format_date(value, relative_to=now)
-        assert result == expected
+        result = FormattedDate.from_rec_date(value, relative_to=now)
+
+        assert result.value == exp_value
+        assert result.datetime == exp_dt
 
     def test_invalid_date(self):
         """Cannot process an invalid value."""
         now = datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC)
         with pytest.raises(TypeError):
             # noinspection PyTypeChecker
-            format_date("", relative_to=now)
+            FormattedDate.from_rec_date("", relative_to=now)
 
 
 class TestAggregations:
@@ -152,7 +165,7 @@ class TestDates:
     def test_formatting(self):
         """Can get a formatted date when accessed."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
-        expected = format_date(date_)
+        expected = FormattedDate.from_rec_date(date_)
 
         dates = Dates(dates=RecordDates(creation=date_))
 
@@ -162,7 +175,7 @@ class TestDates:
         """Can get dates as a DateTypeCode indexed dict."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
         dates = Dates(dates=RecordDates(creation=date_))
-        expected = {DateTypeCode.CREATION: format_date(date_)}
+        expected = {DateTypeCode.CREATION: FormattedDate.from_rec_date(date_)}
 
         assert dates.as_dict_enum() == expected
 
@@ -170,7 +183,7 @@ class TestDates:
         """Can get dates as a dict with human formatted keys."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
         dates = Dates(dates=RecordDates(creation=date_))
-        expected = {"Item created": format_date(date_)}
+        expected = {"Item created": FormattedDate.from_rec_date(date_)}
 
         assert dates.as_dict_labeled() == expected
 
@@ -199,7 +212,7 @@ class TestExtent:
     def test_start_end(self, has_value: bool):
         """Can get formated dates for temporal extent period."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
-        expected = format_date(date_) if has_value else None
+        expected = FormattedDate.from_rec_date(date_) if has_value else None
         record_extent = RecordExtent(
             identifier="bounding",
             geographic=ExtentGeographic(
