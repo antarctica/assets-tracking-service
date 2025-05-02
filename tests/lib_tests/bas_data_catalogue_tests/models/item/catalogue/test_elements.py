@@ -283,15 +283,18 @@ class TestItemSummaryCatalogue:
         if has_date:
             fx_lib_record_summary_minimal_item.publication = publication
         summary = ItemSummaryCatalogue(fx_lib_record_summary_minimal_item)
-        assert summary._date == expected
+        if has_date:
+            assert summary._date.value == expected
+        else:
+            assert summary._date is None
 
     @pytest.mark.parametrize(
-        ("resource_type", "edition", "expected_edition", "has_pub", "expected_date"),
+        ("resource_type", "edition", "exp_edition", "has_pub", "exp_published"),
         [
             (HierarchyLevelCode.PRODUCT, "x", "x", True, "30 June 2014"),
             (HierarchyLevelCode.PRODUCT, "x", "x", False, None),
             (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014"),
-            (HierarchyLevelCode.COLLECTION, "x", None, True, False),
+            (HierarchyLevelCode.COLLECTION, "x", None, True, None),
             (HierarchyLevelCode.COLLECTION, "x", None, False, None),
         ],
     )
@@ -300,9 +303,9 @@ class TestItemSummaryCatalogue:
         fx_lib_record_summary_minimal_item: RecordSummary,
         resource_type: HierarchyLevelCode,
         edition: str | None,
-        expected_edition: str | None,
+        exp_edition: str | None,
         has_pub: bool,
-        expected_date: str | None,
+        exp_published: FormattedDate | None,
     ):
         """Can get fragments to use as part of item summary UI."""
         fx_lib_record_summary_minimal_item.hierarchy_level = resource_type
@@ -313,15 +316,12 @@ class TestItemSummaryCatalogue:
 
         result = summary.fragments
 
-        if resource_type != HierarchyLevelCode.COLLECTION:
-            if edition and has_pub:
-                assert len(result) == 3
-            elif edition or has_pub:
-                assert len(result) == 2
-            else:
-                assert len(result) == 1
+        assert result.item_type == resource_type.value.capitalize()
+        assert result.edition == exp_edition
+        if exp_published is not None:
+            assert result.published.value == exp_published
         else:
-            assert len(result) == 1
+            assert result.published is None
 
     @pytest.mark.parametrize(
         ("href", "expected"),

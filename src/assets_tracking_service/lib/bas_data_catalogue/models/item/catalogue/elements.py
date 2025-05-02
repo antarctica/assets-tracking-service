@@ -75,6 +75,15 @@ class FormattedDate:
         return cls(value=val, datetime=dt)
 
 
+@dataclass(kw_only=True)
+class ItemSummaryFragments:
+    """Properties shown as part of an ItemSummaryCatalogue."""
+
+    item_type: str
+    item_type_icon: str
+    edition: str | None
+    published: FormattedDate | None
+
 
 class ItemSummaryCatalogue(ItemSummaryBase):
     """
@@ -103,14 +112,16 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return FormattedDate.from_rec_date(self.date) if self.date else None
 
     @property
-    def fragments(self) -> list[tuple[str | None, str | None, str | None]]:
+    def fragments(self) -> ItemSummaryFragments:
         """UI fragments (icons and labels) for item summary."""
-        fragments = [(self._resource_type_icon, None, self.resource_type.value.capitalize())]
-        if self.edition and self.resource_type != HierarchyLevelCode.COLLECTION:
-            fragments.append((None, "Edition", self.edition))
-        if self._date and self.resource_type != HierarchyLevelCode.COLLECTION:
-            fragments.append((None, "Published", self._date))
-        return fragments
+        edition = self.edition if self.resource_type != HierarchyLevelCode.COLLECTION else None
+        published = self._date if self.resource_type != HierarchyLevelCode.COLLECTION else None
+        return ItemSummaryFragments(
+            item_type=self.resource_type.value.capitalize(),
+            item_type_icon=self._resource_type_icon,
+            edition=edition,
+            published=published,
+        )
 
     @property
     def href_graphic(self) -> str:
