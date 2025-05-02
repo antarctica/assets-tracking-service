@@ -340,7 +340,11 @@ class RecordSummary:
     @classmethod
     def loads(cls: type[TRecordSummary], record: Record) -> "RecordSummary":
         """Create a RecordSummary from a Record."""
-        graphic = record.identification.graphic_overviews[0].href if record.identification.graphic_overviews else None
+        overview_href = next(
+            (graphic.href for graphic in record.identification.graphic_overviews if graphic.identifier == "overview"),
+            None,
+        )
+
         return cls(
             file_identifier=record.file_identifier,
             hierarchy_level=record.hierarchy_level,
@@ -351,7 +355,7 @@ class RecordSummary:
             creation=record.identification.dates.creation,
             revision=record.identification.dates.revision,
             publication=record.identification.dates.publication,
-            graphic_overview_href=graphic,
+            graphic_overview_href=overview_href,
         )
 
     @property

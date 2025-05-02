@@ -1,17 +1,24 @@
 {% import '_macros/common.html.j2' as com %}
 
-{% macro html_head(title) %}
+{% macro html_head(title, open_graph, schema_org) %}
   <head>
-    {{ head_meta() }}
+    {{ head_meta(open_graph) }}
     {{ head_title(title) }}
     {{ head_styles() }}
-    {{ head_scripts() }}
+    {{ head_scripts(schema_org) }}
   </head>
 {% endmacro %}
 
-{% macro head_meta(value) %}
+{% macro head_meta(open_graph) %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {{ head_open_graph(open_graph) }}
+{% endmacro %}
+
+{% macro head_open_graph(data) %}
+  {% for property, content in data | items %}
+    <meta property="{{ property }}" content="{{ content }}" />
+  {% endfor %}
 {% endmacro %}
 
 {% macro head_title(value) %}
@@ -23,10 +30,11 @@
   <link rel="stylesheet" href="/static/css/main.css" />
 {% endmacro %}
 
-{% macro head_scripts(data) %}
+{% macro head_scripts(schema_org) %}
   {{ script_sentry() }}
   {{ script_sticky_tabs() }}
   {{ script_collapsible() }}
+  {{ script_schema_org(schema_org) }}
 {% endmacro %}
 
 {% macro script_sentry() %}
@@ -110,6 +118,10 @@
       });
     });
   </script>
+{% endmacro %}
+
+{% macro script_schema_org(data) %}
+  <script type="application/ld+json">{{ data }}</script>
 {% endmacro %}
 
 {% macro top_anchor() %}

@@ -84,9 +84,10 @@
 {% endmacro %}
 
 {% macro graphics(data) %}
-  <aside id="item-thumbnails" class="col-span-1">
+  <aside id="item-graphics" class="col-span-1">
     {% for item in data %}
-      <img class="w-full" src="{{ item.href }}" alt="{{ item.value }}"/>
+      {% set alt = item.description or item.identifier %}
+      <img id="graphics-{{ item.identifier }}" class="w-full" src="{{ item.href }}" alt="{{ alt }}"/>
     {% endfor %}
   </aside>
 {% endmacro %}

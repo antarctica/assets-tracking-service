@@ -1,3 +1,4 @@
+import json
 from collections.abc import Callable
 from datetime import UTC, datetime
 
@@ -5,7 +6,6 @@ from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemBase
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Aggregations,
     Dates,
@@ -28,6 +28,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs i
     Tab,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import GraphicOverview
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import ContactRoleCode
 
 
@@ -141,8 +142,11 @@ class ItemCatalogue(ItemBase):
         """
         Prettify HTML string, removing any empty lines.
 
-        Without careful whitespace control, Jinja templates can look messy where conditionals and other logic is used.
-        Whilst this doesn't strictly matter, it is nicer if output looks well-formed.
+        Without very careful whitespace control, Jinja templates quickly look messy where conditionals and other logic
+        is used. Whilst this doesn't strictly matter, it is nicer if output looks well-formed.
+
+        Note: the beautifulsoup prettifier is not perfect as it changes the structure of the page by inserting newlines
+        for example.
         """
         return BeautifulSoup(html, parser="html.parser", features="lxml").prettify()
 
@@ -230,9 +234,84 @@ class ItemCatalogue(ItemBase):
         )
 
     @property
+    def _overview_graphic(self) -> GraphicOverview | None:
+        """
+        Optional 'overview' graphic overview.
+
+        I.e. a default graphic.
+        """
+        return next((graphic for graphic in self.graphics if graphic.identifier == "overview"), None)
+
+    @property
     def html_title(self) -> str:
         """Title with without formatting with site name appended, for HTML title element."""
         return f"{self.title_plain} | BAS Data Catalogue"
+
+    @property
+    def html_open_graph(self) -> dict[str, str]:
+        """
+        Open Graph meta tags.
+
+        For item link previews and unfurling in social media sites, chat clients, etc.
+        See https://ogp.me/ for details.
+        See `self.schema_org` for more specific Microsoft Teams support.
+        """
+        tags = {
+            "og:locale": "en_GB",
+            "og:site_name": "BAS Data Catalogue",
+            "og:type": "article",
+            "og:title": self.title_plain,
+            "og:url": f"https://data.bas.ac.uk/items/{self.resource_id}",
+        }
+
+        if self.summary_plain:
+            tags["og:description"] = self.summary_plain
+        if self._dates.publication:
+            # noinspection PyUnresolvedReferences
+            tags["og:article:published_time"] = self._dates.publication.datetime
+        if self._overview_graphic:
+            tags["og:image"] = self._overview_graphic.href
+
+        return tags
+
+    @property
+    def html_schema_org(self) -> str:
+        """
+        Schema.org metadata.
+
+        Support is limited to item link unfurling in Microsoft Teams.
+        See https://learn.microsoft.com/en-us/microsoftteams/platform/messaging-extensions/how-to/micro-capabilities-for-website-links?tabs=article
+
+        Other Schema.org use-cases may work but are not tested.
+        """
+        doc = {
+            "@context": "http://schema.org/",
+            "@type": "Article",
+            "name": "BAS Data Catalogue",
+            "headline": self.title_plain,
+            "url": f"https://data.bas.ac.uk/items/{self.resource_id}",
+        }
+
+        if self.summary_plain:
+            doc["description"] = self.summary_plain
+
+        if self._overview_graphic:
+            doc["image"] = self._overview_graphic.href
+
+        author_names = []
+        for author in self.contacts.filter(roles=ContactRoleCode.AUTHOR):
+            if author.individual is not None:
+                author_names.append(author.individual.name)
+                continue
+            if author.organisation is not None:
+                author_names.append(author.organisation.name)
+        if len(author_names) > 0:
+            # set as comma separated list of names, except last element which uses '&'
+            doc["creator"] = (
+                ", ".join(author_names[:-1]) + " & " + author_names[-1] if len(author_names) > 1 else author_names[0]
+            )
+
+        return json.dumps(doc, indent=2)
 
     @property
     def page_header(self) -> PageHeader:
@@ -251,11 +330,6 @@ class ItemCatalogue(ItemBase):
             citation=self.citation_html,
             abstract=self.abstract_html,
         )
-
-    @property
-    def graphics(self) -> list[Link]:
-        """Item graphics."""
-        return [Link(href=graphic.href, value=graphic.description) for graphic in super().graphics]
 
     @property
     def tabs(self) -> list[Tab]:

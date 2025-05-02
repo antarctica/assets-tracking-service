@@ -4,7 +4,7 @@
 
 <!DOCTYPE html>
 <html lang="en">
-  {{ site.html_head(title=item.html_title) }}
+  {{ site.html_head(title=item.html_title, open_graph=item.html_open_graph, schema_org=item.html_schema_org) }}
   <body id="{{ com.back_to_top_id() }}" class="font-sans text-base text-grey-900 bg-white">
     <div class="flex flex-col min-h-screen space-y-8 lg:space-y-12">
       {{ site.header() }}

@@ -968,7 +968,7 @@ class TestRecordSummary:
                 ),
                 edition=expected,
                 purpose=expected,
-                graphic_overviews=GraphicOverviews([GraphicOverview(identifier="x", href=expected, mime_type="x")]),
+                graphic_overviews=GraphicOverviews([]),
             ),
         )
 
@@ -983,7 +983,36 @@ class TestRecordSummary:
         assert record_summary.purpose == expected
         assert record_summary.publication == Date(date=expected_time)
         assert record_summary.revision == Date(date=expected_time)
-        assert record_summary.graphic_overview_href is expected
+        assert record_summary.graphic_overview_href is None
+
+    @pytest.mark.parametrize(
+        ("graphics", "expected"),
+        [
+            (GraphicOverviews([]), None),
+            (GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")]), None),
+            (GraphicOverviews([GraphicOverview(identifier="overview", href="x", mime_type="x")]), "x"),
+        ],
+    )
+    def test_loads_graphics(self, graphics: GraphicOverviews, expected: str | None):
+        """Can get graphic overview if a graphic with suitable identifier is in record."""
+        record = Record(
+            hierarchy_level=HierarchyLevelCode.DATASET,
+            metadata=Metadata(
+                contacts=Contacts(
+                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
+                ),
+                date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
+            ),
+            identification=Identification(
+                title="x",
+                abstract="x",
+                dates=Dates(creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())),
+                graphic_overviews=graphics,
+            ),
+        )
+
+        record_summary = RecordSummary.loads(record)
+        assert record_summary.graphic_overview_href == expected
 
     @pytest.mark.parametrize(("purpose", "expected"), [("x", "x"), (None, "y")])
     def test_purpose_abstract(self, purpose: str | None, expected: str):
