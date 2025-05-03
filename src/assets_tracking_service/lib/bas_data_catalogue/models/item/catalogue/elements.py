@@ -125,7 +125,7 @@ class ItemSummaryCatalogue(ItemSummaryBase):
 
     @property
     def href_graphic(self) -> str:
-        """Item graphic, or generic default (bas roundel)."""
+        """Item graphic, or generic default (BAS roundel)."""
         default = (
             "data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAMAAAAKE/YAAAAC+lBMVEUAAADu7u739/fz8/Pt7e3w"
             "8PDv7+/t7e3u7u7u7u7t7e3v7+/u7u7u7u7v7+/x8fH////9/f3s7Ozu7u7s7Ozv7+/u7u7v7+/u7u7u7u7u7u7u7u7u7u7v7+/"

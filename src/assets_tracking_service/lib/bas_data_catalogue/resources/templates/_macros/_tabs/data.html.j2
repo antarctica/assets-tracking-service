@@ -65,7 +65,7 @@
   {% set id_base = data.access_target | replace("#", "") %}
   {% call com.alert(variant='blue', classes='space-y-4') %}
     <p>This item can be added to a desktop or online GIS that supports using <a class="{{ com.link_classes() }}" href="https://ogcapi.ogc.org/features/">OGC API Features {{ com.ext_link_i() }}</a> services.</p>
-    <p>Note: This service is implemented using ArcGIS Server.</p>
+    <p><strong>Note:</strong> This service is implemented using ArcGIS Server.</p>
     <dl class="space-y-4">
       {% call com.dl_item(title='Service Endpoint', id=id_base + '-server-endpoint') %}
         <code>{{ data.service_endpoint }}</code>
