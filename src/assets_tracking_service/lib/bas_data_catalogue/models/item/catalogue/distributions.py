@@ -282,6 +282,50 @@ class ArcGisOgcApiFeatures(Distribution):
         return f"#item-data-info-{self._encode_url(self.item_link.href)}"
 
 
+class BasPublishedMap(Distribution):
+    """
+    BAS published map distribution option.
+
+    Provides information to users on how to purchase BAS maps.
+    """
+
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution]) -> None:
+        self.option = option
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        return (
+            option.transfer_option.online_resource.href
+            == "https://www.bas.ac.uk/data/our-data/maps/how-to-order-a-map/"
+        )
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        return DistributionType.X_PAPER_MAP
+
+    @property
+    def size(self) -> str:
+        """Not applicable."""
+        return "-"
+
+    @property
+    def action(self) -> Link:
+        """Link to distribution without href due to using `access_trigger`."""
+        return Link(value="Purchase", href=None)
+
+    @property
+    def action_btn_icon(self) -> str:
+        """Action button icon classes."""
+        return "far fa-shopping-basket"
+
+    @property
+    def access_target(self) -> str | None:
+        """DOM selector of element showing more information on purchasing item."""
+        return "#item-data-info-map-purchase"
+
+
 class GeoJson(FileDistribution):
     """GeoJSON distribution option."""
 

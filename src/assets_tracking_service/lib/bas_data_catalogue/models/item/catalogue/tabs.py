@@ -10,6 +10,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements im
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distributions import (
     ArcGisFeatureLayer,
     ArcGisOgcApiFeatures,
+    BasPublishedMap,
     Distribution,
     GeoJson,
     GeoPackage,
@@ -108,6 +109,7 @@ class DataTab(Tab):
         self._supported_distributions = [
             ArcGisFeatureLayer,
             ArcGisOgcApiFeatures,
+            BasPublishedMap,
             GeoPackage,
             GeoJson,
             Jpeg,

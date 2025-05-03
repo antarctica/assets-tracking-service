@@ -22,6 +22,7 @@ class DistributionType(Enum):
     GEOPACKAGE_ZIP = "GeoPackage (Zipped)"
     PNG = "PNG"
     SHAPEFILE_ZIP = "Shapefile (Zipped)"
+    X_PAPER_MAP = "Flat or folded paper map"
 
 
 class Licence(Enum):
