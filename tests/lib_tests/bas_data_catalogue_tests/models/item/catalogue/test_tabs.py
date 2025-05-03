@@ -378,7 +378,9 @@ class TestAdditionalInfoTab:
         assert tab.title != ""
         assert tab.icon != ""
 
-    @pytest.mark.parametrize(("series", "expected"), [(None, None), (Series(name="x", edition="x"), "x (x)")])
+    @pytest.mark.parametrize(
+        ("series", "expected"), [(Series(name=None), None), (Series(name="x", edition="x"), "x (x)")]
+    )
     def test_series(
         self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
     ):

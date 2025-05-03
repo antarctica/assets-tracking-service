@@ -407,7 +407,7 @@ class AdditionalInfoTab(Tab):
     @property
     def series(self) -> str | None:
         """Descriptive series if set."""
-        return f"{self._series.name} ({self._series.edition})" if self._series is not None else None
+        return f"{self._series.name} ({self._series.edition})" if self._series.name is not None else None
 
     @property
     def scale(self) -> str | None:
