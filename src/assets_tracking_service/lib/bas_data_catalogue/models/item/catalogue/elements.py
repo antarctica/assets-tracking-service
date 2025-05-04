@@ -112,14 +112,20 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return FormattedDate.from_rec_date(self.date) if self.date else None
 
     @property
+    def _edition(self) -> str | None:
+        """Formatted edition."""
+        if self.edition is None or self.resource_type == HierarchyLevelCode.COLLECTION:
+            return None
+        return f"v{self.edition}"
+
+    @property
     def fragments(self) -> ItemSummaryFragments:
         """UI fragments (icons and labels) for item summary."""
-        edition = self.edition if self.resource_type != HierarchyLevelCode.COLLECTION else None
         published = self._date if self.resource_type != HierarchyLevelCode.COLLECTION else None
         return ItemSummaryFragments(
             item_type=self.resource_type.value.capitalize(),
             item_type_icon=self._resource_type_icon,
-            edition=edition,
+            edition=self._edition,
             published=published,
         )
 
@@ -304,7 +310,7 @@ class Extent(ItemExtent):
         """Visualise bounding box as an embedded map using the BAS Embedded Maps Service."""
         bbox = json.dumps(list(self.bounding_box)).replace(" ", "")
         params = f"bbox={bbox}&globe-overview"
-        return f"<iframe src='{self._map_endpoint}/?{params}' width='100%' height='400' frameborder='0'></iframe>"
+        return f"{self._map_endpoint}/?{params}"
 
 
 class Identifiers(RecordIdentifiers):

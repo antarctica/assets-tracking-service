@@ -46,19 +46,19 @@
           {% if data.address %}
             <div class="space-y-2">
               <h3 class="font-bold"><i class="far fa-envelope"></i> By post</h3>
-              <address>{{ data.address }}</address>
+              <address id="contact-post">{{ data.address }}</address>
             </div>
           {% endif %}
           {% if data.phone %}
             <div class="space-y-2">
               <h3 class="font-bold"><i class="far fa-phone-rotary"></i> By phone</h3>
-              <div>{{ data.phone }}</div>
+              <div id="contact-phone">{{ data.phone }}</div>
             </div>
           {% endif %}
           {% if data.email %}
             <div class="space-y-2">
               <h3 class="font-bold"><i class="far fa-at"></i> By email</h3>
-              <div><a class="{{ com.link_classes() }}" href="{{ data.email }}">{{ data.email }}</a></div>
+              <div id="contact-email"><a class="{{ com.link_classes() }}" href="{{ data.email }}">{{ data.email }}</a></div>
             </div>
            {% endif %}
         </div>

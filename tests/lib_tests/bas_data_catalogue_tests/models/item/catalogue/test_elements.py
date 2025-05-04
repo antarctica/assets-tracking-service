@@ -241,8 +241,7 @@ class TestExtent:
             )
         )
         expected_bbox = "[1.0,3.0,2.0,4.0]"
-        expected_url = f"https://example.com/?bbox={expected_bbox}&globe-overview"
-        expected = f"<iframe src='{expected_url}' width='100%' height='400' frameborder='0'></iframe>"
+        expected = f"https://example.com/?bbox={expected_bbox}&globe-overview"
 
         extent = Extent(extent=item_extent, embedded_maps_endpoint="https://example.com")
         assert extent.map_iframe == expected
@@ -291,8 +290,8 @@ class TestItemSummaryCatalogue:
     @pytest.mark.parametrize(
         ("resource_type", "edition", "exp_edition", "has_pub", "exp_published"),
         [
-            (HierarchyLevelCode.PRODUCT, "x", "x", True, "30 June 2014"),
-            (HierarchyLevelCode.PRODUCT, "x", "x", False, None),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", True, "30 June 2014"),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", False, None),
             (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014"),
             (HierarchyLevelCode.COLLECTION, "x", None, True, None),
             (HierarchyLevelCode.COLLECTION, "x", None, False, None),
@@ -658,14 +657,40 @@ class TestSummary:
         ("item_type", "published", "revision", "expected"),
         [
             (HierarchyLevelCode.PRODUCT, None, None, None),
-            (HierarchyLevelCode.PRODUCT, "x", None, "x"),
+            (
+                HierarchyLevelCode.PRODUCT,
+                FormattedDate(datetime="x", value="x"),
+                None,
+                FormattedDate(datetime="x", value="x"),
+            ),
             (HierarchyLevelCode.PRODUCT, None, "x", None),
-            (HierarchyLevelCode.PRODUCT, "x", "x", "x"),
-            (HierarchyLevelCode.PRODUCT, "x", "y", "x (last updated: y)"),
-            (HierarchyLevelCode.COLLECTION, "x", "y", None),
+            (
+                HierarchyLevelCode.PRODUCT,
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="x", value="x"),
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="y", value="y"),
+                FormattedDate(datetime="x", value="x (last updated: y)"),
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="y", value="y"),
+                None,
+            ),
         ],
     )
-    def test_published(self, item_type: HierarchyLevelCode, published: str, revision: str, expected: str):
+    def test_published(
+        self,
+        item_type: HierarchyLevelCode,
+        published: FormattedDate | None,
+        revision: FormattedDate | None,
+        expected: str,
+    ):
         """Can show combination of publication and revision date if relevant."""
         summary = Summary(
             item_type=item_type,

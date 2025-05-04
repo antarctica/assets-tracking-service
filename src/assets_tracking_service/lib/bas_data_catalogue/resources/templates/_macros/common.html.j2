@@ -64,11 +64,11 @@
   <span><i class="{{ data.item_type_icon }}"></i> {{ data.item_type }}</span>
   {% if data.edition %}
     <span class="text-grey-100">|</span>
-    <span>v{{ data.edition }}</span>
+    <span>{{ data.edition }}</span>
   {% endif %}
   {% if data.published %}
     <span class="text-grey-100">|</span>
-    <span>{{ time(data.published) }}</span>
+    {{ time(data.published) }}
   {% endif %}
 {% endmacro %}
 
