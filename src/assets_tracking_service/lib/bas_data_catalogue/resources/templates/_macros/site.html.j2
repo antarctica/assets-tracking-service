@@ -2,18 +2,22 @@
 
 {% macro html_head(title, open_graph, schema_org) %}
   <head>
-    {{ head_meta(open_graph) }}
+    {{ head_meta() }}
     {{ head_title(title) }}
+    {{ head_open_graph(open_graph) }}
     {{ head_favicon() }}
     {{ head_styles() }}
     {{ head_scripts(schema_org) }}
   </head>
 {% endmacro %}
 
-{% macro head_meta(open_graph) %}
-  <meta charset="UTF-8">
+{% macro head_meta() %}
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {{ head_open_graph(open_graph) }}
+{% endmacro %}
+
+{% macro head_title(value) %}
+  <title>{{ value }}</title>
 {% endmacro %}
 
 {% macro head_open_graph(data) %}
@@ -22,8 +26,6 @@
   {% endfor %}
 {% endmacro %}
 
-{% macro head_title(value) %}
-  <title>{{ value }}</title>
 {% macro head_favicon() %}
   <link rel="shortcut icon" href="/static/img/favicon.ico" />
   <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">

@@ -92,19 +92,19 @@ class TestItemCatalogue:
         ],
     )
     def test_overview_graphic(
-        self, fx_lib_item_catalogue: ItemCatalogue, graphics: GraphicOverviews, expected: GraphicOverview | None
+        self, fx_lib_item_catalogue_min: ItemCatalogue, graphics: GraphicOverviews, expected: GraphicOverview | None
     ):
         """Can get optional item overview graphic."""
-        fx_lib_item_catalogue._record.identification.graphic_overviews = graphics
+        fx_lib_item_catalogue_min._record.identification.graphic_overviews = graphics
 
-        assert fx_lib_item_catalogue._overview_graphic == expected
+        assert fx_lib_item_catalogue_min._overview_graphic == expected
 
-    def test_html_title(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_html_title(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get HTML title."""
         expected = "x | BAS Data Catalogue"
-        fx_lib_item_catalogue._record.identification.title = "_x_"
+        fx_lib_item_catalogue_min._record.identification.title = "_x_"
 
-        assert fx_lib_item_catalogue.html_title == expected
+        assert fx_lib_item_catalogue_min.html_title == expected
 
     @pytest.mark.parametrize(
         ("summary", "published", "graphics"),
@@ -115,31 +115,31 @@ class TestItemCatalogue:
         ],
     )
     def test_html_open_graph(
-        self, fx_lib_item_catalogue: ItemCatalogue, summary: str | None, published: bool, graphics: GraphicOverviews
+        self, fx_lib_item_catalogue_min: ItemCatalogue, summary: str | None, published: bool, graphics: GraphicOverviews
     ):
         """Can get HTML open graph tags."""
         expected = {
             "og:locale": "en_GB",
             "og:site_name": "BAS Data Catalogue",
             "og:type": "article",
-            "og:title": fx_lib_item_catalogue.title_plain,
-            "og:url": f"https://data.bas.ac.uk/items/{fx_lib_item_catalogue.resource_id}",
+            "og:title": fx_lib_item_catalogue_min.title_plain,
+            "og:url": f"https://data.bas.ac.uk/items/{fx_lib_item_catalogue_min.resource_id}",
         }
 
         if summary is not None:
-            fx_lib_item_catalogue._record.identification.purpose = summary
+            fx_lib_item_catalogue_min._record.identification.purpose = summary
             expected["og:description"] = summary
 
         if published:
             date_ = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
-            fx_lib_item_catalogue._record.identification.dates.publication = date_
+            fx_lib_item_catalogue_min._record.identification.dates.publication = date_
             expected["og:article:published_time"] = date_.date.isoformat()
 
-        fx_lib_item_catalogue._record.identification.graphic_overviews = graphics
-        if fx_lib_item_catalogue._overview_graphic is not None:
-            expected["og:image"] = fx_lib_item_catalogue._overview_graphic.href
+        fx_lib_item_catalogue_min._record.identification.graphic_overviews = graphics
+        if fx_lib_item_catalogue_min._overview_graphic is not None:
+            expected["og:image"] = fx_lib_item_catalogue_min._overview_graphic.href
 
-        assert fx_lib_item_catalogue.html_open_graph == expected
+        assert fx_lib_item_catalogue_min.html_open_graph == expected
 
     @pytest.mark.parametrize(
         ("summary", "graphics", "contacts", "contacts_exp"),
@@ -184,7 +184,7 @@ class TestItemCatalogue:
     )
     def test_html_schema_org(
         self,
-        fx_lib_item_catalogue: ItemCatalogue,
+        fx_lib_item_catalogue_min: ItemCatalogue,
         summary: str | None,
         graphics: GraphicOverviews,
         contacts: Contacts,
@@ -195,51 +195,53 @@ class TestItemCatalogue:
             "@context": "http://schema.org/",
             "@type": "Article",
             "name": "BAS Data Catalogue",
-            "headline": fx_lib_item_catalogue.title_plain,
-            "url": f"https://data.bas.ac.uk/items/{fx_lib_item_catalogue.resource_id}",
+            "headline": fx_lib_item_catalogue_min.title_plain,
+            "url": f"https://data.bas.ac.uk/items/{fx_lib_item_catalogue_min.resource_id}",
         }
 
         if summary is not None:
-            fx_lib_item_catalogue._record.identification.purpose = summary
+            fx_lib_item_catalogue_min._record.identification.purpose = summary
             expected["description"] = summary
 
-        fx_lib_item_catalogue._record.identification.graphic_overviews = graphics
-        if fx_lib_item_catalogue._overview_graphic is not None:
-            expected["image"] = fx_lib_item_catalogue._overview_graphic.href
+        fx_lib_item_catalogue_min._record.identification.graphic_overviews = graphics
+        if fx_lib_item_catalogue_min._overview_graphic is not None:
+            expected["image"] = fx_lib_item_catalogue_min._overview_graphic.href
 
-        fx_lib_item_catalogue._record.identification.contacts = contacts
+        fx_lib_item_catalogue_min._record.identification.contacts = contacts
         if contacts_exp is not None:
             expected["creator"] = contacts_exp
 
-        assert fx_lib_item_catalogue.html_schema_org == json.dumps(expected, indent=2)
+        assert fx_lib_item_catalogue_min.html_schema_org == json.dumps(expected, indent=2)
 
-    def test_page_header(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_page_header(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get page header element."""
         expected = "<em>x</em>"
-        fx_lib_item_catalogue._record.identification.title = "_x_"
+        fx_lib_item_catalogue_min._record.identification.title = "_x_"
 
-        assert fx_lib_item_catalogue.page_header.title == expected
-        assert fx_lib_item_catalogue.page_header.subtitle[0] == fx_lib_item_catalogue._record.hierarchy_level.value
+        assert fx_lib_item_catalogue_min.page_header.title == expected
+        assert (
+            fx_lib_item_catalogue_min.page_header.subtitle[0] == fx_lib_item_catalogue_min._record.hierarchy_level.value
+        )
 
-    def test_summary(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_summary(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """
         Can get summary element.
 
         Summary element is checked in more detail in catalogue element tests.
         """
-        assert isinstance(fx_lib_item_catalogue.summary, Summary)
+        assert isinstance(fx_lib_item_catalogue_min.summary, Summary)
 
-    def test_tabs(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_tabs(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get list of tabs."""
-        assert isinstance(fx_lib_item_catalogue.tabs[0], ItemsTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[1], DataTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[2], AuthorsTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[3], LicenceTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[4], ExtentTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[5], LineageTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[6], RelatedTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[7], AdditionalInfoTab)
-        assert isinstance(fx_lib_item_catalogue.tabs[8], ContactTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[0], ItemsTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[1], DataTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[2], AuthorsTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[3], LicenceTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[4], ExtentTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[5], LineageTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[6], RelatedTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[7], AdditionalInfoTab)
+        assert isinstance(fx_lib_item_catalogue_min.tabs[8], ContactTab)
 
     base_record = {  # noqa: RUF012
         "$schema": "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json",
@@ -379,18 +381,18 @@ class TestItemCatalogue:
             ),
         ],
     )
-    def test_default_tab_anchor(self, fx_lib_item_catalogue: ItemCatalogue, values: dict, anchor: str):
+    def test_default_tab_anchor(self, fx_lib_item_catalogue_min: ItemCatalogue, values: dict, anchor: str):
         """Can get default tab anchor depending on enabled tabs."""
         record = Record.loads(values)
-        fx_lib_item_catalogue._record = record
+        fx_lib_item_catalogue_min._record = record
 
-        assert fx_lib_item_catalogue.default_tab_anchor == anchor
+        assert fx_lib_item_catalogue_min.default_tab_anchor == anchor
 
-    def test_render(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_render(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """
         Can render template for item.
 
         This is a basic sanity check that the template can be rendered without error.
         It does not check the content of the rendered template in any detail.
         """
-        assert fx_lib_item_catalogue.render() != ""
+        assert fx_lib_item_catalogue_min.render() != ""

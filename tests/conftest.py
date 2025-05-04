@@ -952,7 +952,7 @@ def _lib_item_catalogue_min() -> ItemCatalogue:
 
 
 @pytest.fixture()
-def fx_lib_item_catalogue(
+def fx_lib_item_catalogue_min(
     fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
 ) -> ItemCatalogue:
     """ItemCatalogue based on minimal catalogue record."""

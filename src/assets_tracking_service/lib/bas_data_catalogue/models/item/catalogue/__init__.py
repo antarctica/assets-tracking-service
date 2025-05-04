@@ -143,12 +143,12 @@ class ItemCatalogue(ItemBase):
         Prettify HTML string, removing any empty lines.
 
         Without very careful whitespace control, Jinja templates quickly look messy where conditionals and other logic
-        is used. Whilst this doesn't strictly matter, it is nicer if output looks well-formed.
+        is used. Whilst this doesn't strictly matter, it is nicer if output looks well-formed by removing empty lines.
 
-        Note: the beautifulsoup prettifier is not perfect as it changes the structure of the page by inserting newlines
-        for example.
+        This gives a 'flat' structure when viewed as source. Browser dev tools will reformat this into a tree structure.
+        The `prettify()` method is not used as it splits all elements onto new lines, which causes layout/spacing bugs.
         """
-        return BeautifulSoup(html, parser="html.parser", features="lxml").prettify()
+        return str(BeautifulSoup(html, parser="html.parser", features="lxml"))
 
     @property
     def _aggregations(self) -> Aggregations:

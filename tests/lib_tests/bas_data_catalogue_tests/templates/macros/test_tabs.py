@@ -71,18 +71,18 @@ class TestItemsTab:
             ),
         ],
     )
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue, value: Aggregations):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
         """Can get items tab if enabled in item."""
-        fx_lib_item_catalogue._record.identification.aggregations = value
-        expected = fx_lib_item_catalogue._items.enabled
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        expected = fx_lib_item_catalogue_min._items.enabled
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected:
             assert html.select_one("#tab-content-items") is not None
         else:
             assert html.select_one("#tab-content-items") is None
 
-    def test_items(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_items(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """
         Can get item summaries with expected values from item.
 
@@ -102,9 +102,9 @@ class TestItemsTab:
                 ),
             ]
         )
-        fx_lib_item_catalogue._record.identification.aggregations = items
-        expected = fx_lib_item_catalogue._items.items
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.aggregations = items
+        expected = fx_lib_item_catalogue_min._items.items
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         for item in expected:
             assert html.select_one(f"a[href='{item.href}']") is not None
@@ -127,20 +127,20 @@ class TestDataTab:
             ],
         ],
     )
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue, value: list[Distribution]):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[Distribution]):
         """Can get data tab if enabled in item."""
-        fx_lib_item_catalogue._record.distribution = value
-        expected = fx_lib_item_catalogue._data.enabled
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.distribution = value
+        expected = fx_lib_item_catalogue_min._data.enabled
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected:
             assert html.select_one("#tab-content-data") is not None
         else:
             assert html.select_one("#tab-content-data") is None
 
-    def test_data_download(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_data_download(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get individual data elements for download distributions based on values from item."""
-        fx_lib_item_catalogue._record.distribution = [
+        fx_lib_item_catalogue_min._record.distribution = [
             Distribution(
                 distributor=Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.DISTRIBUTOR]),
                 format=Format(format="x", href="https://www.iana.org/assignments/media-types/image/png"),
@@ -150,8 +150,8 @@ class TestDataTab:
                 ),
             )
         ]
-        expected = fx_lib_item_catalogue._data.items[0]
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._data.items[0]
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one(f"a[href='{expected.action.href}']") is not None
         assert html.find(name="div", text=expected.format_type.value) is not None
@@ -180,7 +180,7 @@ class TestDataTab:
             ),
         ],
     )
-    def test_data_access(self, fx_lib_item_catalogue: ItemCatalogue, value: list[str], text: str):
+    def test_data_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[str], text: str):
         """
         Can get matching data access template based on values from item.
 
@@ -196,7 +196,7 @@ class TestDataTab:
         example it does not verify a service endpoint (if used) is populated correctly.
         """
         for href in value:
-            fx_lib_item_catalogue._record.distribution.append(
+            fx_lib_item_catalogue_min._record.distribution.append(
                 Distribution(
                     distributor=Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.DISTRIBUTOR]),
                     format=Format(format="x", href=href),
@@ -205,8 +205,8 @@ class TestDataTab:
                     ),
                 )
             )
-        expected = fx_lib_item_catalogue._data.items[0]
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._data.items[0]
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one(f"button[data-target='{expected.access_target}']") is not None
         assert html.find(name="div", text=expected.format_type.value) is not None
@@ -230,22 +230,22 @@ class TestAuthorsTab:
             ),
         ],
     )
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue, value: Contacts):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Contacts):
         """
         Can get items tab if enabled in item.
 
         Point of Contact role always required.
         """
-        fx_lib_item_catalogue._record.identification.contacts = value
-        expected = fx_lib_item_catalogue._authors.enabled
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.contacts = value
+        expected = fx_lib_item_catalogue_min._authors.enabled
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected:
             assert html.select_one("#tab-content-authors") is not None
         else:
             assert html.select_one("#tab-content-authors") is None
 
-    def test_authors(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_authors(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """
         Can get item authors with expected values from item.
 
@@ -258,9 +258,9 @@ class TestAuthorsTab:
                 Contact(organisation=ContactIdentity(name="y"), role=[ContactRoleCode.AUTHOR]),
             ]
         )
-        fx_lib_item_catalogue._record.identification.contacts = items
-        expected = fx_lib_item_catalogue._authors.items
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.contacts = items
+        expected = fx_lib_item_catalogue_min._authors.items
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         for item in expected:
             assert html.find("div", text=item.organisation.name) is not None
@@ -279,12 +279,12 @@ class TestAuthorsTab:
             Contact(individual=ContactIdentity(name="x", href="x"), role=[ContactRoleCode.AUTHOR]),
         ],
     )
-    def test_author(self, fx_lib_item_catalogue: ItemCatalogue, value: Contact):
+    def test_author(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Contact):
         """Can get individual author elements based on values from item."""
         items = Contacts([self.base_contact, value])
-        fx_lib_item_catalogue._record.identification.contacts = items
-        expected = fx_lib_item_catalogue._authors.items[0]
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.contacts = items
+        expected = fx_lib_item_catalogue_min._authors.items[0]
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected.organisation is not None:
             assert html.find("div", text=expected.organisation.name) is not None
@@ -314,11 +314,11 @@ class TestLicenceTab:
             ),
         ],
     )
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue, value: Constraints):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Constraints):
         """Can get licence tab if enabled in item."""
-        fx_lib_item_catalogue._record.identification.constraints = value
-        expected = fx_lib_item_catalogue._licence.enabled
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.constraints = value
+        expected = fx_lib_item_catalogue_min._licence.enabled
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected:
             assert html.select_one("#tab-content-licence") is not None
@@ -346,12 +346,12 @@ class TestLicenceTab:
             ),
         ],
     )
-    def test_licence(self, fx_lib_item_catalogue: ItemCatalogue, value: str, expected: str):
+    def test_licence(self, fx_lib_item_catalogue_min: ItemCatalogue, value: str, expected: str):
         """Can get matching licence template based on value from item."""
-        fx_lib_item_catalogue._record.identification.constraints = Constraints(
+        fx_lib_item_catalogue_min._record.identification.constraints = Constraints(
             [Constraint(type=ConstraintTypeCode.USAGE, restriction_code=ConstraintRestrictionCode.LICENSE, href=value)]
         )
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.find(name="strong", text="Item licence") is not None
 
@@ -381,11 +381,11 @@ class TestExtentTab:
             ),
         ],
     )
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue, value: Extents):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Extents):
         """Can get data tab if enabled in item."""
-        fx_lib_item_catalogue._record.identification.extents = value
-        expected = fx_lib_item_catalogue._extent.enabled
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.extents = value
+        expected = fx_lib_item_catalogue_min._extent.enabled
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected:
             assert html.select_one("#tab-content-extent") is not None
@@ -434,11 +434,11 @@ class TestExtentTab:
             ),
         ],
     )
-    def test_extent(self, fx_lib_item_catalogue: ItemCatalogue, value: Extent):
+    def test_extent(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Extent):
         """Can get individual extent elements based on values from item."""
-        fx_lib_item_catalogue._record.identification.extents = Extents([value])
-        expected = fx_lib_item_catalogue._extent
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.extents = Extents([value])
+        expected = fx_lib_item_catalogue_min._extent
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
         bbox = expected.bounding_box
         bbox_min = f"South: {bbox[1]}, West: {bbox[0]}"
         bbox_max = f"North: {bbox[3]}, East: {bbox[2]}"
@@ -464,11 +464,11 @@ class TestLineageTab:
     """Test lineage tab template macros."""
 
     @pytest.mark.parametrize("value", [None, "x"])
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue, value: str | None):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue, value: str | None):
         """Can get lineage tab if enabled in item."""
-        fx_lib_item_catalogue._record.data_quality = DataQuality(lineage=Lineage(statement=value))
-        expected = fx_lib_item_catalogue._lineage.enabled
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.data_quality = DataQuality(lineage=Lineage(statement=value))
+        expected = fx_lib_item_catalogue_min._lineage.enabled
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected:
             assert html.select_one("#tab-content-lineage") is not None
@@ -476,13 +476,13 @@ class TestLineageTab:
             assert html.select_one("#tab-content-lineage") is None
 
     @pytest.mark.parametrize("value", [None, "x"])
-    def test_collections(self, fx_lib_item_catalogue: ItemCatalogue, value: str | None):
+    def test_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: str | None):
         """Can get optional lineage statement with expected values from item."""
-        fx_lib_item_catalogue._record.data_quality = DataQuality(lineage=Lineage(statement=value))
-        expected = fx_lib_item_catalogue._lineage.statement
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.data_quality = DataQuality(lineage=Lineage(statement=value))
+        expected = fx_lib_item_catalogue_min._lineage.statement
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
-        if fx_lib_item_catalogue._lineage.enabled:
+        if fx_lib_item_catalogue_min._lineage.enabled:
             assert expected in str(html.select_one("#lineage-statement"))
 
 
@@ -504,11 +504,11 @@ class TestRelatedTab:
             ),
         ],
     )
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue, value: Aggregations):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
         """Can get related tab if enabled in item."""
-        fx_lib_item_catalogue._record.identification.aggregations = value
-        expected = fx_lib_item_catalogue._related.enabled
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        expected = fx_lib_item_catalogue_min._related.enabled
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected:
             assert html.select_one("#tab-content-related") is not None
@@ -535,15 +535,15 @@ class TestRelatedTab:
             ),
         ],
     )
-    def test_collections(self, fx_lib_item_catalogue: ItemCatalogue, value: Aggregations):
+    def test_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
         """
         Can get optional related collections with expected values from item.
 
         Detailed item summary tests are run in common macro tests.
         """
-        fx_lib_item_catalogue._record.identification.aggregations = value
-        expected = fx_lib_item_catalogue._related.collections
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        expected = fx_lib_item_catalogue_min._related.collections
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         collections = html.select_one("#related-collections")
         if len(expected) > 0:
@@ -556,33 +556,33 @@ class TestRelatedTab:
 class TestInfoTab:
     """Test additional information tab template macros."""
 
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get additional information tab (always enabled)."""
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#tab-content-info") is not None
 
-    def test_id(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_id(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get item id based on value from item."""
-        expected = fx_lib_item_catalogue._additional_info.item_id
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._additional_info.item_id
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#info-id").text.strip() == expected
 
-    def test_type(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_type(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get item type based on value from item."""
-        expected = fx_lib_item_catalogue._additional_info
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._additional_info
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#info-type i")["class"] == expected.item_type_icon.split(" ")
         assert html.select_one("#info-type").text.strip().lower() == expected.item_type
 
     @pytest.mark.parametrize("value", [Series, Series(name="x", edition="x")])
-    def test_series(self, fx_lib_item_catalogue: ItemCatalogue, value: Series):
+    def test_series(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Series):
         """Can get optional item series based on value from item."""
-        fx_lib_item_catalogue._record.identification.series = value
-        expected = fx_lib_item_catalogue._additional_info.series
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.series = value
+        expected = fx_lib_item_catalogue_min._additional_info.series
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         series = html.select_one("#info-series")
         if expected:
@@ -591,11 +591,11 @@ class TestInfoTab:
             assert series is None
 
     @pytest.mark.parametrize("value", [None, 1.0])
-    def test_scale(self, fx_lib_item_catalogue: ItemCatalogue, value: float | None):
+    def test_scale(self, fx_lib_item_catalogue_min: ItemCatalogue, value: float | None):
         """Can get optional item scale based on value from item."""
-        fx_lib_item_catalogue._record.identification.scale = value
-        expected = fx_lib_item_catalogue._additional_info.scale
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.scale = value
+        expected = fx_lib_item_catalogue_min._additional_info.scale
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         scale = html.select_one("#info-scale")
         if expected:
@@ -604,11 +604,11 @@ class TestInfoTab:
             assert scale is None
 
     @pytest.mark.parametrize("value", [None, ReferenceSystemInfo(code=Code(value="x"))])
-    def test_projection(self, fx_lib_item_catalogue: ItemCatalogue, value: ReferenceSystemInfo):
+    def test_projection(self, fx_lib_item_catalogue_min: ItemCatalogue, value: ReferenceSystemInfo):
         """Can get optional item projection based on value from item."""
-        fx_lib_item_catalogue._record.reference_system_info = value
-        expected = fx_lib_item_catalogue._additional_info.projection
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.reference_system_info = value
+        expected = fx_lib_item_catalogue_min._additional_info.projection
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         projection = html.select_one("#info-projection")
         if expected:
@@ -626,11 +626,11 @@ class TestInfoTab:
             json.dumps({"width": 297, "height": 210}),
         ],
     )
-    def test_size(self, fx_lib_item_catalogue: ItemCatalogue, value: str | None):
+    def test_size(self, fx_lib_item_catalogue_min: ItemCatalogue, value: str | None):
         """Can get optional item physical page size based on value from item."""
-        fx_lib_item_catalogue._record.identification.supplemental_information = value
-        expected = fx_lib_item_catalogue._additional_info.page_size
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.supplemental_information = value
+        expected = fx_lib_item_catalogue_min._additional_info.page_size
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         size = html.select_one("#info-page-size")
         if expected:
@@ -652,11 +652,11 @@ class TestInfoTab:
             ],
         ],
     )
-    def test_doi(self, fx_lib_item_catalogue: ItemCatalogue, value: list[Identifier]):
+    def test_doi(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[Identifier]):
         """Can get optional item DOIs based on value from item."""
-        fx_lib_item_catalogue._record.identification.identifiers.extend(value)
-        expected = fx_lib_item_catalogue._additional_info.doi
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.identifiers.extend(value)
+        expected = fx_lib_item_catalogue_min._additional_info.doi
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         doi = html.select_one("#info-doi")
         if expected:
@@ -675,11 +675,11 @@ class TestInfoTab:
             ],
         ],
     )
-    def test_isbn(self, fx_lib_item_catalogue: ItemCatalogue, value: list[Identifier]):
+    def test_isbn(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[Identifier]):
         """Can get optional item ISBNs based on value from item."""
-        fx_lib_item_catalogue._record.identification.identifiers.extend(value)
-        expected = fx_lib_item_catalogue._additional_info.isbn
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.identifiers.extend(value)
+        expected = fx_lib_item_catalogue_min._additional_info.isbn
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         isbn = html.select_one("#info-isbn")
         if expected:
@@ -706,11 +706,11 @@ class TestInfoTab:
             ],
         ],
     )
-    def test_issues(self, fx_lib_item_catalogue: ItemCatalogue, value: list[Identifier]):
+    def test_issues(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[Identifier]):
         """Can get optional item GitLab issues based on value from item."""
-        fx_lib_item_catalogue._record.identification.identifiers.extend(value)
-        expected = fx_lib_item_catalogue._additional_info.gitlab_issues
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.identifiers.extend(value)
+        expected = fx_lib_item_catalogue_min._additional_info.gitlab_issues
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         issues = html.select_one("#info-issues")
         if expected:
@@ -719,10 +719,10 @@ class TestInfoTab:
         else:
             assert issues is None
 
-    def test_dates(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_dates(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get item dates based on values from item."""
-        expected = fx_lib_item_catalogue._additional_info.dates
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._additional_info.dates
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         for label, item in expected.items():
             element = html.select_one(f"#info-{label.lower().replace(' ', '-')}")
@@ -733,11 +733,11 @@ class TestInfoTab:
         "value",
         [Maintenance(), Maintenance(progress=ProgressCode.COMPLETED)],
     )
-    def test_status(self, fx_lib_item_catalogue: ItemCatalogue, value: Maintenance):
+    def test_status(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Maintenance):
         """Can get optional item status info based on value from item."""
-        fx_lib_item_catalogue._record.identification.maintenance = value
-        expected = fx_lib_item_catalogue._additional_info.status
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.maintenance = value
+        expected = fx_lib_item_catalogue_min._additional_info.status
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         status = html.select_one("#info-status")
         if expected:
@@ -749,11 +749,11 @@ class TestInfoTab:
         "value",
         [Maintenance(), Maintenance(maintenance_frequency=MaintenanceFrequencyCode.AS_NEEDED)],
     )
-    def test_frequency(self, fx_lib_item_catalogue: ItemCatalogue, value: Maintenance):
+    def test_frequency(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Maintenance):
         """Can get optional item update frequency info based on value from item."""
-        fx_lib_item_catalogue._record.identification.maintenance = value
-        expected = fx_lib_item_catalogue._additional_info.frequency
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.maintenance = value
+        expected = fx_lib_item_catalogue_min._additional_info.frequency
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         frequency = html.select_one("#info-frequency")
         if expected:
@@ -761,18 +761,18 @@ class TestInfoTab:
         else:
             assert frequency is None
 
-    def test_datestamp(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_datestamp(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get metadata datestamp based on value from item."""
-        expected = fx_lib_item_catalogue._additional_info.datestamp
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._additional_info.datestamp
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#info-datestamp").text.strip() == expected.value
         assert html.select_one("#info-datestamp")["datetime"] == expected.datetime
 
-    def test_standard(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_standard(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get metadata standard and version based on value from item."""
-        expected = fx_lib_item_catalogue._additional_info
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._additional_info
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#info-standard").text.strip() == expected.standard
         assert html.select_one("#info-standard-version").text.strip() == expected.standard_version
@@ -790,11 +790,11 @@ class TestInfoTab:
             ],
         ],
     )
-    def test_profiles(self, fx_lib_item_catalogue: ItemCatalogue, value: list[DomainConsistency]):
+    def test_profiles(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[DomainConsistency]):
         """Can get metadata profiles based on values from item."""
-        fx_lib_item_catalogue._record.data_quality = DataQuality(domain_consistency=value)
-        expected = fx_lib_item_catalogue._additional_info.profiles
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.data_quality = DataQuality(domain_consistency=value)
+        expected = fx_lib_item_catalogue_min._additional_info.profiles
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         profiles = html.select_one("#info-profiles")
         if len(expected) > 0:
@@ -803,10 +803,10 @@ class TestInfoTab:
         else:
             assert profiles is None
 
-    def test_record_links(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_record_links(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get metadata record links based on values from item."""
-        expected = fx_lib_item_catalogue._additional_info.record_links
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._additional_info.record_links
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         links = html.select_one("#info-records")
         if len(expected) > 0:
@@ -819,16 +819,16 @@ class TestInfoTab:
 class TestContactTab:
     """Test contact tab template macros."""
 
-    def test_enabled(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_enabled(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get contact tab (always enabled)."""
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#tab-content-contact") is not None
 
-    def test_subject(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_subject(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get contact form subject with expected value from item."""
-        expected = fx_lib_item_catalogue._contact.subject_default
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        expected = fx_lib_item_catalogue_min._contact.subject_default
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#message-subject")["value"] == expected
 
@@ -847,15 +847,15 @@ class TestContactTab:
             ),
         ],
     )
-    def test_alternate(self, fx_lib_item_catalogue: ItemCatalogue, value: Contact):
+    def test_alternate(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Contact):
         """
         Can get optional alternate contact information based on, and with, values from item.
 
         Email is always expected as the ItemCatalogue class requires it.
         """
-        fx_lib_item_catalogue._record.identification.contacts = Contacts([value])
-        expected = fx_lib_item_catalogue._contact
-        html = BeautifulSoup(fx_lib_item_catalogue.render(), parser="html.parser", features="lxml")
+        fx_lib_item_catalogue_min._record.identification.contacts = Contacts([value])
+        expected = fx_lib_item_catalogue_min._contact
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#contact-email").text == expected.email
 
