@@ -12,7 +12,6 @@ from uuid import uuid4
 import pytest
 from arcgis.gis import Item, ItemTypeEnum, SharingLevel
 from boto3 import client as S3Client  # noqa: N812
-from jinja2 import Environment, PackageLoader, select_autoescape
 from moto import mock_aws
 from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
@@ -779,14 +778,15 @@ def fx_exporters_manager_eg_exporter(
     return fx_exporters_manager_no_exporters
 
 
-@pytest.fixture()
-def fx_lib_record_config_minimal_iso() -> dict:
+def _lib_record_config_minimal_iso() -> dict:
     """
     Minimal record configuration (ISO).
 
     Minimal record that will validate against the BAS Metadata Library ISO 19115:2003 / 19115-2:2009 v4 schema.
 
     Types must be safe to encode as JSON.
+
+    Standalone method to allow use outside of fixtures in test parametrisation.
     """
     return {
         "$schema": "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json",
@@ -804,17 +804,34 @@ def fx_lib_record_config_minimal_iso() -> dict:
 
 
 @pytest.fixture()
-def fx_lib_record_config_minimal_item(fx_lib_record_config_minimal_iso: dict) -> dict:
+def fx_lib_record_config_minimal_iso() -> dict:
     """
-    Minimal record configuration (Item).
+    Minimal record configuration (ISO).
 
-    Minimal record that can be used with an ItemBase.
+    Minimal record that will validate against the BAS Metadata Library ISO 19115:2003 / 19115-2:2009 v4 schema.
 
     Types must be safe to encode as JSON.
     """
-    config = deepcopy(fx_lib_record_config_minimal_iso)
+    return _lib_record_config_minimal_iso()
+
+
+def _lib_record_config_minimal_item(base_config: dict) -> dict:
+    """
+    Minimal record configuration (Item).
+
+    Minimal record that can be used with an ItemBase. Types must be safe to encode as JSON.
+
+    Standalone method to allow use outside of fixtures in test parametrisation.
+    """
+    config = deepcopy(base_config)
     config["file_identifier"] = "x"
     return config
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_item(fx_lib_record_config_minimal_iso: dict) -> dict:
+    """Minimal record configuration (Item)."""
+    return _lib_record_config_minimal_item(fx_lib_record_config_minimal_iso)
 
 
 @pytest.fixture()
@@ -830,16 +847,15 @@ def fx_lib_record_config_minimal_magic_preset(fx_lib_record_config_minimal_item:
     return deepcopy(fx_lib_record_config_minimal_item)
 
 
-@pytest.fixture()
-def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_item: dict) -> dict:
+def _lib_record_config_minimal_item_catalogue(base_config: dict) -> dict:
     """
     Minimal record configuration (ItemCatalogue).
 
-    Minimal record that can be used with an ItemCatalogue.
+    Minimal record that can be used with an ItemCatalogue. Types must be safe to encode as JSON.
 
-    Types must be safe to encode as JSON.
+    Standalone method to allow use outside of fixtures in test parametrisation.
     """
-    config = deepcopy(fx_lib_record_config_minimal_item)
+    config = deepcopy(base_config)
     config["identification"]["contacts"] = deepcopy(config["metadata"]["contacts"])
     config["identification"]["contacts"][0]["email"] = "x"
     config["identification"]["identifiers"] = [
@@ -851,6 +867,12 @@ def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_ite
     ]
 
     return config
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_item: dict) -> dict:
+    """Minimal record configuration (ItemCatalogue)."""
+    return _lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_item)
 
 
 @pytest.fixture()
@@ -878,7 +900,11 @@ def fx_lib_record_summary_minimal_item(fx_lib_record_minimal_item_catalogue: Rec
 
 
 def _lib_get_record_summary(identifier: str) -> RecordSummary:
-    """Minimal record summary lookup method."""
+    """
+    Minimal record summary lookup method.
+
+    Standalone method to allow use outside of fixtures.
+    """
     return RecordSummary(
         file_identifier=identifier,
         hierarchy_level=HierarchyLevelCode.PRODUCT,
@@ -909,27 +935,32 @@ def fx_lib_item_cat_info_tab_minimal() -> AdditionalInfoTab:
     )
 
 
-@pytest.fixture()
-def fx_lib_item_catalogue(
-    fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
-) -> ItemCatalogue:
-    """Item Catalogue based on a minimal record instance (Item)."""
+def _lib_item_catalogue_min() -> ItemCatalogue:
+    """
+    ItemCatalogue based on minimal catalogue record.
+
+    Standalone method to allow use outside of fixtures in test parametrisation.
+    """
     return ItemCatalogue(
-        fx_lib_record_minimal_item_catalogue,
+        record=LibRecord.loads(
+            _lib_record_config_minimal_item_catalogue(_lib_record_config_minimal_item(_lib_record_config_minimal_iso()))
+        ),
         embedded_maps_endpoint="x",
         item_contact_endpoint="x",
-        get_record_summary=fx_lib_get_record_summary,
+        get_record_summary=_lib_get_record_summary,
     )
 
 
 @pytest.fixture()
-def fx_lib_item_catalogue_jinja() -> Environment:
-    """Template environment for Data Catalogue."""
-    return Environment(
-        loader=PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates"),
-        autoescape=select_autoescape(),
-        trim_blocks=True,
-        lstrip_blocks=True,
+def fx_lib_item_catalogue(
+    fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
+) -> ItemCatalogue:
+    """ItemCatalogue based on minimal catalogue record."""
+    return ItemCatalogue(
+        record=fx_lib_record_minimal_item_catalogue,
+        embedded_maps_endpoint="x",
+        item_contact_endpoint="x",
+        get_record_summary=fx_lib_get_record_summary,
     )
 
 

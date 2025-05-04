@@ -250,12 +250,12 @@ class Dates(RecordDates):
             return None
         return FormattedDate.from_rec_date(val)
 
-    def as_dict_enum(self) -> dict[DateTypeCode, str]:
+    def as_dict_enum(self) -> dict[DateTypeCode, FormattedDate]:
         """Non-None values as a dictionary with DateTypeCode enum keys."""
         # noinspection PyTypeChecker
         return super().as_dict_enum()
 
-    def as_dict_labeled(self) -> dict[str, str]:
+    def as_dict_labeled(self) -> dict[str, FormattedDate]:
         """Non-None values as a dictionary with human-readable labels as keys."""
         mapping = {
             DateTypeCode.CREATION: "Item created",
@@ -430,8 +430,8 @@ class Summary:
         self,
         item_type: HierarchyLevelCode,
         edition: str | None,
-        published_date: str | None,
-        revision_date: str | None,
+        published_date: FormattedDate | None,
+        revision_date: FormattedDate | None,
         aggregations: Aggregations,
         citation: str | None,
         abstract: str,
@@ -465,14 +465,17 @@ class Summary:
         return self._edition
 
     @property
-    def published(self) -> str | None:
+    def published(self) -> FormattedDate | None:
         """Formatted published date with revision date if set and different to publication."""
         if self._item_type == HierarchyLevelCode.COLLECTION:
             return None
         if self._published_date is None:
             return None
         if self._published_date != self._revision_date and self._revision_date is not None:
-            return f"{self._published_date} (last updated: {self._revision_date})"
+            return FormattedDate(
+                value=f"{self._published_date.value} (last updated: {self._revision_date.value})",
+                datetime=self._published_date.datetime,
+            )
         return self._published_date
 
     @property

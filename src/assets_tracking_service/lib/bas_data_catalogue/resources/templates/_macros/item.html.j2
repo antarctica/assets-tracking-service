@@ -18,7 +18,7 @@
 {% endmacro %}
 
 {% macro summary(data) %}
-  <section id="item-summary" class="col-span-2 bg-grey-100 space-y-8 p-4">
+  <section class="col-span-2 bg-grey-100 space-y-8 p-4">
     {% if data.grid_enabled %}
       {{ summary_grid(data) }}
     {% endif %}
@@ -54,11 +54,6 @@
   </div>
 {% endmacro %}
 
-{% macro items_count(value) %}
-  <div class="font-bold">Items</div>
-  <div id="summary-items">{{ value }}</div>
-{% endmacro %}
-
 {% macro edition(value) %}
   <div class="font-bold">Edition</div>
   <div id="summary-edition">{{ value }}</div>
@@ -66,7 +61,7 @@
 
 {% macro published(data) %}
   <div class="font-bold">Published</div>
-  <div>{{ com.time(data, id='summary-publication') }}</div>
+  <div>{{ com.time(data, id='summary-published') }}</div>
 {% endmacro %}
 
 {% macro citation(value) %}

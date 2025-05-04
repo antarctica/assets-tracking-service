@@ -63,7 +63,7 @@ class Tab(ABC):
 
     @property
     @abstractmethod
-    def icon(self) -> bool:
+    def icon(self) -> str:
         """Tab icon class."""
         ...
 
@@ -461,7 +461,7 @@ class AdditionalInfoTab(Tab):
         return self._identifiers.gitlab_issues
 
     @property
-    def dates(self) -> dict[str, str]:
+    def dates(self) -> dict[str, FormattedDate]:
         """Dates."""
         return self._dates.as_dict_labeled()
 
