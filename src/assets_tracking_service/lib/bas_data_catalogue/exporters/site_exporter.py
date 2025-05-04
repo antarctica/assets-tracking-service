@@ -24,9 +24,10 @@ class SiteResourcesExporter:
             s3_bucket=config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
             relative_base=config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
-        self._txt_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.txt"
-        self._fonts_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.fonts"
         self._css_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.css"
+        self._fonts_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.fonts"
+        self._img_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.img"
+        self._txt_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.txt"
         self._export_base = config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "static"
 
     def _dump_css(self) -> None:
@@ -37,8 +38,9 @@ class SiteResourcesExporter:
         Note: the source `main.css` contains an environment specific output path and MUST NOT be checked into git.
         """
         with resources_as_file(resources_files(self._css_src_ref)) as src_base:
-            src_path = src_base / "main.css"
-            dst_path = self._export_base.joinpath("css", "main.css")
+            name = "main.css"
+            src_path = src_base / name
+            dst_path = self._export_base.joinpath("css", name)
             dst_path.parent.mkdir(parents=True, exist_ok=True)
             copy(src_path, dst_path)
 
@@ -46,24 +48,59 @@ class SiteResourcesExporter:
         """Copy fonts to directory if not already present."""
         BaseExporter._dump_package_resources(src_ref=self._fonts_src_ref, dest_path=self._export_base.joinpath("fonts"))
 
+    def _dump_favicon_ico(self) -> None:
+        """
+        Copy favicon.ico to conventional path if not already present.
+
+        Fallback for `favicon.ico` where clients don't respect `<link rel="shortcut icon">` in HTML.
+        """
+        with resources_as_file(resources_files(self._img_src_ref)) as src_base:
+            name = "favicon.ico"
+            src_path = src_base / name
+            dst_path = self._export_base.parent.joinpath(name)
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+            copy(src_path, dst_path)
+
+    def _dump_img(self) -> None:
+        """Copy image files to directory if not already present."""
+        BaseExporter._dump_package_resources(src_ref=self._img_src_ref, dest_path=self._export_base.joinpath("img"))
+
     def _dump_txt(self) -> None:
         """Copy text files to directory if not already present."""
         BaseExporter._dump_package_resources(src_ref=self._txt_src_ref, dest_path=self._export_base.joinpath("txt"))
 
     def _publish_css(self) -> None:
         """Upload CSS as an S3 object."""
+        name = "main.css"
         with resources_as_file(resources_files(self._css_src_ref)) as src_base:
-            src_path = src_base / "main.css"
+            src_path = src_base / name
             with src_path.open("r") as css_file:
                 content = css_file.read()
 
-        key = self._s3_utils.calc_key(self._export_base.joinpath("css", "main.css"))
+        key = self._s3_utils.calc_key(self._export_base.joinpath("css", name))
         self._s3_utils.upload_content(key=key, content_type="text/css", body=content)
+
+    def _publish_favicon_ico(self) -> None:
+        """Upload favicon.ico as an S3 object."""
+        name = "favicon.ico"
+        with resources_as_file(resources_files(self._img_src_ref)) as src_base:
+            src_path = src_base / name
+            with src_path.open("rb") as favicon_file:
+                content = favicon_file.read()
+
+        key = self._s3_utils.calc_key(self._export_base.parent.joinpath(name))
+        self._s3_utils.upload_content(key=key, content_type="image/x-icon", body=content)
 
     def _publish_fonts(self) -> None:
         """Upload fonts as S3 objects if they do not already exist."""
         self._s3_utils.upload_package_resources(
             src_ref=self._fonts_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("fonts"))
+        )
+
+    def _publish_img(self) -> None:
+        """Upload images as S3 objects if they do not already exist."""
+        self._s3_utils.upload_package_resources(
+            src_ref=self._img_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("img"))
         )
 
     def _publish_txt(self) -> None:
@@ -76,10 +113,14 @@ class SiteResourcesExporter:
         """Copy site resources to their respective directories."""
         self._dump_css()
         self._dump_fonts()
+        self._dump_favicon_ico()
+        self._dump_img()
         self._dump_txt()
 
     def publish(self) -> None:
         """Copy site resources to S3 bucket."""
         self._publish_css()
         self._publish_fonts()
+        self._publish_favicon_ico()
+        self._publish_img()
         self._publish_txt()

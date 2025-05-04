@@ -26,15 +26,17 @@ class S3Utils:
         """
         return str(path.relative_to(self._relative_base))
 
-    def upload_content(self, key: str, content_type: str, body: str, redirect: str | None = None) -> None:
+    def upload_content(self, key: str, content_type: str, body: str | bytes, redirect: str | None = None) -> None:
         """
-        Upload string as an S3 object.
+        Upload string or binary content as an S3 object.
 
         Optionally, a redirect can be set to redirect to another object as per [1].
 
         [1] https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-page-redirect.html#redirect-requests-object-metadata
         """
-        params = {"Bucket": self._bucket, "Key": key, "Body": body.encode("utf-8"), "ContentType": content_type}
+        params = {"Bucket": self._bucket, "Key": key, "Body": body, "ContentType": content_type}
+        if isinstance(body, str):
+            params["Body"] = body.encode("utf-8")
         if redirect is not None:
             params["WebsiteRedirectLocation"] = redirect
         self._s3.put_object(**params)

@@ -4,6 +4,7 @@
   <head>
     {{ head_meta(open_graph) }}
     {{ head_title(title) }}
+    {{ head_favicon() }}
     {{ head_styles() }}
     {{ head_scripts(schema_org) }}
   </head>
@@ -23,6 +24,11 @@
 
 {% macro head_title(value) %}
   <title>{{ value }}</title>
+{% macro head_favicon() %}
+  <link rel="shortcut icon" href="/static/img/favicon.ico" />
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png" sizes="180x180" />
+  <link rel='manifest' href="/static/txt/site.webmanifest" />
 {% endmacro %}
 
 {% macro head_styles() %}
