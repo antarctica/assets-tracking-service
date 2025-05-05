@@ -1,3 +1,4 @@
+import logging
 from shutil import copy
 
 from importlib_resources import as_file as resources_as_file
@@ -7,6 +8,7 @@ from mypy_boto3_s3 import S3Client
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter as BaseExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import S3Utils
+from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 
 
 class SiteResourcesExporter:
@@ -129,3 +131,59 @@ class SiteResourcesExporter:
         self._publish_favicon_ico()
         self._publish_img()
         self._publish_txt()
+
+
+class SiteIndexExporter:
+    """
+    Proto Data Catalogue index exporter.
+
+    Generates a basic site index from a set of record summaries.
+
+    Intended for internal use only and unstyled.
+    """
+
+    def __init__(self, config: Config, s3: S3Client, logger: logging.Logger, summaries: list[RecordSummary]) -> None:
+        """Initialise exporter."""
+        self._config = config
+        self._logger = logger
+        self._s3 = s3
+        self._s3_utils = S3Utils(
+            s3=self._s3,
+            s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
+            relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
+        )
+
+        self._summaries = summaries
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "Site Index"
+
+    def dumps(self) -> str:
+        """Build proto/backstage index."""
+        item_links = "\n".join(
+            [
+                f'<li><a href="/items/{summary.file_identifier}/index.html">[{summary.hierarchy_level.name}] {summary.file_identifier} - {summary.title} ({summary.edition})</a></li>'
+                for summary in self._summaries
+            ]
+        )
+        return f"<html><body><h1>Proto Items Index</h1><ul>{item_links}</ul></body></html>"
+
+    def export(self) -> None:
+        """Export proto index to directory."""
+        index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
+        self._logger.info(f"Exporting proto site index to {index_path}")
+
+        index_path.parent.mkdir(parents=True, exist_ok=True)
+        with index_path.open("w") as f:
+            f.write(self.dumps())
+
+    def publish(self) -> None:
+        """Publish proto index to S3."""
+        index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
+        index_key = self._s3_utils.calc_key(index_path)
+        index_url = f"https://{self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET}/{index_key}"
+
+        self._logger.info(f"Publishing proto site index to: {index_url}")
+        self._s3_utils.upload_content(key=index_key, content_type="text/html", body=self.dumps())

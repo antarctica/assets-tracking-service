@@ -30,20 +30,24 @@ class TestRecordsExporter:
         type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
         type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
+        records = [fx_lib_record_minimal_item_catalogue]
+        summaries = [RecordSummary.loads(record) for record in records]
         exporter = RecordsExporter(
-            config=mock_config, s3=fx_s3_client, logger=fx_logger, records=[fx_lib_record_minimal_item_catalogue]
+            config=mock_config, s3=fx_s3_client, logger=fx_logger, records=records, summaries=summaries
         )
 
         assert isinstance(exporter, RecordsExporter)
         assert exporter.name == "Records"
 
-    def test_load_records(self, fx_lib_exporter_records: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record):
+    def test_index_records(
+        self, fx_lib_exporter_records: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record
+    ):
         """Can load records."""
         assert fx_lib_exporter_records._records == {
             fx_lib_record_minimal_item_catalogue.file_identifier: fx_lib_record_minimal_item_catalogue
         }
 
-    def test_load_summaries(
+    def test_index_summaries(
         self, fx_lib_exporter_records: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record
     ):
         """Can load records."""
@@ -70,7 +74,7 @@ class TestRecordsExporter:
     def test_export_record(
         self, fx_lib_exporter_records: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record
     ):
-        """Can export a record."""
+        """Can export a record to local files."""
         site_path = fx_lib_exporter_records._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
         record_id = fx_lib_record_minimal_item_catalogue.file_identifier
         expected = [
@@ -93,14 +97,16 @@ class TestRecordsExporter:
             assert path in result
 
     def test_publish_record(
-        self, fx_lib_exporter_records: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record
+        self,
+        fx_lib_exporter_records: RecordsExporter,
+        fx_lib_record_minimal_item_catalogue: Record,
+        fx_s3_bucket_name: str,
     ):
-        """Can export a record."""
+        """Can export a record to S3 objects."""
         record_id = fx_lib_record_minimal_item_catalogue.file_identifier
-        bucket = fx_lib_exporter_records._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET
         s3_utils = S3Utils(
             s3=fx_lib_exporter_records._s3,
-            s3_bucket=bucket,
+            s3_bucket=fx_s3_bucket_name,
             relative_base=fx_lib_exporter_records._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
         expected = [
@@ -118,7 +124,7 @@ class TestRecordsExporter:
 
         fx_lib_exporter_records.publish_record(fx_lib_record_minimal_item_catalogue.file_identifier)
 
-        result = s3_utils._s3.list_objects(Bucket=bucket)
+        result = s3_utils._s3.list_objects(Bucket=fx_s3_bucket_name)
         keys = [o["Key"] for o in result["Contents"]]
         for key in expected:
             assert key in keys

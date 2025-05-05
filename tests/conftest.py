@@ -39,7 +39,10 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter impo
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.resources_exporter import SiteResourcesExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import (
+    SiteIndexExporter,
+    SiteResourcesExporter,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import AdditionalInfoTab, ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import Dates as ItemCatDates
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
@@ -76,6 +79,18 @@ from tests.pytest_pg_factories import (  # noqa: F401
 )
 from tests.resources.examples.example_exporter import ExampleExporter
 from tests.resources.examples.example_provider import ExampleProvider
+from tests.resources.lib.data_catalogue.records.item_cat_collection_all import record as collection_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_data import record as data_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_formatting import record as formatting_supported
+from tests.resources.lib.data_catalogue.records.item_cat_licence import (
+    cc_record,
+    ogl_record,
+    ops_record,
+    rights_reversed_record,
+)
+from tests.resources.lib.data_catalogue.records.item_cat_product_all import record as product_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_product_min import record as product_min_supported
+from tests.resources.lib.data_catalogue.records.item_cat_pub_map import record as product_published_map
 
 # override `postgresql` fixture with either a local (proc) or remote (noproc) fixture depending on if in CI.
 postgresql = factories.postgresql(postgresql_factory_name)
@@ -1091,9 +1106,9 @@ def fx_lib_exporter_records(
     type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
     type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
 
-    return RecordsExporter(
-        config=mock_config, logger=fx_logger, s3=fx_s3_client, records=[fx_lib_record_minimal_item_catalogue]
-    )
+    records = [fx_lib_record_minimal_item_catalogue]
+    summaries = [RecordSummary.loads(record) for record in records]
+    return RecordsExporter(config=mock_config, logger=fx_logger, s3=fx_s3_client, records=records, summaries=summaries)
 
 
 @pytest.fixture()
@@ -1108,6 +1123,46 @@ def fx_lib_exporter_site_resources(
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
     return SiteResourcesExporter(config=mock_config, s3=fx_s3_client)
+
+
+@pytest.fixture()
+def fx_lib_exporter_site_index(
+    mocker: MockerFixture,
+    fx_s3_bucket_name: str,
+    fx_logger: logging.Logger,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: Record,
+) -> SiteIndexExporter:
+    """Site resources exporter with a mocked config and S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
+    return SiteIndexExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, summaries=summaries)
+
+
+def lib_exporter_static_site_records() -> list[LibRecord]:
+    """Records for populating static site exporter."""  # noqa: D401
+    return [
+        collection_all_supported,
+        product_min_supported,
+        product_all_supported,
+        formatting_supported,
+        data_all_supported,
+        ogl_record,
+        cc_record,
+        ops_record,
+        rights_reversed_record,
+        product_published_map,
+    ]
+
+
+def fx_lib_exporter_static_site_records() -> list[LibRecord]:
+    """Records for populating static site exporter."""  # noqa: D401
+    return lib_exporter_static_site_records()
 
 
 @pytest.fixture(scope="module")

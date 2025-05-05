@@ -14,13 +14,20 @@ class RecordsExporter:
     """
     Data Catalogue records exporter.
 
-    Meta-exporter coordinating format specific exporters for a set of records.
+    Combines format specific exporters for a set of records.
 
     Records and summaries handling is intentionally simple and not intended for large numbers of records.
     It will be replaced with a more capable record repository in the future.
     """
 
-    def __init__(self, config: Config, s3: S3Client, logger: logging.Logger, records: list[Record]) -> None:
+    def __init__(
+        self,
+        config: Config,
+        s3: S3Client,
+        logger: logging.Logger,
+        records: list[Record],
+        summaries: list[RecordSummary],
+    ) -> None:
         """Initialise exporter."""
         self._config = config
         self._s3 = s3
@@ -30,17 +37,17 @@ class RecordsExporter:
         self._summaries: dict[str, RecordSummary] = {}
 
         self._logger.info(f"Initialising records exporter from {len(records)} records")
-        self._load_records(records)
-        self._load_summaries(records)
+        self._index_records(records)
+        self._index_summaries(summaries)
 
-    def _load_records(self, records: list[Record]) -> None:
+    def _index_records(self, records: list[Record]) -> None:
         """Index all records and create record summaries."""
         self._records = {record.file_identifier: record for record in records}
         self._logger.debug(f"{len(self._records)} records indexed")
 
-    def _load_summaries(self, records: list[Record]) -> None:
+    def _index_summaries(self, summaries: list[RecordSummary]) -> None:
         """Create record summaries for all records."""
-        self._summaries = {record.file_identifier: RecordSummary.loads(record) for record in records}
+        self._summaries = {summary.file_identifier: summary for summary in summaries}
         self._logger.debug(f"{len(self._summaries)} record summaries indexed")
 
     def _get_item_summary(self, identifier: str) -> RecordSummary:
