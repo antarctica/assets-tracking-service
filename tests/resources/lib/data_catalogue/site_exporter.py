@@ -4,7 +4,7 @@ from mypy_boto3_s3 import S3Client
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import SiteResourcesExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.resources_exporter import SiteResourcesExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from tests.resources.lib.data_catalogue.records.item_cat_collection_all import record as collection_all_supported
 from tests.resources.lib.data_catalogue.records.item_cat_data import record as data_all_supported

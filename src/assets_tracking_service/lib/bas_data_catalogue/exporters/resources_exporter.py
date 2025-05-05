@@ -28,7 +28,7 @@ class SiteResourcesExporter:
         self._fonts_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.fonts"
         self._img_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.img"
         self._txt_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.txt"
-        self._export_base = config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "static"
+        self._export_base = config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("static")
 
     def _dump_css(self) -> None:
         """

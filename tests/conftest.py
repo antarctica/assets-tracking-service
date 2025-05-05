@@ -39,7 +39,7 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter impo
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import SiteResourcesExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.resources_exporter import SiteResourcesExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import AdditionalInfoTab, ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import Dates as ItemCatDates
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (

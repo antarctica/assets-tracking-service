@@ -166,7 +166,7 @@ class TestBaseExporter:
         assert dest_path.exists()
 
     def test_dumps_invalid(self, mocker: MockerFixture, fx_lib_record_minimal_item: Record):
-        """Cannot export record from base exporter."""
+        """Cannot generate a record in a derived format from base exporter."""
         with TemporaryDirectory() as tmp_path:
             output_path = Path(tmp_path)
         s3_client = mocker.MagicMock()

@@ -75,19 +75,9 @@ class Exporter:
         """
         Initialise exporter.
 
-        `export_base` is an output directory for each export type. This MUST be relative to
-        `Config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` so that a base S3 key can be generated from it.
+        Where `export_base` is an output directory for each export type which MUST be relative to
+        `Config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`, so that a base S3 key can be generated from it.
         """
-        if record.file_identifier is None:
-            msg = "File identifier must be set to export record."
-            raise ValueError(msg) from None
-
-        try:
-            _ = export_base.relative_to(config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
-        except ValueError as e:
-            msg = "Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."
-            raise ValueError(msg) from e
-
         self._config = config
         self._s3_client = s3
         self._s3_utils = S3Utils(
@@ -95,8 +85,22 @@ class Exporter:
             s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
             relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
+
+        self._validate(record, export_base)
         self._record = record
         self._export_path = export_base.joinpath(export_name)
+
+    def _validate(self, record: Record, export_base: Path) -> None:
+        """Validate exporter configuration."""
+        if record.file_identifier is None:
+            msg = "File identifier must be set to export record."
+            raise ValueError(msg) from None
+
+        try:
+            _ = export_base.relative_to(self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
+        except ValueError as e:
+            msg = "Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."
+            raise ValueError(msg) from e
 
     def _dump(self, path: Path) -> None:
         """Write dumped output to file."""

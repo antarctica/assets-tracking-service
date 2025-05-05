@@ -4,7 +4,7 @@ from unittest.mock import PropertyMock
 
 from pytest_mock import MockerFixture
 
-from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import SiteResourcesExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.resources_exporter import SiteResourcesExporter
 
 
 class TestSiteResourcesExporter:

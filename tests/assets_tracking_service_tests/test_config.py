@@ -416,10 +416,9 @@ class TestConfig:
         """Configurable properties can be accessed."""
         envs = {f"ASSETS_TRACKING_SERVICE_{property_name}": str(expected)}
         envs_bck = self._set_envs(envs)
-
         config = Config()
-        assert getattr(config, property_name) == expected
 
+        assert getattr(config, property_name) == expected
         if sensitive:
             assert getattr(config, f"{property_name}_SAFE") == "[**REDACTED**]"
 
