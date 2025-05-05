@@ -1,9 +1,13 @@
 import logging
+import sys
+import time
 from contextlib import suppress
 from copy import deepcopy
 from datetime import UTC, datetime
+from http.client import HTTPConnection
 from importlib.metadata import version
 from pathlib import Path
+from subprocess import PIPE, Popen
 from tempfile import TemporaryDirectory
 from typing import Literal, TypedDict
 from unittest.mock import MagicMock, PropertyMock
@@ -19,6 +23,7 @@ from psycopg.sql import SQL
 from pytest_mock import MockerFixture
 from pytest_postgresql import factories
 from requests import HTTPError
+from resources.lib.data_catalogue.site_exporter import SiteExporter
 from shapely import Point
 from typer.testing import CliRunner
 from ulid import ULID
@@ -33,6 +38,7 @@ from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import SiteResourcesExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import AdditionalInfoTab, ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import Dates as ItemCatDates
@@ -1014,7 +1020,7 @@ def fx_lib_exporter_base(
 
     exporter = Exporter(
         config=mock_config,
-        s3_client=fx_s3_client,
+        s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=output_path.joinpath("x"),
         export_name="x.txt",
@@ -1038,7 +1044,7 @@ def fx_lib_exporter_iso_xml_html(
 
     return IsoXmlHtmlExporter(
         config=mock_config,
-        s3_client=fx_s3_client,
+        s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=exports_path,
         stylesheets_base=stylesheets_path,
@@ -1064,7 +1070,29 @@ def fx_lib_exporter_html_alias(
     )
 
     return HtmlAliasesExporter(
-        config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item_catalogue, site_base=output_path
+        config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item_catalogue, site_base=output_path
+    )
+
+
+@pytest.fixture()
+def fx_lib_exporter_records(
+    mocker: MockerFixture,
+    fx_logger: logging.Logger,
+    fx_s3_bucket_name: str,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: Record,
+) -> RecordsExporter:
+    """Records meta exporter with a mocked config and S3 client and minimal record."""  # noqa: D401
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
+    type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
+
+    return RecordsExporter(
+        config=mock_config, logger=fx_logger, s3=fx_s3_client, records=[fx_lib_record_minimal_item_catalogue]
     )
 
 
@@ -1079,7 +1107,80 @@ def fx_lib_exporter_site_resources(
     type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
-    return SiteResourcesExporter(config=mock_config, s3_client=fx_s3_client)
+    return SiteResourcesExporter(config=mock_config, s3=fx_s3_client)
+
+
+@pytest.fixture(scope="module")
+def fx_lib_exporter_static_site(module_mocker: MockerFixture) -> TemporaryDirectory:
+    """
+    Build static site and export to a temp directory.
+
+    Module scoped for performance. Means usual fixtures for config and S3Client can't be used and are duplicated.
+    """
+    site_dir = TemporaryDirectory()
+
+    logger = logging.getLogger("app")
+    logger.setLevel(logging.DEBUG)
+
+    config = Config()
+    module_mocker.patch.object(
+        type(config),
+        attribute="EXPORTER_DATA_CATALOGUE_OUTPUT_PATH",
+        new_callable=PropertyMock,
+        return_value=Path(site_dir.name),
+    )
+    module_mocker.patch.object(
+        type(config), attribute="EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID", new_callable=PropertyMock, return_value="x"
+    )
+    module_mocker.patch.object(
+        type(config), attribute="EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", new_callable=PropertyMock, return_value="x"
+    )
+
+    with mock_aws():
+        s3_client = S3Client(
+            "s3",
+            aws_access_key_id=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
+            aws_secret_access_key=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET,
+            region_name="eu-west-1",
+        )
+
+    exporter = SiteExporter(config=config, s3=s3_client, logger=logger)
+    exporter.export()
+
+    if not Path(site_dir.name).joinpath("favicon.ico").exists():
+        msg = "Failed to generate static site"
+        raise RuntimeError(msg) from None
+
+    return site_dir
+
+
+@pytest.fixture(scope="module")
+def fx_lib_exporter_static_server(fx_lib_exporter_static_site: TemporaryDirectory):
+    """Expose static site from a local server."""
+    retries = 5
+    python_bin = sys.executable
+    site_dir = fx_lib_exporter_static_site.name
+    process = Popen([python_bin, "-m", "http.server", "8123", "--directory", site_dir], stdout=PIPE)  # noqa: S603
+
+    while retries > 0:
+        conn = HTTPConnection("localhost:8123")
+        try:
+            conn.request("HEAD", "/")
+            response = conn.getresponse()
+            if response is not None:
+                yield process
+                break
+        except ConnectionRefusedError:
+            time.sleep(1)
+            retries -= 1
+
+    if not retries:
+        msg = "Failed to start http server"
+        raise RuntimeError(msg) from None
+    else:
+        process.terminate()
+        process.wait()
+        fx_lib_exporter_static_site.cleanup()
 
 
 @pytest.fixture()

@@ -220,7 +220,7 @@ class DataCatalogueExporter(Exporter):
         """Export record as BAS Metadata Library JSON."""
         self._logger.debug("Exporting record '%s' as BAS ISO JSON...", record.file_identifier)
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        exporter = JsonExporter(config=self._config, s3_client=self._s3, record=record, export_base=output_path)
+        exporter = JsonExporter(config=self._config, s3=self._s3, record=record, export_base=output_path)
         exporter.export()
         exporter.publish()
         self._logger.debug("Exported record '%s' as BAS ISO JSON", record.file_identifier)
@@ -241,7 +241,7 @@ class DataCatalogueExporter(Exporter):
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "items"
         exporter = HtmlExporter(
             config=self._config,
-            s3_client=self._s3,
+            s3=self._s3,
             record=record,
             export_base=output_path,
             get_record_summary=_get_item_summary,
@@ -254,7 +254,7 @@ class DataCatalogueExporter(Exporter):
         """Export aliases in record as redirects to catalogue items."""
         self._logger.debug("Exporting optional catalogue item aliases for record '%s' ...", record.file_identifier)
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
-        exporter = HtmlAliasesExporter(config=self._config, s3_client=self._s3, record=record, site_base=output_path)
+        exporter = HtmlAliasesExporter(config=self._config, s3=self._s3, record=record, site_base=output_path)
         exporter.export()
         exporter.publish()
         self._logger.debug("Exported optional catalogue item aliases for record '%s'", record.file_identifier)
@@ -263,7 +263,7 @@ class DataCatalogueExporter(Exporter):
         """Export record as ISO XML."""
         self._logger.debug("Exporting record '%s' as ISO XML...", record.file_identifier)
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        exporter = IsoXmlExporter(config=self._config, s3_client=self._s3, record=record, export_base=output_path)
+        exporter = IsoXmlExporter(config=self._config, s3=self._s3, record=record, export_base=output_path)
         exporter.export()
         exporter.publish()
         self._logger.debug("Exported record '%s' as ISO XML", record.file_identifier)
@@ -274,11 +274,7 @@ class DataCatalogueExporter(Exporter):
         stylesheets_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("static/xsl/iso-html")
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
         exporter = IsoXmlHtmlExporter(
-            config=self._config,
-            s3_client=self._s3,
-            record=record,
-            export_base=output_path,
-            stylesheets_base=stylesheets_path,
+            config=self._config, s3=self._s3, record=record, export_base=output_path, stylesheets_base=stylesheets_path
         )
         exporter.export()
         exporter.publish()

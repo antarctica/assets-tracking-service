@@ -71,9 +71,7 @@ class Exporter:
     - require records to set Record.file_identifier
     """
 
-    def __init__(
-        self, config: Config, s3_client: S3Client, record: Record, export_base: Path, export_name: str
-    ) -> None:
+    def __init__(self, config: Config, s3: S3Client, record: Record, export_base: Path, export_name: str) -> None:
         """
         Initialise exporter.
 
@@ -91,7 +89,7 @@ class Exporter:
             raise ValueError(msg) from e
 
         self._config = config
-        self._s3_client = s3_client
+        self._s3_client = s3
         self._s3_utils = S3Utils(
             s3=self._s3_client,
             s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
@@ -120,6 +118,11 @@ class Exporter:
         with resources_as_file(resources_files(src_ref)) as resources_path:
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             copytree(resources_path, dest_path)
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        raise NotImplementedError() from None
 
     def dumps(self) -> str:
         """Encode resource as a particular format."""

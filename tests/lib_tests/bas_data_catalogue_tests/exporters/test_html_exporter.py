@@ -26,13 +26,14 @@ class TestHtmlExporter:
 
         exporter = HtmlExporter(
             config=mock_config,
-            s3_client=fx_s3_client,
+            s3=fx_s3_client,
             record=fx_lib_record_minimal_item,
             export_base=output_path,
             get_record_summary=_lib_get_record_summary,
         )
 
         assert isinstance(exporter, HtmlExporter)
+        assert exporter.name == "Item HTML"
         assert exporter._export_path == expected
 
     def test_dumps(
@@ -52,7 +53,7 @@ class TestHtmlExporter:
         type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
         exporter = HtmlExporter(
             config=mock_config,
-            s3_client=fx_s3_client,
+            s3=fx_s3_client,
             record=fx_lib_record_minimal_item_catalogue,
             export_base=output_path,
             get_record_summary=_lib_get_record_summary,
@@ -76,10 +77,11 @@ class TestHtmlAliasesExporter:
         type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
         exporter = HtmlAliasesExporter(
-            config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item, site_base=output_path
+            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, site_base=output_path
         )
 
         assert isinstance(exporter, HtmlAliasesExporter)
+        assert exporter.name == "Item Aliases"
 
     def test_get_aliases(self, fx_lib_exporter_html_alias: HtmlAliasesExporter):
         """Can process any alias identifiers in record."""

@@ -19,11 +19,14 @@ class IsoXmlExporter(Exporter):
     Intended for interoperability with clients that prefer ISO XML, or need access to the full underlying record.
     """
 
-    def __init__(self, config: Config, s3_client: S3Client, record: Record, export_base: Path) -> None:
+    def __init__(self, config: Config, s3: S3Client, record: Record, export_base: Path) -> None:
         export_name = f"{record.file_identifier}.xml"
-        super().__init__(
-            config=config, s3_client=s3_client, record=record, export_base=export_base, export_name=export_name
-        )
+        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "ISO XML"
 
     def dumps(self) -> str:
         """Encode record as XML using ISO 19139 schemas."""
@@ -55,7 +58,7 @@ class IsoXmlHtmlExporter(Exporter):
     def __init__(
         self,
         config: Config,
-        s3_client: S3Client,
+        s3: S3Client,
         record: Record,
         export_base: Path,
         stylesheets_base: Path,
@@ -68,9 +71,7 @@ class IsoXmlHtmlExporter(Exporter):
         `Config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` so that a base S3 key can be generated from it.
         """
         export_name = f"{record.file_identifier}.html"
-        super().__init__(
-            config=config, s3_client=s3_client, record=record, export_base=export_base, export_name=export_name
-        )
+        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
         self._stylesheets_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl.iso-html"
         self._stylesheets_path = stylesheets_base
         self._stylesheets_base_key = self._s3_utils.calc_key(stylesheets_base)
@@ -84,6 +85,11 @@ class IsoXmlHtmlExporter(Exporter):
         """Upload stylesheets as S3 objects if they do not already exist."""
         self._s3_utils.upload_package_resources(src_ref=self._stylesheets_src_ref, base_key=self._stylesheets_base_key)
 
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "ISO XML HTML"
+
     def dumps(self) -> str:
         """
         Include ISO 19115 HTML XML stylesheet within XML encoded record.
@@ -92,7 +98,7 @@ class IsoXmlHtmlExporter(Exporter):
         """
         # noinspection PyTypeChecker
         xml = IsoXmlExporter(
-            config=self._config, s3_client=self._s3_client, record=self._record, export_base=self._export_path.parent
+            config=self._config, s3=self._s3_client, record=self._record, export_base=self._export_path.parent
         ).dumps()
         doc = ElementTree(fromstring(xml.encode()))  # noqa: S320
         root = doc.getroot()

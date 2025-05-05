@@ -18,9 +18,9 @@ class SiteResourcesExporter:
     Due to global nature of this exporter it does subclass the BaseExporter to avoid hacking around its requirements.
     """
 
-    def __init__(self, config: Config, s3_client: S3Client) -> None:
+    def __init__(self, config: Config, s3: S3Client) -> None:
         self._s3_utils = S3Utils(
-            s3=s3_client,
+            s3=s3,
             s3_bucket=config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
             relative_base=config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
@@ -108,6 +108,11 @@ class SiteResourcesExporter:
         self._s3_utils.upload_package_resources(
             src_ref=self._txt_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("txt"))
         )
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "Site Resources"
 
     def export(self) -> None:
         """Copy site resources to their respective directories."""

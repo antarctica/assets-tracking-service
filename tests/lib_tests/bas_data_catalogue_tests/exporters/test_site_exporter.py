@@ -18,9 +18,10 @@ class TestSiteResourcesExporter:
         mock_config = mocker.Mock()
         type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
 
-        exporter = SiteResourcesExporter(config=mock_config, s3_client=s3_client)
+        exporter = SiteResourcesExporter(config=mock_config, s3=s3_client)
 
         assert isinstance(exporter, SiteResourcesExporter)
+        assert exporter.name == "Site Resources"
 
     def test_dump_css(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can copy CSS to output path."""
