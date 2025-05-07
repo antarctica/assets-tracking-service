@@ -16,6 +16,44 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Date, HierarchyLevelCode, RecordSummary
 
 
+class TestPageHeader:
+    """Test page header common macro."""
+
+    @staticmethod
+    def _render(config: dict) -> str:
+        _loader = PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates")
+        jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
+        template = """{% import '_macros/common.html.j2' as com %}{{ com.page_header(**config) }}"""
+        return jinja.from_string(template).render(config=config)
+
+    def test_main(self):
+        """Can render a minimal page header with main content only."""
+        expected = "x"
+        html = BeautifulSoup(self._render({"main": expected}), parser="html.parser", features="lxml")
+        assert html.select_one("h1").text.strip() == expected
+
+    @pytest.mark.parametrize(("sub", "sub_i"), [("x", None), ("x", "x")])
+    def test_subheader(self, sub: str, sub_i: str | None):
+        """Can render a page header with optional subheader with and without icon."""
+        html = BeautifulSoup(self._render({"sub": sub, "sub_i": sub_i}), parser="html.parser", features="lxml")
+
+        assert html.select_one("small").text.strip() == sub
+        if sub_i is not None:
+            assert html.select_one("small i")["class"] == sub_i.split(" ")
+
+    def test_id(self):
+        """Can render a page header with optional id selectors for each component."""
+        html = BeautifulSoup(
+            self._render({"id_wrapper": "x", "id_sub": "y", "id_main": "z", "sub": "..."}),
+            parser="html.parser",
+            features="lxml",
+        )
+
+        assert html.select_one("#x") is not None
+        assert html.select_one("#y") is not None
+        assert html.select_one("#z") is not None
+
+
 class TestItemSummaryMacro:
     """Test item summary common macro."""
 

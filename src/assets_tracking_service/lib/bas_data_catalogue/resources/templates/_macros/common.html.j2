@@ -35,6 +35,17 @@
   <a class="{{ link_classes() }}" href="{{ href }}" target="_blank">{{ value }} {{ ext_link_i() }}</a>
 {% endmacro %}
 
+{% macro page_header(id_wrapper=None, id_sub=None, id_main=None, sub=None, sub_i=None, main=None) %}
+  <header {% if id_wrapper %}id="{{ id_wrapper }}"{% endif %} class="border-b-1 border-grey-100 pb-4">
+    {% if sub %}
+      <small {% if id_sub %}id="{{ id_sub }}"{% endif %} class="text-grey-500 uppercase">
+        {% if sub_i %}<i class="{{ sub_i }}"></i>{% endif %} {{ sub }}
+      </small>
+    {% endif %}
+    <h1 {% if id_main %}id="{{ id_main }}"{% endif %} class="text-3xl">{{ main }}</h1>
+  </header>
+{% endmacro %}
+
 {% macro item_border(classes="") %}
   <div class="border-1 border-grey-100 p-2 {{ classes }}">
     {{ caller() }}

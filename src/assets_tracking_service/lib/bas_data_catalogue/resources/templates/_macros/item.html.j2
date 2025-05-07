@@ -2,12 +2,12 @@
 {% import '_macros/tabs.html.j2' as tab %}
 
 {% macro header(data) %}
-  <header id="item-header" class="border-b-1 border-grey-100 pb-4">
-    <small id="item-header-type" class="text-grey-500 uppercase">
-      <i class="{{ data.subtitle[1] }}"></i> {{ data.subtitle[0] }}
-    </small>
-    <h1 id="item-header-title" class="text-3xl">{{ data.title }}</h1>
-  </header>
+  {{
+    com.page_header(
+      id_wrapper='item-header', id_sub='item-header-type', id_main='item-header-title',
+      sub_i=data.subtitle[1], sub=data.subtitle[0], main=data.title
+    )
+  }}
 {% endmacro %}
 
 {% macro top_bit(data) %}
