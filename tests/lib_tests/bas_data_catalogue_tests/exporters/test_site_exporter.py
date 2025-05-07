@@ -33,14 +33,14 @@ class TestSiteIndexExporter:
 
     def test_dumps(self, fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: Record):
         """Can dump site index."""
-        result = fx_lib_exporter_site_index.dumps()
+        result = fx_lib_exporter_site_index._dumps()
         assert (
             '<html><body><h1>Proto Items Index</h1><ul><li><a href="/items/x/index.html">[DATASET] x - x (None)</a></li></ul></body></html>'
             in result
         )
 
     def test_export(self, fx_lib_exporter_site_index: SiteIndexExporter):
-        """Can export site index to local file."""
+        """Can export site index to a local file."""
         site_path = fx_lib_exporter_site_index._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
         expected = site_path.joinpath("-", "index", "index.html")
 

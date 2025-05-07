@@ -20,7 +20,7 @@ class SiteResourcesExporter:
 
     A non-record specific exporter for static resources used across the static site (CSS, fonts, etc.).
 
-    Due to global nature of this exporter it does subclass the BaseExporter to avoid hacking around its requirements.
+    Due to its global nature, does not subclass the BaseExporter to avoid hacking around its requirements.
     """
 
     def __init__(self, config: Config, s3: S3Client) -> None:
@@ -140,9 +140,11 @@ class SiteIndexExporter:
     """
     Proto Data Catalogue index exporter.
 
+    Note: Intended for internal use only and unstyled.
+
     Generates a basic site index from a set of record summaries.
 
-    Intended for internal use only and unstyled.
+    Due to its global nature, does not subclass the BaseExporter to avoid hacking around its requirements.
     """
 
     def __init__(self, config: Config, s3: S3Client, logger: logging.Logger, summaries: list[RecordSummary]) -> None:
@@ -157,13 +159,14 @@ class SiteIndexExporter:
         )
 
         self._summaries = summaries
+        self._index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
 
     @property
     def name(self) -> str:
         """Exporter name."""
         return "Site Index"
 
-    def dumps(self) -> str:
+    def _dumps(self) -> str:
         """Build proto/backstage index."""
         item_links = "\n".join(
             [
@@ -175,21 +178,17 @@ class SiteIndexExporter:
 
     def export(self) -> None:
         """Export proto index to directory."""
-        index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
-        self._logger.info(f"Exporting proto site index to {index_path}")
-
-        index_path.parent.mkdir(parents=True, exist_ok=True)
-        with index_path.open("w") as f:
-            f.write(self.dumps())
+        self._logger.info(f"Exporting proto site index to {self._index_path.resolve()}")
+        self._index_path.parent.mkdir(parents=True, exist_ok=True)
+        with self._index_path.open("w") as f:
+            f.write(self._dumps())
 
     def publish(self) -> None:
         """Publish proto index to S3."""
-        index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
-        index_key = self._s3_utils.calc_key(index_path)
+        index_key = self._s3_utils.calc_key(self._index_path)
         index_url = f"https://{self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET}/{index_key}"
-
         self._logger.info(f"Publishing proto site index to: {index_url}")
-        self._s3_utils.upload_content(key=index_key, content_type="text/html", body=self.dumps())
+        self._s3_utils.upload_content(key=index_key, content_type="text/html", body=self._dumps())
 
 
 class SitePagesExporter:
@@ -260,13 +259,13 @@ class SiteExporter:
         self._summaries = [RecordSummary.loads(record) for record in self._records]
 
         self._resources_exporter = SiteResourcesExporter(config=self._config, s3=self._s3)
-        self._records_exporter = RecordsExporter(
-            config=self._config, s3=self._s3, logger=self._logger, records=self._records, summaries=self._summaries
-        )
         self._index_exporter = SiteIndexExporter(
             config=self._config, s3=self._s3, logger=self._logger, summaries=self._summaries
         )
         self._pages_exporter = SitePagesExporter(config=self._config, s3=self._s3, logger=self._logger)
+        self._records_exporter = RecordsExporter(
+            config=self._config, s3=self._s3, logger=self._logger, records=self._records, summaries=self._summaries
+        )
 
     @property
     def name(self) -> str:
