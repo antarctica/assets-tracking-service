@@ -1,6 +1,5 @@
 import json
 from collections.abc import Callable
-from datetime import UTC, datetime
 
 from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -30,6 +29,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs i
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import GraphicOverview
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import ContactRoleCode
+from assets_tracking_service.lib.bas_data_catalogue.models.templates import PageMetadata
 
 
 class ItemInvalidError(Exception):
@@ -243,12 +243,19 @@ class ItemCatalogue(ItemBase):
         return next((graphic for graphic in self.graphics if graphic.identifier == "overview"), None)
 
     @property
-    def html_title(self) -> str:
-        """Title with without formatting with site name appended, for HTML title element."""
-        return f"{self.title_plain} | BAS Data Catalogue"
+    def page_metadata(self) -> PageMetadata:
+        """Templates page metadata."""
+        return PageMetadata(
+            html_title=self._html_title, html_open_graph=self._html_open_graph, html_schema_org=self._html_schema_org
+        )
 
     @property
-    def html_open_graph(self) -> dict[str, str]:
+    def _html_title(self) -> str:
+        """Title with without formatting with site name appended, for HTML title element."""
+        return f"{self.title_plain}"
+
+    @property
+    def _html_open_graph(self) -> dict[str, str]:
         """
         Open Graph meta tags.
 
@@ -275,7 +282,7 @@ class ItemCatalogue(ItemBase):
         return tags
 
     @property
-    def html_schema_org(self) -> str:
+    def _html_schema_org(self) -> str:
         """
         Schema.org metadata.
 
@@ -364,6 +371,5 @@ class ItemCatalogue(ItemBase):
 
     def render(self) -> str:
         """Render HTML representation of item."""
-        current_year = datetime.now(tz=UTC).year
-        raw = self._jinja.get_template("item.html.j2").render(item=self, current_year=current_year)
+        raw = self._jinja.get_template("item.html.j2").render(item=self, meta=self.page_metadata)
         return self._prettify_html(raw)

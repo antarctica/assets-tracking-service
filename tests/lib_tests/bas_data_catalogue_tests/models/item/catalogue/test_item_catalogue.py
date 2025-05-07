@@ -104,7 +104,7 @@ class TestItemCatalogue:
         expected = "x | BAS Data Catalogue"
         fx_lib_item_catalogue_min._record.identification.title = "_x_"
 
-        assert fx_lib_item_catalogue_min.html_title == expected
+        assert fx_lib_item_catalogue_min.page_metadata.html_title == expected
 
     @pytest.mark.parametrize(
         ("summary", "published", "graphics"),
@@ -139,7 +139,7 @@ class TestItemCatalogue:
         if fx_lib_item_catalogue_min._overview_graphic is not None:
             expected["og:image"] = fx_lib_item_catalogue_min._overview_graphic.href
 
-        assert fx_lib_item_catalogue_min.html_open_graph == expected
+        assert fx_lib_item_catalogue_min.page_metadata.html_open_graph == expected
 
     @pytest.mark.parametrize(
         ("summary", "graphics", "contacts", "contacts_exp"),
@@ -211,7 +211,7 @@ class TestItemCatalogue:
         if contacts_exp is not None:
             expected["creator"] = contacts_exp
 
-        assert fx_lib_item_catalogue_min.html_schema_org == json.dumps(expected, indent=2)
+        assert fx_lib_item_catalogue_min.page_metadata.html_schema_org == json.dumps(expected, indent=2)
 
     def test_page_header(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get page header element."""
