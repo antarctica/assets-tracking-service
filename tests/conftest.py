@@ -41,6 +41,7 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter i
 from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import (
     SiteExporter,
     SiteIndexExporter,
+    SitePagesExporter,
     SiteResourcesExporter,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import AdditionalInfoTab, ItemCatalogue
@@ -1154,6 +1155,23 @@ def fx_lib_exporter_site_index(
 
     summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
     return SiteIndexExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, summaries=summaries)
+
+
+@pytest.fixture()
+def fx_lib_exporter_site_pages(
+    mocker: MockerFixture,
+    fx_s3_bucket_name: str,
+    fx_logger: logging.Logger,
+    fx_s3_client: S3Client,
+) -> SitePagesExporter:
+    """Site pages exporter with a mocked config and S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    return SitePagesExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger)
 
 
 @pytest.fixture()

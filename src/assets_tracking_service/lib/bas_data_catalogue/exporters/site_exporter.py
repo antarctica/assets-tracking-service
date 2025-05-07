@@ -3,6 +3,7 @@ from shutil import copy
 
 from importlib_resources import as_file as resources_as_file
 from importlib_resources import files as resources_files
+from jinja2 import Environment, PackageLoader, select_autoescape
 from mypy_boto3_s3 import S3Client
 
 from assets_tracking_service.config import Config
@@ -10,6 +11,7 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter impo
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.templates import PageMetadata
 
 
 class SiteResourcesExporter:
@@ -190,6 +192,57 @@ class SiteIndexExporter:
         self._s3_utils.upload_content(key=index_key, content_type="text/html", body=self.dumps())
 
 
+class SitePagesExporter:
+    """
+    Static site pages exporter.
+
+    Renders static site pages from Jinja2 templates for legal pages, 404, etc.
+
+    Due to its global nature, does not subclass the BaseExporter to avoid hacking around its requirements.
+    """
+
+    def __init__(self, config: Config, s3: S3Client, logger: logging.Logger) -> None:
+        """Initialise exporter."""
+        self._config = config
+        self._logger = logger
+
+        self._s3 = s3
+        self._s3_utils = S3Utils(
+            s3=self._s3,
+            s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
+            relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
+        )
+
+        _loader = PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates")
+        self._jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
+
+        self._error_404_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "404.html"
+
+    def _dumps_404(self) -> str:
+        """Build 404 page."""
+        return self._jinja.get_template("404.html.j2").render(meta=PageMetadata(html_title="Not Found"))
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "Site Pages"
+
+    def export(self) -> None:
+        """Export static pages to directory."""
+        self._logger.info(f"Exporting 404 page to {self._error_404_path.resolve()}")
+        self._error_404_path.parent.mkdir(parents=True, exist_ok=True)
+        with self._error_404_path.open("w") as f:
+            f.write(self._dumps_404())
+
+    def publish(self) -> None:
+        """Publish static pages to S3."""
+        error_404_key = self._s3_utils.calc_key(self._error_404_path)
+        error_404_url = f"https://{self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET}/{error_404_key}"
+
+        self._logger.info(f"Publishing 404 error page to: {error_404_url}")
+        self._s3_utils.upload_content(key=error_404_key, content_type="text/html", body=self._dumps_404())
+
+
 class SiteExporter:
     """
     Data Catalogue static site exporter.
@@ -213,6 +266,7 @@ class SiteExporter:
         self._index_exporter = SiteIndexExporter(
             config=self._config, s3=self._s3, logger=self._logger, summaries=self._summaries
         )
+        self._pages_exporter = SitePagesExporter(config=self._config, s3=self._s3, logger=self._logger)
 
     @property
     def name(self) -> str:
@@ -222,11 +276,13 @@ class SiteExporter:
     def export(self) -> None:
         """Export site contents to a directory."""
         self._resources_exporter.export()
+        self._pages_exporter.export()
         self._records_exporter.export_all()
         self._index_exporter.export()
 
     def publish(self) -> None:
         """Publish site contents to S3."""
         self._resources_exporter.publish()
+        self._pages_exporter.publish()
         self._records_exporter.publish_all()
         self._index_exporter.publish()

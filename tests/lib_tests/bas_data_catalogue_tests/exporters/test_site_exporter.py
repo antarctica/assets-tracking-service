@@ -8,6 +8,7 @@ from pytest_mock import MockerFixture
 from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import (
     SiteExporter,
     SiteIndexExporter,
+    SitePagesExporter,
     SiteResourcesExporter,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
@@ -59,6 +60,52 @@ class TestSiteIndexExporter:
             Key=fx_lib_exporter_site_index._s3_utils.calc_key(site_path.joinpath("-", "index", "index.html")),
         )
         assert output["ResponseMetadata"]["HTTPStatusCode"] == 200
+
+
+class TestSitePageExporter:
+    """Test site pages exporter."""
+
+    def test_init(self, mocker: MockerFixture, fx_logger: logging.Logger):
+        """Can create an Exporter."""
+        with TemporaryDirectory() as tmp_path:
+            output_path = Path(tmp_path)
+        s3_client = mocker.MagicMock()
+        mock_config = mocker.Mock()
+        type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+
+        exporter = SitePagesExporter(config=mock_config, s3=s3_client, logger=fx_logger)
+
+        assert isinstance(exporter, SitePagesExporter)
+        assert exporter.name == "Site Pages"
+
+    def test_dumps_404(
+        self, fx_lib_exporter_site_pages: SitePagesExporter, fx_lib_record_minimal_item_catalogue: Record
+    ):
+        """Can dump 404 page."""
+        result = fx_lib_exporter_site_pages._dumps_404()
+        assert "If you typed the website address, please check it is correct." in result
+
+    def test_export(self, fx_lib_exporter_site_pages: SitePagesExporter):
+        """Can export site pages to local files."""
+        site_path = fx_lib_exporter_site_pages._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+        expected = [site_path.joinpath("404.html")]
+
+        fx_lib_exporter_site_pages.export()
+
+        result = list(fx_lib_exporter_site_pages._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.glob("**/*.*"))
+        for path in expected:
+            assert path in result
+
+    def test_publish(self, fx_lib_exporter_site_pages: SitePagesExporter, fx_s3_bucket_name: str):
+        """Can publish site pages to S3."""
+        expected = ["404.html"]
+
+        fx_lib_exporter_site_pages.publish()
+
+        result = fx_lib_exporter_site_pages._s3_utils._s3.list_objects(Bucket=fx_s3_bucket_name)
+        keys = [o["Key"] for o in result["Contents"]]
+        for key in expected:
+            assert key in keys
 
 
 class TestSiteResourcesExporter:
@@ -210,6 +257,7 @@ class TestSiteExporter:
         site_path = fx_lib_exporter_site._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
         expected = [
             site_path.joinpath("favicon.ico"),
+            site_path.joinpath("404.html"),
             site_path.joinpath("static", "css", "main.css"),
             site_path.joinpath("static", "xsl", "iso-html", "xml-to-html-ISO.xsl"),
             site_path.joinpath("items", record.file_identifier, "index.html"),
@@ -230,6 +278,7 @@ class TestSiteExporter:
         record = fx_lib_record_minimal_item_catalogue
         expected = [
             "favicon.ico",
+            "404.html",
             "static/css/main.css",
             "static/xsl/iso-html/xml-to-html-ISO.xsl",
             f"items/{record.file_identifier}/index.html",
