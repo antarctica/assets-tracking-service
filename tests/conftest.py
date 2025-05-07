@@ -23,7 +23,6 @@ from psycopg.sql import SQL
 from pytest_mock import MockerFixture
 from pytest_postgresql import factories
 from requests import HTTPError
-from resources.lib.data_catalogue.site_exporter import SiteExporter
 from shapely import Point
 from typer.testing import CliRunner
 from ulid import ULID
@@ -40,6 +39,7 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter impo
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import (
+    SiteExporter,
     SiteIndexExporter,
     SiteResourcesExporter,
 )
@@ -1097,7 +1097,13 @@ def fx_lib_exporter_records(
     fx_s3_client: S3Client,
     fx_lib_record_minimal_item_catalogue: Record,
 ) -> RecordsExporter:
-    """Records meta exporter with a mocked config and S3 client and minimal record."""  # noqa: D401
+    """
+    Site records exporter.
+
+    With:
+    - a mocked config and S3 client
+    - a minimal sample record
+    """
     with TemporaryDirectory() as tmp_path:
         output_path = Path(tmp_path)
     mock_config = mocker.Mock()
@@ -1133,7 +1139,13 @@ def fx_lib_exporter_site_index(
     fx_s3_client: S3Client,
     fx_lib_record_minimal_item_catalogue: Record,
 ) -> SiteIndexExporter:
-    """Site resources exporter with a mocked config and S3 client."""
+    """
+    Site index exporter.
+
+    With:
+    - a mocked config and S3 client
+    - a minimal sample record
+    """
     with TemporaryDirectory() as tmp_path:
         output_path = Path(tmp_path)
     mock_config = mocker.Mock()
@@ -1142,6 +1154,33 @@ def fx_lib_exporter_site_index(
 
     summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
     return SiteIndexExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, summaries=summaries)
+
+
+@pytest.fixture()
+def fx_lib_exporter_site(
+    mocker: MockerFixture,
+    fx_s3_bucket_name: str,
+    fx_logger: logging.Logger,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: Record,
+) -> SiteExporter:
+    """
+    Site exporter.
+
+    With:
+    - a mocked config and S3 client
+    - a minimal sample record
+    """
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
+    type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
+
+    records = [fx_lib_record_minimal_item_catalogue]
+    return SiteExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, records=records)
 
 
 def lib_exporter_static_site_records() -> list[LibRecord]:
@@ -1160,13 +1199,16 @@ def lib_exporter_static_site_records() -> list[LibRecord]:
     ]
 
 
+@pytest.fixture(scope="module")
 def fx_lib_exporter_static_site_records() -> list[LibRecord]:
     """Records for populating static site exporter."""  # noqa: D401
     return lib_exporter_static_site_records()
 
 
 @pytest.fixture(scope="module")
-def fx_lib_exporter_static_site(module_mocker: MockerFixture) -> TemporaryDirectory:
+def fx_lib_exporter_static_site(
+    module_mocker: MockerFixture, fx_lib_exporter_static_site_records: list[Record]
+) -> TemporaryDirectory:
     """
     Build static site and export to a temp directory.
 
@@ -1199,7 +1241,7 @@ def fx_lib_exporter_static_site(module_mocker: MockerFixture) -> TemporaryDirect
             region_name="eu-west-1",
         )
 
-    exporter = SiteExporter(config=config, s3=s3_client, logger=logger)
+    exporter = SiteExporter(config=config, s3=s3_client, logger=logger, records=fx_lib_exporter_static_site_records)
     exporter.export()
 
     if not Path(site_dir.name).joinpath("favicon.ico").exists():
