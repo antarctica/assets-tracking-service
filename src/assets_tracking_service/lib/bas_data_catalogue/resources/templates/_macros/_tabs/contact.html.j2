@@ -71,9 +71,12 @@
   <div class="space-y-8">
     {% call com.item_title() %}Privacy Notice{% endcall %}
     {% call com.alert(variant='blue', classes="space-y-2") %}
-      <p>If you contact us, your information will be retained for up to 6 months before being deleted.</p>
-      <p>Your message will only be seen by the British Antarctic Survey (BAS) and will only be used to process your enquiry.
-      <p>BAS is part of the Natural Environment Research Council (NERC), within UK Research & Innovation (UKRI). Consult their {{ com.ext_link_a(href="https://www.ukri.org/about-us/privacy-notice/", value="Privacy Notice") }} for more information.</p>
+      <p>
+        If you contact us, your personal information will be retained for up to three years and then deleted. It will
+        only be used to contact you regarding your enquiry. If this item relates to an external organisation, we may
+        share an anonymised version of your enquiry with them to help answer your query.
+      </p>
+      <p>See our <a class="{{ com.link_classes() }}" href="/legal/privacy">privacy policy</a> for more information.</p>
     {% endcall %}
   </div>
 {% endmacro %}

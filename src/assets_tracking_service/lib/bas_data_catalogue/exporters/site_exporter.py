@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from shutil import copy
 
 from importlib_resources import as_file as resources_as_file
@@ -215,31 +216,59 @@ class SitePagesExporter:
         _loader = PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates")
         self._jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
 
-        self._error_404_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "404.html"
+        self._templates = ["404.html.j2", "legal/cookies.html.j2", "legal/copyright.html.j2", "legal/privacy.html.j2"]
 
-    def _dumps_404(self) -> str:
-        """Build 404 page."""
-        return self._jinja.get_template("404.html.j2").render(meta=PageMetadata(html_title="Not Found"))
+    @staticmethod
+    def _get_page_metadata(template_path: str) -> PageMetadata:
+        """Get metadata for a page based on its template."""
+        mapping = {
+            "404.html.j2": PageMetadata(html_title="Not Found"),
+            "legal/cookies.html.j2": PageMetadata(html_title="Cookies Policy"),
+            "legal/copyright.html.j2": PageMetadata(html_title="Copyright Policy"),
+            "legal/privacy.html.j2": PageMetadata(html_title="Privacy Policy"),
+        }
+        return mapping[template_path]
+
+    def _get_page_path(self, template_path: str) -> Path:
+        """Get path within exported site for a page based on its template."""
+        if template_path == "404.html.j2":
+            return self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "404.html"
+        return self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / template_path.split(".")[0] / "index.html"
+
+    def _dumps(self, template_path: str) -> str:
+        """Build a page."""
+        return self._jinja.get_template(template_path).render(meta=self._get_page_metadata(template_path))
 
     @property
     def name(self) -> str:
         """Exporter name."""
         return "Site Pages"
 
+    def export_page(self, template_path: str) -> None:
+        """Export a page to directory."""
+        page_path = self._get_page_path(template_path)
+        self._logger.info(f"Exporting {template_path} to {page_path.resolve()}")
+        page_path.parent.mkdir(parents=True, exist_ok=True)
+        with page_path.open("w") as f:
+            f.write(self._dumps(template_path))
+
+    def publish_page(self, template_path: str) -> None:
+        """Publish a page to S3."""
+        page_path = self._get_page_path(template_path)
+        page_key = self._s3_utils.calc_key(page_path)
+        page_url = f"https://{self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET}/{page_key}"
+        self._logger.info(f"Publishing {template_path} to: {page_url}")
+        self._s3_utils.upload_content(key=page_key, content_type="text/html", body=self._dumps(template_path))
+
     def export(self) -> None:
         """Export static pages to directory."""
-        self._logger.info(f"Exporting 404 page to {self._error_404_path.resolve()}")
-        self._error_404_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._error_404_path.open("w") as f:
-            f.write(self._dumps_404())
+        for template in self._templates:
+            self.export_page(template_path=template)
 
     def publish(self) -> None:
         """Publish static pages to S3."""
-        error_404_key = self._s3_utils.calc_key(self._error_404_path)
-        error_404_url = f"https://{self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET}/{error_404_key}"
-
-        self._logger.info(f"Publishing 404 error page to: {error_404_url}")
-        self._s3_utils.upload_content(key=error_404_key, content_type="text/html", body=self._dumps_404())
+        for template in self._templates:
+            self.publish_page(template_path=template)
 
 
 class SiteExporter:

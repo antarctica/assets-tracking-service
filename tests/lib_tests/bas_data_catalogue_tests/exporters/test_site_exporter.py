@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import PropertyMock
 
+from bs4 import BeautifulSoup
 from pytest_mock import MockerFixture
 
 from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import (
@@ -78,17 +79,42 @@ class TestSitePageExporter:
         assert isinstance(exporter, SitePagesExporter)
         assert exporter.name == "Site Pages"
 
-    def test_dumps_404(
-        self, fx_lib_exporter_site_pages: SitePagesExporter, fx_lib_record_minimal_item_catalogue: Record
-    ):
-        """Can dump 404 page."""
-        result = fx_lib_exporter_site_pages._dumps_404()
-        assert "If you typed the website address, please check it is correct." in result
+    def test_dumps(self, fx_lib_exporter_site_pages: SitePagesExporter):
+        """Can dump a site page with expected title and site title."""
+        expected = "Privacy Policy | BAS Data Catalogue"
+        result = fx_lib_exporter_site_pages._dumps("legal/privacy.html.j2")
+        html = BeautifulSoup(result, parser="html.parser", features="lxml")
+
+        assert html.head.title.string == expected
+        assert "This website has links to other websites for which we are not responsible." in result
+
+    def test_export_page(self, fx_lib_exporter_site_pages: SitePagesExporter):
+        """Can export a site page to a local file."""
+        site_path = fx_lib_exporter_site_pages._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+        expected = site_path.joinpath("legal/privacy/index.html")
+
+        fx_lib_exporter_site_pages.export_page("legal/privacy.html.j2")
+
+        assert expected.exists()
+
+    def test_publish_page(self, fx_lib_exporter_site_pages: SitePagesExporter, fx_s3_bucket_name: str):
+        """Can publish a site page to S3."""
+        expected = "legal/privacy/index.html"
+
+        fx_lib_exporter_site_pages.publish_page("legal/privacy.html.j2")
+
+        result = fx_lib_exporter_site_pages._s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key=expected)
+        assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
 
     def test_export(self, fx_lib_exporter_site_pages: SitePagesExporter):
         """Can export site pages to local files."""
         site_path = fx_lib_exporter_site_pages._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
-        expected = [site_path.joinpath("404.html")]
+        expected = [
+            site_path.joinpath("404.html"),
+            site_path.joinpath("legal/cookies/index.html"),
+            site_path.joinpath("legal/copyright/index.html"),
+            site_path.joinpath("legal/privacy/index.html"),
+        ]
 
         fx_lib_exporter_site_pages.export()
 
@@ -98,7 +124,12 @@ class TestSitePageExporter:
 
     def test_publish(self, fx_lib_exporter_site_pages: SitePagesExporter, fx_s3_bucket_name: str):
         """Can publish site pages to S3."""
-        expected = ["404.html"]
+        expected = [
+            "404.html",
+            "legal/cookies/index.html",
+            "legal/copyright/index.html",
+            "legal/privacy/index.html",
+        ]
 
         fx_lib_exporter_site_pages.publish()
 
@@ -261,6 +292,7 @@ class TestSiteExporter:
             site_path.joinpath("static", "css", "main.css"),
             site_path.joinpath("static", "xsl", "iso-html", "xml-to-html-ISO.xsl"),
             site_path.joinpath("items", record.file_identifier, "index.html"),
+            site_path.joinpath("legal", "privacy", "index.html"),
             site_path.joinpath("-", "index", "index.html"),
         ]  # representative sample
 
@@ -282,6 +314,7 @@ class TestSiteExporter:
             "static/css/main.css",
             "static/xsl/iso-html/xml-to-html-ISO.xsl",
             f"items/{record.file_identifier}/index.html",
+            "legal/privacy/index.html",
             "-/index/index.html",
         ]  # representative sample
 
