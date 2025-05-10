@@ -131,7 +131,7 @@ class TestRecordsExporter:
 
     def test_export_all(self, fx_lib_exporter_records: RecordsExporter):
         """Can export all records."""
-        fx_lib_exporter_records.export_all()
+        fx_lib_exporter_records.export()
 
         result = list(fx_lib_exporter_records._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.glob("**/*.*"))
         assert len(result) > 0
@@ -145,7 +145,7 @@ class TestRecordsExporter:
             relative_base=fx_lib_exporter_records._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
 
-        fx_lib_exporter_records.publish_all()
+        fx_lib_exporter_records.publish()
 
         result = s3_utils._s3.list_objects(Bucket=bucket)
         keys = [o["Key"] for o in result["Contents"]]

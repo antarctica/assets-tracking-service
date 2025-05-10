@@ -305,12 +305,12 @@ class SiteExporter:
         """Export site contents to a directory."""
         self._resources_exporter.export()
         self._pages_exporter.export()
-        self._records_exporter.export_all()
+        self._records_exporter.export()
         self._index_exporter.export()
 
     def publish(self) -> None:
         """Publish site contents to S3."""
         self._resources_exporter.publish()
         self._pages_exporter.publish()
-        self._records_exporter.publish_all()
+        self._records_exporter.publish()
         self._index_exporter.publish()

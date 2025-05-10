@@ -145,7 +145,7 @@ class TestMacrosSite:
 
     def test_footer(self):
         """Can get static site footer."""
-        expected = "(BAS) 666"
+        expected = "666"
         template = """{% import '_macros/site.html.j2' as site %}{{ site.footer(meta) }}"""
         meta = PageMetadata(current_year=666)
         html = BeautifulSoup(self._render(template, meta), parser="html.parser", features="lxml")

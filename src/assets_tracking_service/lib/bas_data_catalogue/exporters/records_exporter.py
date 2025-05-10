@@ -127,12 +127,12 @@ class RecordsExporter:
             self._logger.debug(f"Publishing record '{file_identifier}' using {exporter.name} exporter")
             exporter.publish()
 
-    def export_all(self) -> None:
+    def export(self) -> None:
         """Export all records to a directory."""
         for file_identifier in self._records:
             self.export_record(file_identifier)
 
-    def publish_all(self) -> None:
+    def publish(self) -> None:
         """Publish all records to S3."""
         for file_identifier in self._records:
             self.publish_record(file_identifier)

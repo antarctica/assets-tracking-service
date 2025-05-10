@@ -93,7 +93,7 @@
 
   {% if data.tab.enabled %}
     <input id="{{ tab_id }}" type="radio" name="tabs" class="peer/{{ tab_id }} opacity-0 absolute" {% if is_default_tab %}checked="checked"{% endif %} />
-    <label for="{{ tab_id }}" class="block relative p-4 cursor-pointer hover:underline hover:bg-grey-100 hover:text-sky-blue-500 hover:border-b-grey-300 border-1 border-transparent text-grey-500 peer-checked/{{ tab_id }}:text-grey-900 peer-checked/{{ tab_id }}:border-grey-300 peer-checked/{{ tab_id }}:border-b-white">
+    <label for="{{ tab_id }}" class="block relative p-4 cursor-pointer hover:underline hover:bg-grey-100 hover:text-sky-blue-500 hover:border-b-grey-300 border-1 border-transparent text-grey-500 peer-checked/{{ tab_id }}:text-grey-900 peer-checked/{{ tab_id }}:border-grey-300 peer-checked/{{ tab_id }}:border-b-white peer-checked/{{ tab_id }}:hover:bg-white peer-checked/{{ tab_id }}:hover:border-b-white">
       <i class="{{ data.tab.icon }}"></i> {{ data.tab.title }}
     </label>
   {% endif %}

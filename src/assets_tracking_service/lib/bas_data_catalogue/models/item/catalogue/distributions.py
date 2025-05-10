@@ -313,7 +313,7 @@ class BasPublishedMap(Distribution):
     @property
     def action(self) -> Link:
         """Link to distribution without href due to using `access_trigger`."""
-        return Link(value="Purchase", href=None)
+        return Link(value="Purchase Options", href=None)
 
     @property
     def action_btn_icon(self) -> str:
