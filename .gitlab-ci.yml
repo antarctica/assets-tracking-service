@@ -72,9 +72,9 @@ image: mcr.microsoft.com/playwright/python:v1.51.0-noble
   - apt-get update
 
   # setup UV
-  - curl -LsSfo uv.tar.gz https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-aarch64-unknown-linux-gnu.tar.gz
+  - curl -LsSfo uv.tar.gz https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-i686-unknown-linux-gnu.tar.gz
   - tar -xzf uv.tar.gz
-  - mv uv-aarch64-unknown-linux-gnu/uv uv-aarch64-unknown-linux-gnu/uvx /usr/local/bin
+  - mv uv-i686-unknown-linux-gnu/uv uv-i686-unknown-linux-gnu/uvx /usr/local/bin
   - uv --version
 
 .before_script_testing: &before_script_testing
