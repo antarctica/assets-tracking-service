@@ -16,7 +16,6 @@ variables:
   UV_CACHE_DIR: ".uv-cache"
   UV_VERSION: "0.6.5"
   PYTHON_VERSION: "3.11"
-  BASE_LAYER: "bookworm-slim"
 
   # Postgres Service
   POSTGRES_HOST: "postgres"
@@ -67,10 +66,19 @@ variables:
   # - OP_SERVICE_ACCOUNT_TOKEN
   #   - https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=hpszegtzzarkgua2ckg57gxpxe&h=magic.1password.eu
 
-image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
+image: mcr.microsoft.com/playwright/python:v1.51.0-noble
+
+.before_script_python: &before_script_python
+  - apt-get update
+
+  # setup UV
+  - curl -LsSfo uv.tar.gz https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-aarch64-unknown-linux-gnu.tar.gz
+  - tar -xzf uv.tar.gz
+  - mv uv-aarch64-unknown-linux-gnu/uv uv-aarch64-unknown-linux-gnu/uvx /usr/local/bin
+  - uv --version
 
 .before_script_testing: &before_script_testing
-  - apt-get update
+  - *before_script_python
 
   # setup locale
   - apt-get install -y locales
@@ -82,7 +90,7 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 
   # setup app deps
   - apt-get install -y gcc libkrb5-dev
-  - uv sync --all-groups
+  - uv sync --all-groups --python $PYTHON_VERSION
 
   # setup postgres
   - apt-get install -y postgresql-client
@@ -177,6 +185,8 @@ ruff:
 sqlfluff:
   stage: 📋 lint
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - uv run --only-group dev --frozen sqlfluff lint src/assets_tracking_service/resources/db_migrations
   rules:
@@ -188,6 +198,8 @@ sqlfluff:
 safety:
   stage: 📋 lint
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - uv run --only-group dev --frozen safety --stage cicd scan --detailed-output
   rules:
@@ -200,6 +212,8 @@ safety:
 build:
   stage: 🏗 build
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - uv build
   artifacts:
@@ -219,6 +233,8 @@ publish:
   needs:
     - job: build
       artifacts: true
+  before_script:
+    - *before_script_python
   script:
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   retry:
@@ -230,10 +246,10 @@ prerelease:
   stage: 📦 publish
   needs: []
   before_script:
+    - *before_script_python
     - apt-get update && apt-get install -y git gcc libkrb5-dev
     - scripts/create-release.py prerelease
     - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
-    - uv --version
   script:
     - uv build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
