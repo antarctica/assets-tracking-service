@@ -175,6 +175,8 @@ pytest:
 ruff:
   stage: 📋 lint
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - $RUFF_BIN check $RUFF_TARGETS
     - $RUFF_BIN format --check $RUFF_TARGETS
