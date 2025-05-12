@@ -111,7 +111,7 @@ class TestItemSummaryMacro:
         html = BeautifulSoup(self._render(summary), parser="html.parser", features="lxml")
 
         if expected:
-            assert html.find(name="span", text=expected) is not None
+            assert html.find(name="span", string=expected) is not None
 
     @pytest.mark.parametrize("published", [None, Date(date=date(2023, 10, 31))])
     def test_published(self, published: Date | None):

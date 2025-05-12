@@ -2,7 +2,6 @@ from datetime import date
 
 import pytest
 from bs4 import BeautifulSoup
-from conftest import _lib_item_catalogue_min
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue, Tab
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Date
@@ -17,6 +16,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
     AggregationInitiativeCode,
 )
+from tests.conftest import _lib_item_catalogue_min
 
 
 class TestMacrosItem:

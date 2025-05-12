@@ -1,7 +1,5 @@
 from datetime import date
 
-from resources.lib.data_catalogue.records.utils import make_record
-
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Date,
     Dates,
@@ -20,6 +18,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     DatePrecisionCode,
     HierarchyLevelCode,
 )
+from tests.resources.lib.data_catalogue.records.utils import make_record
 
 # A record for an ItemCatalogue instance with all supported fields for collections.
 

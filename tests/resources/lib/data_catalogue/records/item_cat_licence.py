@@ -1,11 +1,10 @@
-from resources.lib.data_catalogue.records.utils import make_record
-
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Constraint, Constraints
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintRestrictionCode,
     ConstraintTypeCode,
     HierarchyLevelCode,
 )
+from tests.resources.lib.data_catalogue.records.utils import make_record
 
 # Records for all supported licence usage constraints.
 

@@ -222,20 +222,20 @@ class Record:
     @staticmethod
     def _normalise_static_config_values(value: dict) -> dict:
         """Adjust properties that will be set by default to allow for accurate config comparisons."""
-        updated = deepcopy(value)
-        updated["metadata"]["character_set"] = "utf8"
-        updated["metadata"]["language"] = "eng"
-        updated["metadata"]["metadata_standard"] = {
+        normalised = deepcopy(value)
+        normalised["metadata"]["character_set"] = "utf8"
+        normalised["metadata"]["language"] = "eng"
+        normalised["metadata"]["metadata_standard"] = {
             "name": "ISO 19115-2 Geographic Information - Metadata - Part 2: Extensions for Imagery and Gridded Data",
             "version": "ISO 19115-2:2009(E)",
         }
-        updated["identification"]["character_set"] = "utf8"
-        updated["identification"]["language"] = "eng"
+        normalised["identification"]["character_set"] = "utf8"
+        normalised["identification"]["language"] = "eng"
 
-        if "maintenance" in updated["metadata"]:
-            del updated["metadata"]["maintenance"]
+        if "maintenance" in normalised["metadata"]:
+            del normalised["metadata"]["maintenance"]
 
-        return updated
+        return normalised
 
     @staticmethod
     def config_supported(config: dict) -> bool:

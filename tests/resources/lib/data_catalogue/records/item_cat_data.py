@@ -1,5 +1,3 @@
-from resources.lib.data_catalogue.records.utils import make_record
-
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Address,
     Contact,
@@ -17,6 +15,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     HierarchyLevelCode,
     OnlineResourceFunctionCode,
 )
+from tests.resources.lib.data_catalogue.records.utils import make_record
 
 # A record with all supported distribution options.
 

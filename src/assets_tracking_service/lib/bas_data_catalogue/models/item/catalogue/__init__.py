@@ -310,8 +310,7 @@ class ItemCatalogue(ItemBase):
             if author.individual is not None:
                 author_names.append(author.individual.name)
                 continue
-            if author.organisation is not None:
-                author_names.append(author.organisation.name)
+            author_names.append(author.organisation.name)
         if len(author_names) > 0:
             # set as comma separated list of names, except last element which uses '&'
             doc["creator"] = (

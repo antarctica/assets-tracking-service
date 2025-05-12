@@ -174,7 +174,17 @@ class TestRecord:
 
         assert config == expected
 
-    @pytest.mark.parametrize("supported", [True, False])
+    @pytest.mark.cov()
+    @pytest.mark.parametrize("maintenance", [False, True])
+    def test_normalise_static_config_values(self, fx_lib_record_config_minimal_iso: dict, maintenance: bool):
+        """Can normalise record."""
+        if maintenance:
+            fx_lib_record_config_minimal_iso["metadata"]["maintenance"] = {"progress": ProgressCode.ON_GOING.value}
+
+        result = Record._normalise_static_config_values(fx_lib_record_config_minimal_iso)
+        assert "maintenance" not in result["metadata"]
+
+    @pytest.mark.parametrize("supported", [False, True])
     def test_config_supported(self, fx_lib_record_config_minimal_iso: dict, supported: bool):
         """Can determine if a record config is supported or not."""
         if not supported:

@@ -154,8 +154,8 @@ class TestDataTab:
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one(f"a[href='{expected.action.href}']") is not None
-        assert html.find(name="div", text=expected.format_type.value) is not None
-        assert html.find(name="div", text=expected.size) is not None
+        assert html.find(name="div", string=expected.format_type.value) is not None
+        assert html.find(name="div", string=expected.size) is not None
 
     @pytest.mark.parametrize(
         ("value", "text"),
@@ -209,7 +209,7 @@ class TestDataTab:
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one(f"button[data-target='{expected.access_target}']") is not None
-        assert html.find(name="div", text=expected.format_type.value) is not None
+        assert html.find(name="div", string=expected.format_type.value) is not None
         assert str(html).count(text) == 1
 
 
@@ -263,7 +263,7 @@ class TestAuthorsTab:
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         for item in expected:
-            assert html.find("div", text=item.organisation.name) is not None
+            assert html.find("div", string=item.organisation.name) is not None
 
     @pytest.mark.parametrize(
         "value",
@@ -287,9 +287,9 @@ class TestAuthorsTab:
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         if expected.organisation is not None:
-            assert html.find("div", text=expected.organisation.name) is not None
+            assert html.find("div", string=expected.organisation.name) is not None
         if expected.individual is not None:
-            assert html.find("div", text=expected.individual.name) is not None
+            assert html.find("div", string=expected.individual.name) is not None
         if expected.email is not None:
             assert html.find("a", href=f"mailto:{expected.email}") is not None
         if expected.orcid is not None:

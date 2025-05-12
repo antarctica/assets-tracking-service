@@ -66,15 +66,15 @@ variables:
   # - OP_SERVICE_ACCOUNT_TOKEN
   #   - https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=hpszegtzzarkgua2ckg57gxpxe&h=magic.1password.eu
 
-image: mcr.microsoft.com/playwright/python:v1.51.0-noble
+image: mcr.microsoft.com/playwright/python:v1.52.0-noble
 
 .before_script_python: &before_script_python
   - apt-get update
 
   # setup UV
-  - curl -LsSfo uv.tar.gz https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-i686-unknown-linux-gnu.tar.gz
+  - curl -LsSfo uv.tar.gz https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-unknown-linux-gnu.tar.gz
   - tar -xzf uv.tar.gz
-  - mv uv-i686-unknown-linux-gnu/uv uv-i686-unknown-linux-gnu/uvx /usr/local/bin
+  - mv uv-x86_64-unknown-linux-gnu/uv uv-x86_64-unknown-linux-gnu/uvx /usr/local/bin
   - uv --version
 
 .before_script_testing: &before_script_testing
@@ -88,9 +88,8 @@ image: mcr.microsoft.com/playwright/python:v1.51.0-noble
   - export LANGUAGE=en_GB:en
   - export LC_ALL=en_GB.UTF-8
 
-  # setup app deps
+  # setup app dep libs
   - apt-get install -y gcc libkrb5-dev
-  - uv sync --all-groups --python $PYTHON_VERSION
 
   # setup postgres
   - apt-get install -y postgresql-client
@@ -107,6 +106,9 @@ image: mcr.microsoft.com/playwright/python:v1.51.0-noble
   - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
   - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;"
   - uv run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.DB_DSN_SAFE)'
+
+  # setup app deps
+  - uv sync --all-groups --python $PYTHON_VERSION
 
 .before_script_deploy: &before_script_deploy
   - apt-get update
