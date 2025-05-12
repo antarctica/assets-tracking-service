@@ -14,6 +14,15 @@ class DistributionType(Enum):
 
     ARCGIS_FEATURE_LAYER = "ArcGIS Feature Layer"
     ARCGIS_OGC_FEATURE_LAYER = "OGC API Features (ArcGIS)"
+    JPEG = "JPEG"
+    PDF = "PDF"
+    PDF_GEO = "PDF (Georeferenced)"
+    GEOJSON = "GeoJSON"
+    GEOPACKAGE = "GeoPackage"
+    GEOPACKAGE_ZIP = "GeoPackage (Zipped)"
+    PNG = "PNG"
+    SHAPEFILE_ZIP = "Shapefile (Zipped)"
+    X_PAPER_MAP = "Flat or folded paper map"
 
 
 class Licence(Enum):

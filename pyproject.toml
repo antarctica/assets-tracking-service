@@ -27,6 +27,7 @@ dependencies = [
     "mygeotab>=0.9.2",
     "pint>=0.24.4",
     "psycopg[binary]>=3.2.3",
+    "pytest-playwright>=0.7.0",
     "rich>=13.9.4",
     "sentry-sdk>=2.19.2",
     "shapely>=2.0.6",

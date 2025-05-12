@@ -75,9 +75,9 @@ class Extent(RecordExtent):
 
     @property
     def bounding_box(self) -> list[float]:
-        """Bounding box [min_x, max_x, min_y, max_y]."""
+        """Bounding box [west, south, east, north] [min_x, min_y, max_x, max_y]."""
         bbox = self.geographic.bounding_box
-        return [bbox.west_longitude, bbox.east_longitude, bbox.north_latitude, bbox.south_latitude]
+        return [bbox.west_longitude, bbox.south_latitude, bbox.east_longitude, bbox.north_latitude]
 
     @property
     def start(self) -> Date | None:

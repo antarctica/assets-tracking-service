@@ -12,10 +12,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import
     Summary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
+    FormattedDate,
     Identifiers,
     ItemSummaryCatalogue,
     Maintenance,
-    format_date,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
 from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
@@ -50,31 +50,44 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
 from tests.conftest import _lib_get_record_summary
 
 
-class TestFormatDate:
-    """Test `format_date` util function."""
+class TestFormattedDate:
+    """Test Catalogue Item formatted dates."""
+
+    def test_init(self):
+        """Can create a FormattedDate element."""
+        fd = FormattedDate(datetime="x", value="x")
+
+        assert fd.datetime == "x"
+        assert fd.value == "x"
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
+        ("value", "exp_value", "exp_dt"),
         [
-            (Date(date=date(2014, 1, 1), precision=DatePrecisionCode.YEAR), "2014"),
-            (Date(date=date(2014, 6, 1), precision=DatePrecisionCode.MONTH), "June 2014"),
-            (Date(date=date(2014, 6, 30)), "30 June 2014"),
-            (Date(date=datetime(2014, 6, 30, 13, tzinfo=UTC)), "30 June 2014 13:00:00 UTC"),
-            (Date(date=datetime(2014, 6, 29, 1, tzinfo=UTC)), "29 June 2014"),
+            (Date(date=date(2014, 1, 1), precision=DatePrecisionCode.YEAR), "2014", "2014"),
+            (Date(date=date(2014, 6, 1), precision=DatePrecisionCode.MONTH), "June 2014", "2014-06"),
+            (Date(date=date(2014, 6, 30)), "30 June 2014", "2014-06-30"),
+            (
+                Date(date=datetime(2014, 6, 30, 13, tzinfo=UTC)),
+                "30 June 2014 13:00:00 UTC",
+                "2014-06-30T13:00:00+00:00",
+            ),
+            (Date(date=datetime(2014, 6, 29, 1, tzinfo=UTC)), "29 June 2014", "2014-06-29"),
         ],
     )
-    def test_format(self, value: Date, expected: str):
-        """Can format a date(time) as a string."""
+    def test_from_record_date(self, value: Date, exp_value: str, exp_dt: str):
+        """Can create a FormattedDate from a Record Date."""
         now = datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC)
-        result = format_date(value, relative_to=now)
-        assert result == expected
+        result = FormattedDate.from_rec_date(value, relative_to=now)
+
+        assert result.value == exp_value
+        assert result.datetime == exp_dt
 
     def test_invalid_date(self):
         """Cannot process an invalid value."""
         now = datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC)
         with pytest.raises(TypeError):
             # noinspection PyTypeChecker
-            format_date("", relative_to=now)
+            FormattedDate.from_rec_date("", relative_to=now)
 
 
 class TestAggregations:
@@ -152,7 +165,7 @@ class TestDates:
     def test_formatting(self):
         """Can get a formatted date when accessed."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
-        expected = format_date(date_)
+        expected = FormattedDate.from_rec_date(date_)
 
         dates = Dates(dates=RecordDates(creation=date_))
 
@@ -162,7 +175,7 @@ class TestDates:
         """Can get dates as a DateTypeCode indexed dict."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
         dates = Dates(dates=RecordDates(creation=date_))
-        expected = {DateTypeCode.CREATION: format_date(date_)}
+        expected = {DateTypeCode.CREATION: FormattedDate.from_rec_date(date_)}
 
         assert dates.as_dict_enum() == expected
 
@@ -170,7 +183,7 @@ class TestDates:
         """Can get dates as a dict with human formatted keys."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
         dates = Dates(dates=RecordDates(creation=date_))
-        expected = {"Item created": format_date(date_)}
+        expected = {"Item created": FormattedDate.from_rec_date(date_)}
 
         assert dates.as_dict_labeled() == expected
 
@@ -199,7 +212,7 @@ class TestExtent:
     def test_start_end(self, has_value: bool):
         """Can get formated dates for temporal extent period."""
         date_ = Date(date=datetime(2014, 6, 30, 14, 30, second=45, tzinfo=UTC))
-        expected = format_date(date_) if has_value else None
+        expected = FormattedDate.from_rec_date(date_) if has_value else None
         record_extent = RecordExtent(
             identifier="bounding",
             geographic=ExtentGeographic(
@@ -227,9 +240,8 @@ class TestExtent:
                 ),
             )
         )
-        expected_bbox = "[1.0,2.0,4.0,3.0]"
-        expected_url = f"https://example.com/?bbox={expected_bbox}&globe-overview"
-        expected = f"<iframe src='{expected_url}' width='100%' height='400' frameborder='0'></iframe>"
+        expected_bbox = "[1.0,3.0,2.0,4.0]"
+        expected = f"https://example.com/?bbox={expected_bbox}&globe-overview"
 
         extent = Extent(extent=item_extent, embedded_maps_endpoint="https://example.com")
         assert extent.map_iframe == expected
@@ -270,15 +282,18 @@ class TestItemSummaryCatalogue:
         if has_date:
             fx_lib_record_summary_minimal_item.publication = publication
         summary = ItemSummaryCatalogue(fx_lib_record_summary_minimal_item)
-        assert summary._date == expected
+        if has_date:
+            assert summary._date.value == expected
+        else:
+            assert summary._date is None
 
     @pytest.mark.parametrize(
-        ("resource_type", "edition", "expected_edition", "has_pub", "expected_date"),
+        ("resource_type", "edition", "exp_edition", "has_pub", "exp_published"),
         [
-            (HierarchyLevelCode.PRODUCT, "x", "x", True, "30 June 2014"),
-            (HierarchyLevelCode.PRODUCT, "x", "x", False, None),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", True, "30 June 2014"),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", False, None),
             (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014"),
-            (HierarchyLevelCode.COLLECTION, "x", None, True, False),
+            (HierarchyLevelCode.COLLECTION, "x", None, True, None),
             (HierarchyLevelCode.COLLECTION, "x", None, False, None),
         ],
     )
@@ -287,9 +302,9 @@ class TestItemSummaryCatalogue:
         fx_lib_record_summary_minimal_item: RecordSummary,
         resource_type: HierarchyLevelCode,
         edition: str | None,
-        expected_edition: str | None,
+        exp_edition: str | None,
         has_pub: bool,
-        expected_date: str | None,
+        exp_published: FormattedDate | None,
     ):
         """Can get fragments to use as part of item summary UI."""
         fx_lib_record_summary_minimal_item.hierarchy_level = resource_type
@@ -300,15 +315,12 @@ class TestItemSummaryCatalogue:
 
         result = summary.fragments
 
-        if resource_type != HierarchyLevelCode.COLLECTION:
-            if edition and has_pub:
-                assert len(result) == 3
-            elif edition or has_pub:
-                assert len(result) == 2
-            else:
-                assert len(result) == 1
+        assert result.item_type == resource_type.value.capitalize()
+        assert result.edition == exp_edition
+        if exp_published is not None:
+            assert result.published.value == exp_published
         else:
-            assert len(result) == 1
+            assert result.published is None
 
     @pytest.mark.parametrize(
         ("href", "expected"),
@@ -540,17 +552,145 @@ class TestSummary:
             assert summary.citation is None
 
     @pytest.mark.parametrize(
+        ("item_type", "edition", "published", "aggregations", "expected"),
+        [
+            (
+                HierarchyLevelCode.PRODUCT,
+                "1",
+                "x",
+                # add collection and item aggregations
+                Aggregations(
+                    aggregations=RecordAggregations(
+                        [
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            ),
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            ),
+                        ]
+                    ),
+                    get_summary=_lib_get_record_summary,
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                "1",
+                None,
+                # add collection aggregation
+                Aggregations(
+                    aggregations=RecordAggregations(
+                        [
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            )
+                        ]
+                    ),
+                    get_summary=_lib_get_record_summary,
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                None,
+                "x",
+                # add item aggregation
+                Aggregations(
+                    aggregations=RecordAggregations(
+                        [
+                            Aggregation(
+                                identifier=Identifier(identifier="x", href="x", namespace="x"),
+                                association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                                initiative_type=AggregationInitiativeCode.COLLECTION,
+                            )
+                        ]
+                    ),
+                    get_summary=_lib_get_record_summary,
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                None,
+                None,
+                Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                False,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                "1",
+                "x",
+                Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                False,
+            ),
+        ],
+    )
+    def test_grid_enabled(
+        self,
+        item_type: HierarchyLevelCode,
+        edition: str | None,
+        published: str | None,
+        aggregations: Aggregations,
+        expected: bool,
+    ):
+        """Can show combination of publication and revision date if relevant."""
+        summary = Summary(
+            item_type=item_type,
+            edition=edition,
+            published_date=published,
+            revision_date=None,
+            aggregations=aggregations,
+            citation=None,
+            abstract="x",
+        )
+
+        assert summary.grid_enabled == expected
+
+    @pytest.mark.parametrize(
         ("item_type", "published", "revision", "expected"),
         [
             (HierarchyLevelCode.PRODUCT, None, None, None),
-            (HierarchyLevelCode.PRODUCT, "x", None, "x"),
+            (
+                HierarchyLevelCode.PRODUCT,
+                FormattedDate(datetime="x", value="x"),
+                None,
+                FormattedDate(datetime="x", value="x"),
+            ),
             (HierarchyLevelCode.PRODUCT, None, "x", None),
-            (HierarchyLevelCode.PRODUCT, "x", "x", "x"),
-            (HierarchyLevelCode.PRODUCT, "x", "y", "x (last updated: y)"),
-            (HierarchyLevelCode.COLLECTION, "x", "y", None),
+            (
+                HierarchyLevelCode.PRODUCT,
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="x", value="x"),
+            ),
+            (
+                HierarchyLevelCode.PRODUCT,
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="y", value="y"),
+                FormattedDate(datetime="x", value="x (last updated: y)"),
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                FormattedDate(datetime="x", value="x"),
+                FormattedDate(datetime="y", value="y"),
+                None,
+            ),
         ],
     )
-    def test_published(self, item_type: HierarchyLevelCode, published: str, revision: str, expected: str):
+    def test_published(
+        self,
+        item_type: HierarchyLevelCode,
+        published: FormattedDate | None,
+        revision: FormattedDate | None,
+        expected: str,
+    ):
         """Can show combination of publication and revision date if relevant."""
         summary = Summary(
             item_type=item_type,

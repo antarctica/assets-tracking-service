@@ -24,10 +24,11 @@ class TestIsoXmlExporter:
         type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
         exporter = JsonExporter(
-            config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
+            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
         )
 
         assert isinstance(exporter, JsonExporter)
+        assert exporter.name == "BAS JSON"
 
     def test_dumps(
         self, mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: Record
@@ -41,7 +42,7 @@ class TestIsoXmlExporter:
         expected = fx_lib_record_minimal_item.dumps()
 
         exporter = JsonExporter(
-            config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
+            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
         )
 
         result = exporter.dumps()

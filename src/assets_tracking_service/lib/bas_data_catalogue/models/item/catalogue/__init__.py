@@ -1,11 +1,10 @@
+import json
 from collections.abc import Callable
-from datetime import UTC, datetime
 
 from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemBase
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Aggregations,
     Dates,
@@ -28,7 +27,9 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs i
     Tab,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import GraphicOverview
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import ContactRoleCode
+from assets_tracking_service.lib.bas_data_catalogue.models.templates import PageMetadata
 
 
 class ItemInvalidError(Exception):
@@ -60,25 +61,26 @@ class ItemCatalogue(ItemBase):
     - identification.citation.dates
     - identification.citation.edition
     - identification.citation.contacts ('author' roles and a single 'point of contact' role only, and except `contact.position`)
-    - identification.abstract
-    - identification.aggregations ('collections' and 'items' only)
-    - identification.constraints ('licence' only)
     - identification.citation.series
     - identification.citation.identifiers[namespace='doi']
     - identification.citation.identifiers[namespace='isbn']
     - identification.citation.identifiers[namespace='gitlab.data.bas.ac.uk'] (as references only)
+    - identification.abstract
+    - identification.aggregations ('collections' and 'items' only)
+    - identification.constraints ('licence' only)
     - identification.maintenance
     - identification.extent (single bounding temporal and geographic bounding box extent only)
     - identification.other_citation_details
     - identification.graphic_overviews
     - identification.spatial_resolution
+    - identification.supplemental_information (for physical dimensions only)
     - data_quality.lineage.statement
+    - data_quality.domain_consistency
     - distributor.format (`format` and `href` only)
     - distributor.transfer_option (except `online_resource.protocol`)
 
     Unsupported properties:
     - identification.purpose (except as used in ItemSummaries)
-    - data_quality.domain_consistency
 
     Intentionally omitted properties:
     - *.character_set (not useful to end-users, present in underlying record)
@@ -140,10 +142,13 @@ class ItemCatalogue(ItemBase):
         """
         Prettify HTML string, removing any empty lines.
 
-        Without careful whitespace control, Jinja templates can look messy where conditionals and other logic is used.
-        Whilst this doesn't strictly matter, it is nicer if output looks well-formed.
+        Without very careful whitespace control, Jinja templates quickly look messy where conditionals and other logic
+        is used. Whilst this doesn't strictly matter, it is nicer if output looks well-formed by removing empty lines.
+
+        This gives a 'flat' structure when viewed as source. Browser dev tools will reformat this into a tree structure.
+        The `prettify()` method is not used as it splits all elements onto new lines, which causes layout/spacing bugs.
         """
-        return BeautifulSoup(html, parser="html.parser", features="lxml").prettify()
+        return str(BeautifulSoup(html, parser="html.parser", features="lxml"))
 
     @property
     def _aggregations(self) -> Aggregations:
@@ -229,9 +234,90 @@ class ItemCatalogue(ItemBase):
         )
 
     @property
-    def html_title(self) -> str:
+    def _overview_graphic(self) -> GraphicOverview | None:
+        """
+        Optional 'overview' graphic overview.
+
+        I.e. a default graphic.
+        """
+        return next((graphic for graphic in self.graphics if graphic.identifier == "overview"), None)
+
+    @property
+    def page_metadata(self) -> PageMetadata:
+        """Templates page metadata."""
+        return PageMetadata(
+            html_title=self._html_title, html_open_graph=self._html_open_graph, html_schema_org=self._html_schema_org
+        )
+
+    @property
+    def _html_title(self) -> str:
         """Title with without formatting with site name appended, for HTML title element."""
-        return f"{self.title_plain} | BAS Data Catalogue"
+        return f"{self.title_plain}"
+
+    @property
+    def _html_open_graph(self) -> dict[str, str]:
+        """
+        Open Graph meta tags.
+
+        For item link previews and unfurling in social media sites, chat clients, etc.
+        See https://ogp.me/ for details.
+        See `self.schema_org` for more specific Microsoft Teams support.
+        """
+        tags = {
+            "og:locale": "en_GB",
+            "og:site_name": "BAS Data Catalogue",
+            "og:type": "article",
+            "og:title": self.title_plain,
+            "og:url": f"https://data.bas.ac.uk/items/{self.resource_id}",
+        }
+
+        if self.summary_plain:
+            tags["og:description"] = self.summary_plain
+        if self._dates.publication:
+            # noinspection PyUnresolvedReferences
+            tags["og:article:published_time"] = self._dates.publication.datetime
+        if self._overview_graphic:
+            tags["og:image"] = self._overview_graphic.href
+
+        return tags
+
+    @property
+    def _html_schema_org(self) -> str:
+        """
+        Schema.org metadata.
+
+        Support is limited to item link unfurling in Microsoft Teams.
+        See https://learn.microsoft.com/en-us/microsoftteams/platform/messaging-extensions/how-to/micro-capabilities-for-website-links?tabs=article
+
+        Other Schema.org use-cases may work but are not tested.
+        """
+        doc = {
+            "@context": "http://schema.org/",
+            "@type": "Article",
+            "name": "BAS Data Catalogue",
+            "headline": self.title_plain,
+            "url": f"https://data.bas.ac.uk/items/{self.resource_id}",
+        }
+
+        if self.summary_plain:
+            doc["description"] = self.summary_plain
+
+        if self._overview_graphic:
+            doc["image"] = self._overview_graphic.href
+
+        author_names = []
+        for author in self.contacts.filter(roles=ContactRoleCode.AUTHOR):
+            if author.individual is not None:
+                author_names.append(author.individual.name)
+                continue
+            author_names.append(author.organisation.name)
+        if len(author_names) > 0:
+            # set as comma separated list of names, except last element which uses '&'
+            doc["creator"] = (
+                ", ".join(author_names[:-1]) + " & " + author_names[-1] if len(author_names) > 1 else author_names[0]
+            )
+
+        return json.dumps(doc, indent=2)
 
     @property
     def page_header(self) -> PageHeader:
@@ -250,11 +336,6 @@ class ItemCatalogue(ItemBase):
             citation=self.citation_html,
             abstract=self.abstract_html,
         )
-
-    @property
-    def graphics(self) -> list[Link]:
-        """Item graphics."""
-        return [Link(href=graphic.href, value=graphic.description) for graphic in super().graphics]
 
     @property
     def tabs(self) -> list[Tab]:
@@ -289,6 +370,5 @@ class ItemCatalogue(ItemBase):
 
     def render(self) -> str:
         """Render HTML representation of item."""
-        current_year = datetime.now(tz=UTC).year
-        raw = self._jinja.get_template("item.html.j2").render(item=self, current_year=current_year)
+        raw = self._jinja.get_template("item.html.j2").render(item=self, meta=self.page_metadata)
         return self._prettify_html(raw)

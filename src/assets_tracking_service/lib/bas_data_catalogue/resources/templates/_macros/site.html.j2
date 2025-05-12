@@ -1,21 +1,38 @@
 {% import '_macros/common.html.j2' as com %}
 
-{% macro html_head(title) %}
+{% macro html_head(data) %}
   <head>
     {{ head_meta() }}
-    {{ head_title(title) }}
+    {{ head_title(data.html_title) }}
+    {% if data.html_open_graph %}
+      {{ head_open_graph(data.html_open_graph) }}
+    {% endif %}
+    {{ head_favicon() }}
     {{ head_styles() }}
-    {{ head_scripts() }}
+    {{ head_scripts(data) }}
   </head>
 {% endmacro %}
 
-{% macro head_meta(value) %}
-  <meta charset="UTF-8">
+{% macro head_meta() %}
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endmacro %}
 
 {% macro head_title(value) %}
   <title>{{ value }}</title>
+{% endmacro %}
+
+{% macro head_open_graph(data) %}
+  {% for property, content in data | items %}
+    <meta property="{{ property }}" content="{{ content }}" />
+  {% endfor %}
+{% endmacro %}
+
+{% macro head_favicon() %}
+  <link rel="shortcut icon" href="/static/img/favicon.ico" />
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png" sizes="180x180" />
+  <link rel='manifest' href="/static/txt/site.webmanifest" />
 {% endmacro %}
 
 {% macro head_styles() %}
@@ -27,6 +44,9 @@
   {{ script_sentry() }}
   {{ script_sticky_tabs() }}
   {{ script_collapsible() }}
+  {% if data.html_schema_org %}
+    {{ script_schema_org(data.html_schema_org) }}
+  {% endif %}
 {% endmacro %}
 
 {% macro script_sentry() %}
@@ -112,6 +132,10 @@
   </script>
 {% endmacro %}
 
+{% macro script_schema_org(data) %}
+  <script type="application/ld+json">{{ data }}</script>
+{% endmacro %}
+
 {% macro top_anchor() %}
   <div id="{{ com.back_to_top_id() }}"></div>
 {% endmacro %}
@@ -126,16 +150,14 @@
 {% macro navbar() %}
   <nav id="site-nav" class="bg-grey-950 text-white">
     <div class="{{ com.container_classes() }} py-4">
-      <div class="flex items-center justify-between">
-        <a id="site-title" class="font-bold text-lg" href="/">BAS Data Catalogue</a>
-      </div>
+      <a id="site-title" class="block font-bold text-lg text-center lg:text-left" href="/">BAS Data Catalogue</a>
     </div>
   </nav>
 {% endmacro %}
 
 {% macro dev_phase() %}
-  <div id="site-dev" class="{{ com.container_classes() }} space-x-2">
-    <span id="site-dev-phase" class="uppercase text-sm font-bold bg-pink-500 text-white px-2">alpha</span>
+  <div id="site-dev" class="{{ com.container_classes() }} px-2 lg:px-0 space-x-2">
+    <span id="site-dev-phase" class="uppercase text-sm font-bold bg-pink-500 text-white py-1 px-2">alpha</span>
     <span>
       This is a new website, your
       <button class="{{ com.sentry_trigger() }} {{ com.link_classes() }}">feedback</button> will help us to improve it.
@@ -143,22 +165,21 @@
   </div>
 {% endmacro %}
 
-{% macro footer(current_year) %}
+{% macro footer(data) %}
   <footer id="site-footer" class="font-light bg-grey-950 text-grey-100">
     <div class="{{ com.container_classes() }} py-8 space-y-8">
-      <div class="flex justify-between items-center">
+      <div class="flex flex-col justify-between space-y-4 lg:space-y-0 lg:flex-row">
         <button class="{{ com.sentry_trigger() }} {{ com.footer_link_classes() }} cursor-pointer">Is something wrong with this page?</button>
-        <a class="{{ com.footer_link_classes() }}" href="#{{ com.back_to_top_id() }}">Back to top</a>
+        <a class="{{ com.footer_link_classes() }} text-center lg:text-right" href="#{{ com.back_to_top_id() }}">Back to top</a>
       </div>
-      <div class="flex justify-between">
-        <div>
-          © <a class="{{ com.footer_link_classes() }}" href="https://www.bas.ac.uk">British Antarctic Survey</a> (BAS) {{ current_year }}.
-          BAS is part of <a class="{{ com.footer_link_classes() }}" href="https://www.ukri.org">UK Research and Innovation</a> (UKRI)
+      <div class="flex flex-col justify-between space-y-4 lg:space-y-0 lg:flex-row">
+        <div class="text-center lg:text-left lg:flex lg:space-x-2">
+          <p>© <a class="{{ com.footer_link_classes() }}" href="https://www.bas.ac.uk">British Antarctic Survey</a> {{ data.current_year }}<span class="hidden lg:inline">.</span></p>
         </div>
-        <ul class="flex space-x-2">
-          <li><a class="{{ com.footer_link_classes() }}" href="#">Cookies</a></li>
-          <li><a class="{{ com.footer_link_classes() }}" href="#">Copyright</a></li>
-          <li><a class="{{ com.footer_link_classes() }}" href="#">Privacy</a></li>
+        <ul class="flex justify-center space-x-2 lg:justify-end">
+          <li><a class="{{ com.footer_link_classes() }}" href="/legal/cookies">Cookies</a></li>
+          <li><a class="{{ com.footer_link_classes() }}" href="/legal/copyright">Copyright</a></li>
+          <li><a class="{{ com.footer_link_classes() }}" href="/legal/privacy">Privacy</a></li>
         </ul>
       </div>
     </div>

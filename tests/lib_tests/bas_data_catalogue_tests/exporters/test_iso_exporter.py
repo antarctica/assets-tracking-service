@@ -26,10 +26,11 @@ class TestIsoXmlExporter:
         expected = output_path.joinpath(f"{fx_lib_record_minimal_item.file_identifier}.xml")
 
         exporter = IsoXmlExporter(
-            config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
+            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
         )
 
         assert isinstance(exporter, IsoXmlExporter)
+        assert exporter.name == "ISO XML"
         assert exporter._export_path == expected
 
     def test_dumps(
@@ -44,7 +45,7 @@ class TestIsoXmlExporter:
         expected = fx_lib_record_minimal_item.dumps()
 
         exporter = IsoXmlExporter(
-            config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
+            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
         )
 
         result = exporter.dumps()
@@ -70,7 +71,7 @@ class TestIsoXmlHtmlExporter:
 
         exporter = IsoXmlHtmlExporter(
             config=mock_config,
-            s3_client=fx_s3_client,
+            s3=fx_s3_client,
             record=fx_lib_record_minimal_item,
             export_base=exports_path,
             stylesheets_base=stylesheets_path,
@@ -78,6 +79,7 @@ class TestIsoXmlHtmlExporter:
         expected = exports_path.joinpath(f"{fx_lib_record_minimal_item.file_identifier}.html")
 
         assert isinstance(exporter, IsoXmlHtmlExporter)
+        assert exporter.name == "ISO XML HTML"
         assert exporter._export_path == expected
         assert exporter._stylesheet_url == "static/xml-to-html-ISO.xsl"
 

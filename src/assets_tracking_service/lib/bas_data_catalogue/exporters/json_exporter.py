@@ -19,11 +19,14 @@ class JsonExporter(Exporter):
     [1] https://metadata-standards.data.bas.ac.uk/standards/iso-19115-19139#json-schemas
     """
 
-    def __init__(self, config: Config, s3_client: S3Client, record: Record, export_base: Path) -> None:
+    def __init__(self, config: Config, s3: S3Client, record: Record, export_base: Path) -> None:
         export_name = f"{record.file_identifier}.json"
-        super().__init__(
-            config=config, s3_client=s3_client, record=record, export_base=export_base, export_name=export_name
-        )
+        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "BAS JSON"
 
     def dumps(self) -> str:
         """Encode record as data catalogue record config in JSON."""

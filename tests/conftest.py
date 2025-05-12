@@ -1,9 +1,13 @@
 import logging
+import sys
+import time
 from contextlib import suppress
 from copy import deepcopy
 from datetime import UTC, datetime
+from http.client import HTTPConnection
 from importlib.metadata import version
 from pathlib import Path
+from subprocess import PIPE, Popen
 from tempfile import TemporaryDirectory
 from typing import Literal, TypedDict
 from unittest.mock import MagicMock, PropertyMock
@@ -12,7 +16,6 @@ from uuid import uuid4
 import pytest
 from arcgis.gis import Item, ItemTypeEnum, SharingLevel
 from boto3 import client as S3Client  # noqa: N812
-from jinja2 import Environment, PackageLoader, select_autoescape
 from moto import mock_aws
 from mygeotab import MyGeotabException, TimeoutException
 from psycopg import Connection
@@ -34,7 +37,13 @@ from assets_tracking_service.exporters.exporters_manager import ExportersManager
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import SiteResourcesExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import (
+    SiteExporter,
+    SiteIndexExporter,
+    SitePagesExporter,
+    SiteResourcesExporter,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import AdditionalInfoTab, ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import Dates as ItemCatDates
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
@@ -71,6 +80,18 @@ from tests.pytest_pg_factories import (  # noqa: F401
 )
 from tests.resources.examples.example_exporter import ExampleExporter
 from tests.resources.examples.example_provider import ExampleProvider
+from tests.resources.lib.data_catalogue.records.item_cat_collection_all import record as collection_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_data import record as data_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_formatting import record as formatting_supported
+from tests.resources.lib.data_catalogue.records.item_cat_licence import (
+    cc_record,
+    ogl_record,
+    ops_record,
+    rights_reversed_record,
+)
+from tests.resources.lib.data_catalogue.records.item_cat_product_all import record as product_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_product_min import record as product_min_supported
+from tests.resources.lib.data_catalogue.records.item_cat_pub_map import record as product_published_map
 
 # override `postgresql` fixture with either a local (proc) or remote (noproc) fixture depending on if in CI.
 postgresql = factories.postgresql(postgresql_factory_name)
@@ -779,14 +800,15 @@ def fx_exporters_manager_eg_exporter(
     return fx_exporters_manager_no_exporters
 
 
-@pytest.fixture()
-def fx_lib_record_config_minimal_iso() -> dict:
+def _lib_record_config_minimal_iso() -> dict:
     """
     Minimal record configuration (ISO).
 
     Minimal record that will validate against the BAS Metadata Library ISO 19115:2003 / 19115-2:2009 v4 schema.
 
     Types must be safe to encode as JSON.
+
+    Standalone method to allow use outside of fixtures in test parametrisation.
     """
     return {
         "$schema": "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json",
@@ -804,17 +826,34 @@ def fx_lib_record_config_minimal_iso() -> dict:
 
 
 @pytest.fixture()
-def fx_lib_record_config_minimal_item(fx_lib_record_config_minimal_iso: dict) -> dict:
+def fx_lib_record_config_minimal_iso() -> dict:
     """
-    Minimal record configuration (Item).
+    Minimal record configuration (ISO).
 
-    Minimal record that can be used with an ItemBase.
+    Minimal record that will validate against the BAS Metadata Library ISO 19115:2003 / 19115-2:2009 v4 schema.
 
     Types must be safe to encode as JSON.
     """
-    config = deepcopy(fx_lib_record_config_minimal_iso)
+    return _lib_record_config_minimal_iso()
+
+
+def _lib_record_config_minimal_item(base_config: dict) -> dict:
+    """
+    Minimal record configuration (Item).
+
+    Minimal record that can be used with an ItemBase. Types must be safe to encode as JSON.
+
+    Standalone method to allow use outside of fixtures in test parametrisation.
+    """
+    config = deepcopy(base_config)
     config["file_identifier"] = "x"
     return config
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_item(fx_lib_record_config_minimal_iso: dict) -> dict:
+    """Minimal record configuration (Item)."""
+    return _lib_record_config_minimal_item(fx_lib_record_config_minimal_iso)
 
 
 @pytest.fixture()
@@ -830,16 +869,15 @@ def fx_lib_record_config_minimal_magic_preset(fx_lib_record_config_minimal_item:
     return deepcopy(fx_lib_record_config_minimal_item)
 
 
-@pytest.fixture()
-def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_item: dict) -> dict:
+def _lib_record_config_minimal_item_catalogue(base_config: dict) -> dict:
     """
     Minimal record configuration (ItemCatalogue).
 
-    Minimal record that can be used with an ItemCatalogue.
+    Minimal record that can be used with an ItemCatalogue. Types must be safe to encode as JSON.
 
-    Types must be safe to encode as JSON.
+    Standalone method to allow use outside of fixtures in test parametrisation.
     """
-    config = deepcopy(fx_lib_record_config_minimal_item)
+    config = deepcopy(base_config)
     config["identification"]["contacts"] = deepcopy(config["metadata"]["contacts"])
     config["identification"]["contacts"][0]["email"] = "x"
     config["identification"]["identifiers"] = [
@@ -851,6 +889,12 @@ def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_ite
     ]
 
     return config
+
+
+@pytest.fixture()
+def fx_lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_item: dict) -> dict:
+    """Minimal record configuration (ItemCatalogue)."""
+    return _lib_record_config_minimal_item_catalogue(fx_lib_record_config_minimal_item)
 
 
 @pytest.fixture()
@@ -878,7 +922,11 @@ def fx_lib_record_summary_minimal_item(fx_lib_record_minimal_item_catalogue: Rec
 
 
 def _lib_get_record_summary(identifier: str) -> RecordSummary:
-    """Minimal record summary lookup method."""
+    """
+    Minimal record summary lookup method.
+
+    Standalone method to allow use outside of fixtures.
+    """
     return RecordSummary(
         file_identifier=identifier,
         hierarchy_level=HierarchyLevelCode.PRODUCT,
@@ -909,27 +957,32 @@ def fx_lib_item_cat_info_tab_minimal() -> AdditionalInfoTab:
     )
 
 
-@pytest.fixture()
-def fx_lib_item_catalogue(
-    fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
-) -> ItemCatalogue:
-    """Item Catalogue based on a minimal record instance (Item)."""
+def _lib_item_catalogue_min() -> ItemCatalogue:
+    """
+    ItemCatalogue based on minimal catalogue record.
+
+    Standalone method to allow use outside of fixtures in test parametrisation.
+    """
     return ItemCatalogue(
-        fx_lib_record_minimal_item_catalogue,
+        record=LibRecord.loads(
+            _lib_record_config_minimal_item_catalogue(_lib_record_config_minimal_item(_lib_record_config_minimal_iso()))
+        ),
         embedded_maps_endpoint="x",
         item_contact_endpoint="x",
-        get_record_summary=fx_lib_get_record_summary,
+        get_record_summary=_lib_get_record_summary,
     )
 
 
 @pytest.fixture()
-def fx_lib_item_catalogue_jinja() -> Environment:
-    """Template environment for Data Catalogue."""
-    return Environment(
-        loader=PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates"),
-        autoescape=select_autoescape(),
-        trim_blocks=True,
-        lstrip_blocks=True,
+def fx_lib_item_catalogue_min(
+    fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
+) -> ItemCatalogue:
+    """ItemCatalogue based on minimal catalogue record."""
+    return ItemCatalogue(
+        record=fx_lib_record_minimal_item_catalogue,
+        embedded_maps_endpoint="x",
+        item_contact_endpoint="x",
+        get_record_summary=fx_lib_get_record_summary,
     )
 
 
@@ -983,7 +1036,7 @@ def fx_lib_exporter_base(
 
     exporter = Exporter(
         config=mock_config,
-        s3_client=fx_s3_client,
+        s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=output_path.joinpath("x"),
         export_name="x.txt",
@@ -1007,7 +1060,7 @@ def fx_lib_exporter_iso_xml_html(
 
     return IsoXmlHtmlExporter(
         config=mock_config,
-        s3_client=fx_s3_client,
+        s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=exports_path,
         stylesheets_base=stylesheets_path,
@@ -1033,8 +1086,36 @@ def fx_lib_exporter_html_alias(
     )
 
     return HtmlAliasesExporter(
-        config=mock_config, s3_client=fx_s3_client, record=fx_lib_record_minimal_item_catalogue, site_base=output_path
+        config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item_catalogue, site_base=output_path
     )
+
+
+@pytest.fixture()
+def fx_lib_exporter_records(
+    mocker: MockerFixture,
+    fx_logger: logging.Logger,
+    fx_s3_bucket_name: str,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: Record,
+) -> RecordsExporter:
+    """
+    Site records exporter.
+
+    With:
+    - a mocked config and S3 client
+    - a minimal sample record
+    """
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
+    type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
+
+    records = [fx_lib_record_minimal_item_catalogue]
+    summaries = [RecordSummary.loads(record) for record in records]
+    return RecordsExporter(config=mock_config, logger=fx_logger, s3=fx_s3_client, records=records, summaries=summaries)
 
 
 @pytest.fixture()
@@ -1048,7 +1129,173 @@ def fx_lib_exporter_site_resources(
     type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
-    return SiteResourcesExporter(config=mock_config, s3_client=fx_s3_client)
+    return SiteResourcesExporter(config=mock_config, s3=fx_s3_client)
+
+
+@pytest.fixture()
+def fx_lib_exporter_site_index(
+    mocker: MockerFixture,
+    fx_s3_bucket_name: str,
+    fx_logger: logging.Logger,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: Record,
+) -> SiteIndexExporter:
+    """
+    Site index exporter.
+
+    With:
+    - a mocked config and S3 client
+    - a minimal sample record
+    """
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
+    return SiteIndexExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, summaries=summaries)
+
+
+@pytest.fixture()
+def fx_lib_exporter_site_pages(
+    mocker: MockerFixture,
+    fx_s3_bucket_name: str,
+    fx_logger: logging.Logger,
+    fx_s3_client: S3Client,
+) -> SitePagesExporter:
+    """Site pages exporter with a mocked config and S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    return SitePagesExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_lib_exporter_site(
+    mocker: MockerFixture,
+    fx_s3_bucket_name: str,
+    fx_logger: logging.Logger,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: Record,
+) -> SiteExporter:
+    """
+    Site exporter.
+
+    With:
+    - a mocked config and S3 client
+    - a minimal sample record
+    """
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
+    type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
+
+    records = [fx_lib_record_minimal_item_catalogue]
+    return SiteExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, records=records)
+
+
+def lib_exporter_static_site_records() -> list[LibRecord]:
+    """Records for populating static site exporter."""  # noqa: D401
+    return [
+        collection_all_supported,
+        product_min_supported,
+        product_all_supported,
+        formatting_supported,
+        data_all_supported,
+        ogl_record,
+        cc_record,
+        ops_record,
+        rights_reversed_record,
+        product_published_map,
+    ]
+
+
+@pytest.fixture(scope="module")
+def fx_lib_exporter_static_site_records() -> list[LibRecord]:
+    """Records for populating static site exporter."""  # noqa: D401
+    return lib_exporter_static_site_records()
+
+
+@pytest.fixture(scope="module")
+def fx_lib_exporter_static_site(
+    module_mocker: MockerFixture, fx_lib_exporter_static_site_records: list[Record]
+) -> TemporaryDirectory:
+    """
+    Build static site and export to a temp directory.
+
+    Module scoped for performance. Means usual fixtures for config and S3Client can't be used and are duplicated.
+    """
+    site_dir = TemporaryDirectory()
+
+    logger = logging.getLogger("app")
+    logger.setLevel(logging.DEBUG)
+
+    config = Config()
+    module_mocker.patch.object(
+        type(config),
+        attribute="EXPORTER_DATA_CATALOGUE_OUTPUT_PATH",
+        new_callable=PropertyMock,
+        return_value=Path(site_dir.name),
+    )
+    module_mocker.patch.object(
+        type(config), attribute="EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID", new_callable=PropertyMock, return_value="x"
+    )
+    module_mocker.patch.object(
+        type(config), attribute="EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", new_callable=PropertyMock, return_value="x"
+    )
+
+    with mock_aws():
+        s3_client = S3Client(
+            "s3",
+            aws_access_key_id=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
+            aws_secret_access_key=config.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET,
+            region_name="eu-west-1",
+        )
+
+    exporter = SiteExporter(config=config, s3=s3_client, logger=logger, records=fx_lib_exporter_static_site_records)
+    exporter.export()
+
+    if not Path(site_dir.name).joinpath("favicon.ico").exists():
+        msg = "Failed to generate static site"
+        raise RuntimeError(msg) from None
+
+    return site_dir
+
+
+@pytest.fixture(scope="module")
+def fx_lib_exporter_static_server(fx_lib_exporter_static_site: TemporaryDirectory):
+    """Expose static site from a local server."""
+    retries = 5
+    python_bin = sys.executable
+    site_dir = fx_lib_exporter_static_site.name
+    process = Popen([python_bin, "-m", "http.server", "8123", "--directory", site_dir], stdout=PIPE)  # noqa: S603
+
+    while retries > 0:
+        conn = HTTPConnection("localhost:8123")
+        try:
+            conn.request("HEAD", "/")
+            response = conn.getresponse()
+            if response is not None:
+                yield process
+                break
+        except ConnectionRefusedError:
+            time.sleep(1)
+            retries -= 1
+
+    if not retries:
+        msg = "Failed to start http server"
+        raise RuntimeError(msg) from None
+    else:
+        process.terminate()
+        process.wait()
+        fx_lib_exporter_static_site.cleanup()
 
 
 @pytest.fixture()

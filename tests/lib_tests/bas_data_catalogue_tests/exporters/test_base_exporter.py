@@ -89,7 +89,7 @@ class TestBaseExporter:
 
         base = Exporter(
             config=mock_config,
-            s3_client=s3_client,
+            s3=s3_client,
             record=fx_lib_record_minimal_item,
             export_base=output_path.joinpath("x"),
             export_name="x.txt",
@@ -106,7 +106,7 @@ class TestBaseExporter:
         with pytest.raises(ValueError, match="File identifier must be set to export record."):
             Exporter(
                 config=fx_config,
-                s3_client=s3_client,
+                s3=s3_client,
                 record=fx_lib_record_minimal_iso,
                 export_base=output_path,
                 export_name="x",
@@ -125,11 +125,29 @@ class TestBaseExporter:
         with pytest.raises(ValueError, match="Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."):
             Exporter(
                 config=fx_config,
-                s3_client=s3_client,
+                s3=s3_client,
                 record=fx_lib_record_minimal_item,
                 export_base=export_path,
                 export_name="x",
             )
+
+    def test_name_invalid(self, mocker: MockerFixture, fx_lib_record_minimal_item: Record):
+        """Cannot get exporter name from base exporter."""
+        with TemporaryDirectory() as tmp_path:
+            output_path = Path(tmp_path)
+        s3_client = mocker.MagicMock()
+        mock_config = mocker.Mock()
+        type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+        exporter = Exporter(
+            config=mock_config,
+            s3=s3_client,
+            record=fx_lib_record_minimal_item,
+            export_base=output_path.joinpath("x"),
+            export_name="x.txt",
+        )
+
+        with pytest.raises(NotImplementedError):
+            _ = exporter.name
 
     def test_dump(self, fx_lib_exporter_base: Exporter):
         """Can write output to a file at a low level."""
@@ -148,7 +166,7 @@ class TestBaseExporter:
         assert dest_path.exists()
 
     def test_dumps_invalid(self, mocker: MockerFixture, fx_lib_record_minimal_item: Record):
-        """Cannot export record from base exporter."""
+        """Cannot generate a record in a derived format from base exporter."""
         with TemporaryDirectory() as tmp_path:
             output_path = Path(tmp_path)
         s3_client = mocker.MagicMock()
@@ -156,7 +174,7 @@ class TestBaseExporter:
         type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
         exporter = Exporter(
             config=mock_config,
-            s3_client=s3_client,
+            s3=s3_client,
             record=fx_lib_record_minimal_item,
             export_base=output_path.joinpath("x"),
             export_name="x.txt",

@@ -21,7 +21,7 @@ class HtmlExporter(Exporter):
     def __init__(
         self,
         config: Config,
-        s3_client: S3Client,
+        s3: S3Client,
         record: Record,
         export_base: Path,
         get_record_summary: Callable[[str], RecordSummary],
@@ -33,10 +33,13 @@ class HtmlExporter(Exporter):
         """
         export_base = export_base / record.file_identifier
         export_name = "index.html"
-        super().__init__(
-            config=config, s3_client=s3_client, record=record, export_base=export_base, export_name=export_name
-        )
+        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
         self._get_summary = get_record_summary
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "Item HTML"
 
     def dumps(self) -> str:
         """Encode record as data catalogue item in HTML."""
@@ -57,7 +60,7 @@ class HtmlAliasesExporter(Exporter):
     Uses S3 object redirects with a minimal HTML page as a fallback.
     """
 
-    def __init__(self, config: Config, s3_client: S3Client, record: Record, site_base: Path) -> None:
+    def __init__(self, config: Config, s3: S3Client, record: Record, site_base: Path) -> None:
         """
         Initialise.
 
@@ -70,14 +73,17 @@ class HtmlAliasesExporter(Exporter):
         export_name = f"{record.file_identifier}.html"
         export_base = site_base
         self._site_base = site_base
-        super().__init__(
-            config=config, s3_client=s3_client, record=record, export_base=export_base, export_name=export_name
-        )
+        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
 
     def _get_aliases(self) -> list[str]:
         """Get optional aliases for record as relative file paths / S3 keys."""
         identifiers = self._record.identification.identifiers.filter(namespace="alias.data.bas.ac.uk")
         return [identifier.href.replace("https://data.bas.ac.uk/", "") for identifier in identifiers]
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        return "Item Aliases"
 
     def dumps(self) -> str:
         """Generate redirect page for record."""

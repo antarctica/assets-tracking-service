@@ -10,10 +10,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Aggregations,
     Dates,
     Extent,
+    FormattedDate,
     Identifiers,
     ItemSummaryCatalogue,
     Maintenance,
-    format_date,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
@@ -256,7 +256,7 @@ class TestAuthorsTab:
 class TestLicenceTab:
     """Test licence tab."""
 
-    def test_init(self, fx_lib_item_catalogue: ItemCatalogue):
+    def test_init(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can create licence tab."""
         constraint = Constraint(
             type=ConstraintTypeCode.USAGE,
@@ -264,7 +264,9 @@ class TestLicenceTab:
             href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
             statement="x",
         )
-        tab = LicenceTab(jinja=fx_lib_item_catalogue._jinja, item_type=HierarchyLevelCode.PRODUCT, licence=constraint)
+        tab = LicenceTab(
+            jinja=fx_lib_item_catalogue_min._jinja, item_type=HierarchyLevelCode.PRODUCT, licence=constraint
+        )
 
         assert tab.enabled is True
         assert tab.slug == Licence.OGL_UK_3_0
@@ -281,7 +283,7 @@ class TestLicenceTab:
         ],
     )
     def test_disabled(
-        self, fx_lib_item_catalogue: ItemCatalogue, item_type: HierarchyLevelCode, has_licence: bool, expected: bool
+        self, fx_lib_item_catalogue_min: ItemCatalogue, item_type: HierarchyLevelCode, has_licence: bool, expected: bool
     ):
         """Can disable licence tab based on item type and if item has a licence."""
         constraint = Constraint(
@@ -292,7 +294,7 @@ class TestLicenceTab:
         )
         licence = constraint if has_licence else None
 
-        tab = LicenceTab(jinja=fx_lib_item_catalogue._jinja, item_type=item_type, licence=licence)
+        tab = LicenceTab(jinja=fx_lib_item_catalogue_min._jinja, item_type=item_type, licence=licence)
 
         assert tab.enabled == expected
         if has_licence:
@@ -369,7 +371,7 @@ class TestAdditionalInfoTab:
         assert tab.item_type == item_type.value
         assert tab.item_type_icon == "fa-fw far fa-map"
         assert isinstance(tab.dates, dict)
-        assert tab.datestamp == format_date(Date(date=datestamp))
+        assert tab.datestamp == FormattedDate.from_rec_date(Date(date=datestamp))
         assert tab.record_link_xml.href == xml_href
         assert tab.record_link_html.href == html_href
         assert tab.record_link_json.href == json_href
@@ -378,7 +380,9 @@ class TestAdditionalInfoTab:
         assert tab.title != ""
         assert tab.icon != ""
 
-    @pytest.mark.parametrize(("series", "expected"), [(None, None), (Series(name="x", edition="x"), "x (x)")])
+    @pytest.mark.parametrize(
+        ("series", "expected"), [(Series(name=None), None), (Series(name="x", edition="x"), "x (x)")]
+    )
     def test_series(
         self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
     ):

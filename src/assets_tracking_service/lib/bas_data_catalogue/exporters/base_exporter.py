@@ -26,15 +26,17 @@ class S3Utils:
         """
         return str(path.relative_to(self._relative_base))
 
-    def upload_content(self, key: str, content_type: str, body: str, redirect: str | None = None) -> None:
+    def upload_content(self, key: str, content_type: str, body: str | bytes, redirect: str | None = None) -> None:
         """
-        Upload string as an S3 object.
+        Upload string or binary content as an S3 object.
 
         Optionally, a redirect can be set to redirect to another object as per [1].
 
         [1] https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-page-redirect.html#redirect-requests-object-metadata
         """
-        params = {"Bucket": self._bucket, "Key": key, "Body": body.encode("utf-8"), "ContentType": content_type}
+        params = {"Bucket": self._bucket, "Key": key, "Body": body, "ContentType": content_type}
+        if isinstance(body, str):
+            params["Body"] = body.encode("utf-8")
         if redirect is not None:
             params["WebsiteRedirectLocation"] = redirect
         self._s3.put_object(**params)
@@ -69,34 +71,36 @@ class Exporter:
     - require records to set Record.file_identifier
     """
 
-    def __init__(
-        self, config: Config, s3_client: S3Client, record: Record, export_base: Path, export_name: str
-    ) -> None:
+    def __init__(self, config: Config, s3: S3Client, record: Record, export_base: Path, export_name: str) -> None:
         """
         Initialise exporter.
 
-        `export_base` is an output directory for each export type. This MUST be relative to
-        `Config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` so that a base S3 key can be generated from it.
+        Where `export_base` is an output directory for each export type which MUST be relative to
+        `Config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`, so that a base S3 key can be generated from it.
         """
-        if record.file_identifier is None:
-            msg = "File identifier must be set to export record."
-            raise ValueError(msg) from None
-
-        try:
-            _ = export_base.relative_to(config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
-        except ValueError as e:
-            msg = "Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."
-            raise ValueError(msg) from e
-
         self._config = config
-        self._s3_client = s3_client
+        self._s3_client = s3
         self._s3_utils = S3Utils(
             s3=self._s3_client,
             s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
             relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
+
+        self._validate(record, export_base)
         self._record = record
         self._export_path = export_base.joinpath(export_name)
+
+    def _validate(self, record: Record, export_base: Path) -> None:
+        """Validate exporter configuration."""
+        if record.file_identifier is None:
+            msg = "File identifier must be set to export record."
+            raise ValueError(msg) from None
+
+        try:
+            _ = export_base.relative_to(self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
+        except ValueError as e:
+            msg = "Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."
+            raise ValueError(msg) from e
 
     def _dump(self, path: Path) -> None:
         """Write dumped output to file."""
@@ -118,6 +122,11 @@ class Exporter:
         with resources_as_file(resources_files(src_ref)) as resources_path:
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             copytree(resources_path, dest_path)
+
+    @property
+    def name(self) -> str:
+        """Exporter name."""
+        raise NotImplementedError() from None
 
     def dumps(self) -> str:
         """Encode resource as a particular format."""

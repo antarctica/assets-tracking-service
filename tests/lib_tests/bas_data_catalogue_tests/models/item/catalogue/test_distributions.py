@@ -5,6 +5,13 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distri
     ArcGisFeatureLayer,
     ArcGisOgcApiFeatures,
     Distribution,
+    FileDistribution,
+    GeoJson,
+    GeoPackage,
+    Jpeg,
+    Pdf,
+    Png,
+    Shapefile,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import DistributionType
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -17,6 +24,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distr
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import (
     Format,
+    Size,
     TransferOption,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
@@ -59,9 +67,28 @@ class FakeDistributionType(Distribution):
         return Link(value="x", href="x")
 
     @property
+    def action_btn_icon(self) -> str:
+        """Link icon."""
+        return "far fa-square"
+
+    @property
     def access_target(self) -> None:
         """Access target."""
         return None
+
+
+class FakeFileDistributionType(FileDistribution):
+    """For testing non-abstract or common file distribution properties."""
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Match."""
+        return False
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format."""
+        return DistributionType.GEOJSON
 
 
 class TestDistribution:
@@ -83,6 +110,35 @@ class TestDistribution:
         assert dist.action_btn_icon != ""
 
 
+class TestFileDistribution:
+    """Test base file based Catalogue distribution."""
+
+    @pytest.mark.parametrize(
+        ("size", "expected"),
+        [(Size(unit="bytes", magnitude=2), "2 Bytes"), (Size(unit="x", magnitude=1), "1 x"), (None, "")],
+    )
+    def test_size(self, size: Size | None, expected: str):
+        """Can format file size."""
+        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[])
+        dist._option.transfer_option.size = size
+        assert dist.size == expected
+
+    def test_action(self):
+        """Can get action link."""
+        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[])
+        assert dist.action == Link(value="Download", href="x")
+
+    def test_action_btn_icon(self):
+        """Can get action icon."""
+        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[])
+        assert dist.action_btn_icon == "far fa-download"
+
+    def test_access_target(self):
+        """Can get null action target."""
+        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[])
+        assert dist.access_target is None
+
+
 class TestDistributionArcGisFeatureLayer:
     """Test ArcGIS Feature Layer catalogue distribution."""
 
@@ -95,7 +151,7 @@ class TestDistributionArcGisFeatureLayer:
 
         # cov
         assert dist.format_type == DistributionType.ARCGIS_FEATURE_LAYER
-        assert dist.size == "N/A"
+        assert dist.size == "-"
         assert dist.item_link.href == main.transfer_option.online_resource.href
         assert dist.service_endpoint == others[0].transfer_option.online_resource.href
         assert isinstance(dist.action, Link)
@@ -152,7 +208,7 @@ class TestDistributionArcGisOgcApiFeatures:
 
         # cov
         assert dist.format_type == DistributionType.ARCGIS_OGC_FEATURE_LAYER
-        assert dist.size == "N/A"
+        assert dist.size == "-"
         assert dist.item_link.href == main.transfer_option.online_resource.href
         assert dist.service_endpoint == others[0].transfer_option.online_resource.href
         assert isinstance(dist.action, Link)
@@ -195,3 +251,97 @@ class TestDistributionArcGisOgcApiFeatures:
         """Can determine if a record distribution matches this catalogue distribution."""
         result = ArcGisOgcApiFeatures.matches(main, others)
         assert result == expected
+
+
+class TestDistributionGeoJson:
+    """Test GeoJSON catalogue distribution."""
+
+    def test_init(self):
+        """Can create a distribution."""
+        dist = GeoJson(
+            option=_make_dist("https://www.iana.org/assignments/media-types/application/geo+json"), other_options=[]
+        )
+
+        assert dist.format_type == DistributionType.GEOJSON
+
+
+class TestDistributionGeoPackage:
+    """Test GeoPackage catalogue distribution."""
+
+    @pytest.mark.parametrize(
+        ("href", "format_type", "compressed"),
+        [
+            (
+                "https://www.iana.org/assignments/media-types/application/geopackage+sqlite3",
+                DistributionType.GEOPACKAGE,
+                False,
+            ),
+            (
+                "https://metadata-resources.data.bas.ac.uk/media-types/application/geopackage+sqlite3+zip",
+                DistributionType.GEOPACKAGE_ZIP,
+                True,
+            ),
+        ],
+    )
+    def test_init(self, href: str, format_type: DistributionType, compressed: bool):
+        """Can create a distribution."""
+        dist = GeoPackage(option=_make_dist(format_href=href), other_options=[])
+
+        assert dist.format_type == format_type
+        assert dist._compressed == compressed
+
+
+class TestDistributionJpeg:
+    """Test JPEG catalogue distribution."""
+
+    def test_init(self):
+        """Can create a distribution."""
+        dist = Jpeg(option=_make_dist("https://jpeg.org/jpeg/"), other_options=[])
+        assert dist.format_type == DistributionType.JPEG
+
+
+class TestDistributionPdf:
+    """Test PDF catalogue distribution."""
+
+    @pytest.mark.parametrize(
+        ("href", "format_type", "georeferenced"),
+        [
+            (
+                "https://www.iana.org/assignments/media-types/application/pdf",
+                DistributionType.PDF,
+                False,
+            ),
+            (
+                "https://metadata-resources.data.bas.ac.uk/media-types/application/pdf+geo",
+                DistributionType.PDF_GEO,
+                True,
+            ),
+        ],
+    )
+    def test_init(self, href: str, format_type: DistributionType, georeferenced: bool):
+        """Can create a distribution."""
+        dist = Pdf(option=_make_dist(format_href=href), other_options=[])
+
+        assert dist.format_type == format_type
+        assert dist._georeferenced == georeferenced
+
+
+class TestDistributionPng:
+    """Test PNG catalogue distribution."""
+
+    def test_init(self):
+        """Can create a distribution."""
+        dist = Png(option=_make_dist("https://www.iana.org/assignments/media-types/image/png"), other_options=[])
+        assert dist.format_type == DistributionType.PNG
+
+
+class TestDistributionShapefile:
+    """Test Shapefile catalogue distribution."""
+
+    def test_init(self):
+        """Can create a distribution."""
+        dist = Shapefile(
+            option=_make_dist("https://metadata-resources.data.bas.ac.uk/media-types/application/shapefile+zip"),
+            other_options=[],
+        )
+        assert dist.format_type == DistributionType.SHAPEFILE_ZIP

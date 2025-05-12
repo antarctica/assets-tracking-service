@@ -1,6 +1,8 @@
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from typing import TypeVar
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemSummaryBase, md_as_html
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
@@ -28,27 +30,59 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ProgressCode,
 )
 
+TFormattedDate = TypeVar("TFormattedDate", bound="FormattedDate")
 
-def format_date(value: Date, relative_to: datetime | None = None) -> str:
-    """
-    Format date to string.
 
-    Uses the 'DD MMM YYYY' (e.g. 01 Oct 2023) format for dates where precision allows.
-    Date times within 24 hours of now (or other specified time) return the date and time, otherwise the time is omitted.
-    """
-    relative_to = relative_to or datetime.now(tz=UTC)
+@dataclass(kw_only=True)
+class FormattedDate:
+    """Represents a HTML time element."""
 
-    if not isinstance(value, Date):
-        msg = "Value must be a record Date object."
-        raise TypeError(msg) from None
+    value: str
+    datetime: str
 
-    if isinstance(value.date, datetime) and not relative_to - value.date > timedelta(hours=24):
-        return value.date.strftime("%d %B %Y %H:%M:%S %Z")
-    if isinstance(value.date, date) and value.precision is DatePrecisionCode.YEAR:
-        return value.date.strftime("%Y")
-    if isinstance(value.date, date) and value.precision is DatePrecisionCode.MONTH:
-        return value.date.strftime("%B %Y")
-    return value.date.strftime("%d %B %Y")
+    @classmethod
+    def from_rec_date(cls: type[TFormattedDate], value: Date, relative_to: datetime | None = None) -> "FormattedDate":
+        """
+        Format a Record date for use in HTML time elements.
+
+        Time elements consist of human-readable value and a machine-readable 'datetime' attribute.
+
+        For time values:
+        - uses a 'DD MMM YYYY' (e.g. 01 Oct 2023) representation where precision allows
+        - Date times within 24 hours of a reference point (defaults to now) returns the date and time (otherwise omitted)
+
+        For time 'datetime' attributes:
+        - uses the relevant ISO 8601 representation (e.g. 2023-10-01T12:00:00+00:00)
+        """
+        if not isinstance(value, Date):
+            msg = "Value must be a record Date object."
+            raise TypeError(msg) from None
+
+        dt = value.date.strftime("%Y-%m-%d")
+        val = value.date.strftime("%d %B %Y")
+        relative_to = relative_to or datetime.now(tz=UTC)
+
+        if isinstance(value.date, datetime) and not relative_to - value.date > timedelta(hours=24):
+            val = value.date.strftime("%d %B %Y %H:%M:%S %Z")
+            dt = value.date.isoformat()
+        if isinstance(value.date, date) and value.precision is DatePrecisionCode.YEAR:
+            val = value.date.strftime("%Y")
+            dt = str(value.date.year)
+        if isinstance(value.date, date) and value.precision is DatePrecisionCode.MONTH:
+            val = value.date.strftime("%B %Y")
+            dt = value.date.strftime("%Y-%m")
+
+        return cls(value=val, datetime=dt)
+
+
+@dataclass(kw_only=True)
+class ItemSummaryFragments:
+    """Properties shown as part of an ItemSummaryCatalogue."""
+
+    item_type: str
+    item_type_icon: str
+    edition: str | None
+    published: FormattedDate | None
 
 
 class ItemSummaryCatalogue(ItemSummaryBase):
@@ -73,23 +107,31 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return ResourceTypeIcon[self.resource_type.name].value
 
     @property
-    def _date(self) -> str | None:
+    def _date(self) -> FormattedDate | None:
         """Formatted date."""
-        return format_date(self.date) if self.date else None
+        return FormattedDate.from_rec_date(self.date) if self.date else None
 
     @property
-    def fragments(self) -> list[tuple[str | None, str | None, str]]:
+    def _edition(self) -> str | None:
+        """Formatted edition."""
+        if self.edition is None or self.resource_type == HierarchyLevelCode.COLLECTION:
+            return None
+        return f"v{self.edition}"
+
+    @property
+    def fragments(self) -> ItemSummaryFragments:
         """UI fragments (icons and labels) for item summary."""
-        fragments = [(self._resource_type_icon, None, self.resource_type.value.capitalize())]
-        if self.edition and self.resource_type != HierarchyLevelCode.COLLECTION:
-            fragments.append((None, "Edition", self.edition))
-        if self._date and self.resource_type != HierarchyLevelCode.COLLECTION:
-            fragments.append((None, "Published", self._date))
-        return fragments
+        published = self._date if self.resource_type != HierarchyLevelCode.COLLECTION else None
+        return ItemSummaryFragments(
+            item_type=self.resource_type.value.capitalize(),
+            item_type_icon=self._resource_type_icon,
+            edition=self._edition,
+            published=published,
+        )
 
     @property
     def href_graphic(self) -> str:
-        """Item graphic, or generic default (bas roundel)."""
+        """Item graphic, or generic default (BAS roundel)."""
         default = (
             "data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAMAAAAKE/YAAAAC+lBMVEUAAADu7u739/fz8/Pt7e3w"
             "8PDv7+/t7e3u7u7u7u7t7e3v7+/u7u7u7u7v7+/x8fH////9/f3s7Ozu7u7s7Ozv7+/u7u7v7+/u7u7u7u7u7u7u7u7u7u7v7+/"
@@ -204,7 +246,7 @@ class Dates(RecordDates):
         # noinspection PyTypeChecker
         super().__init__(**unpack(dates))
 
-    def __getattribute__(self, name: str) -> str | None:
+    def __getattribute__(self, name: str) -> FormattedDate | None:
         """Get formatted date by name."""
         if name not in object.__getattribute__(self, "__dataclass_fields__"):
             return object.__getattribute__(self, name)
@@ -212,14 +254,14 @@ class Dates(RecordDates):
         val: Date = super().__getattribute__(name)
         if val is None:
             return None
-        return format_date(val)
+        return FormattedDate.from_rec_date(val)
 
-    def as_dict_enum(self) -> dict[DateTypeCode, str]:
+    def as_dict_enum(self) -> dict[DateTypeCode, FormattedDate]:
         """Non-None values as a dictionary with DateTypeCode enum keys."""
         # noinspection PyTypeChecker
         return super().as_dict_enum()
 
-    def as_dict_labeled(self) -> dict[str, str]:
+    def as_dict_labeled(self) -> dict[str, FormattedDate]:
         """Non-None values as a dictionary with human-readable labels as keys."""
         mapping = {
             DateTypeCode.CREATION: "Item created",
@@ -256,19 +298,19 @@ class Extent(ItemExtent):
     @property
     def start(self) -> str | None:
         """Temporal period start."""
-        return format_date(super().start) if super().start else None
+        return FormattedDate.from_rec_date(super().start) if super().start else None
 
     @property
     def end(self) -> str | None:
         """Temporal period end."""
-        return format_date(super().end) if super().end else None
+        return FormattedDate.from_rec_date(super().end) if super().end else None
 
     @property
     def map_iframe(self) -> str:
         """Visualise bounding box as an embedded map using the BAS Embedded Maps Service."""
         bbox = json.dumps(list(self.bounding_box)).replace(" ", "")
         params = f"bbox={bbox}&globe-overview"
-        return f"<iframe src='{self._map_endpoint}/?{params}' width='100%' height='400' frameborder='0'></iframe>"
+        return f"{self._map_endpoint}/?{params}"
 
 
 class Identifiers(RecordIdentifiers):
@@ -394,8 +436,8 @@ class Summary:
         self,
         item_type: HierarchyLevelCode,
         edition: str | None,
-        published_date: str | None,
-        revision_date: str | None,
+        published_date: FormattedDate | None,
+        revision_date: FormattedDate | None,
         aggregations: Aggregations,
         citation: str | None,
         abstract: str,
@@ -409,6 +451,19 @@ class Summary:
         self._abstract = abstract
 
     @property
+    def grid_enabled(self) -> bool:
+        """
+        Whether to show summary grid section in UI.
+
+        The grid consists of all properties except the abstract/purpose and citation.
+        """
+        if self._item_type == HierarchyLevelCode.COLLECTION:
+            return False
+        return (
+            self.edition is not None or self.published is not None or len(self.collections) > 0 or self.items_count > 0
+        )
+
+    @property
     def edition(self) -> str | None:
         """Edition."""
         if self._item_type == HierarchyLevelCode.COLLECTION:
@@ -416,14 +471,17 @@ class Summary:
         return self._edition
 
     @property
-    def published(self) -> str | None:
+    def published(self) -> FormattedDate | None:
         """Formatted published date with revision date if set and different to publication."""
         if self._item_type == HierarchyLevelCode.COLLECTION:
             return None
         if self._published_date is None:
             return None
         if self._published_date != self._revision_date and self._revision_date is not None:
-            return f"{self._published_date} (last updated: {self._revision_date})"
+            return FormattedDate(
+                value=f"{self._published_date.value} (last updated: {self._revision_date.value})",
+                datetime=self._published_date.datetime,
+            )
         return self._published_date
 
     @property

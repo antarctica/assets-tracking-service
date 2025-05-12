@@ -2,16 +2,15 @@
 
 {% macro link_classes() %}text-sky-blue-500 hover:underline{% endmacro %}
 
-{% macro btn_base_classes() %}font-bold cursor-pointer{% endmacro %}
+{% macro btn_base_classes() %}cursor-pointer{% endmacro %}
 
-{% macro btn_default_classes() %}{{ btn_base_classes() }} bg-grey-500 text-black hover:bg-grey-700{% endmacro %}
+{% macro btn_default_classes() %}{{ btn_base_classes() }} bg-grey-100 text-black hover:bg-grey-300{% endmacro %}
 
 {% macro btn_primary_classes() %}{{ btn_base_classes() }} bg-turquoise-500 text-white hover:bg-turquoise-700{% endmacro %}
 
 {% macro footer_link_classes() %}text-sky-blue-300 hover:underline{% endmacro %}
 
-
-{% macro back_to_top_id() %}site_top{% endmacro %}
+{% macro back_to_top_id() %}site-top{% endmacro %}
 
 {% macro sentry_trigger() %}site-feedback-trigger{% endmacro %}
 
@@ -26,10 +25,25 @@
   </div>
 {% endmacro %}
 
+{% macro time(data, id=None) %}
+  <time {% if id %}id="{{ id }}"{% endif %} datetime="{{ data.datetime }}">{{ data.value }}</time>
+{% endmacro %}
+
 {% macro ext_link_i() %}<i class="far fa-external-link"></i>{% endmacro %}
 
 {% macro ext_link_a(href, value) %}
   <a class="{{ link_classes() }}" href="{{ href }}" target="_blank">{{ value }} {{ ext_link_i() }}</a>
+{% endmacro %}
+
+{% macro page_header(id_wrapper=None, id_sub=None, id_main=None, sub=None, sub_i=None, main=None) %}
+  <header {% if id_wrapper %}id="{{ id_wrapper }}"{% endif %} class="border-b-1 border-grey-100 pb-4">
+    {% if sub %}
+      <small {% if id_sub %}id="{{ id_sub }}"{% endif %} class="text-grey-500 uppercase">
+        {% if sub_i %}<i class="{{ sub_i }}"></i>{% endif %} {{ sub }}
+      </small>
+    {% endif %}
+    <h1 {% if id_main %}id="{{ id_main }}"{% endif %} class="text-3xl">{{ main }}</h1>
+  </header>
 {% endmacro %}
 
 {% macro item_border(classes="") %}
@@ -51,17 +65,22 @@
       <header><a class="text-lg {{ link_classes() }}" href="{{item.href}}">{{ item.title_html }}</a></header>
       <article>{{ prose(item.summary_html) }}</article>
       <div class="flex items-center space-x-2 text-sm text-grey-500">
-        {% for fragment in item.fragments %}
-          {% if fragment[0] %}
-            <span><i class="{{ fragment[0] }}"></i> {{ fragment[2] }}</span>
-          {% else %}
-            <span>{{ fragment[1] }}: {{ fragment[2] }}</span>
-          {% endif %}
-          {% if not loop.last %}<span class="text-grey-100">|</span>{% endif %}
-        {% endfor %}
+        {{ item_summary_fragments(item.fragments) }}
       </div>
     </div>
   {% endcall %}
+{% endmacro %}
+
+{% macro item_summary_fragments(data) %}
+  <span><i class="{{ data.item_type_icon }}"></i> {{ data.item_type }}</span>
+  {% if data.edition %}
+    <span class="text-grey-100">|</span>
+    <span>{{ data.edition }}</span>
+  {% endif %}
+  {% if data.published %}
+    <span class="text-grey-100">|</span>
+    {{ time(data.published) }}
+  {% endif %}
 {% endmacro %}
 
 {% macro alert(variant, classes="") %}

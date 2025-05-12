@@ -16,7 +16,6 @@ variables:
   UV_CACHE_DIR: ".uv-cache"
   UV_VERSION: "0.6.5"
   PYTHON_VERSION: "3.11"
-  BASE_LAYER: "bookworm-slim"
 
   # Postgres Service
   POSTGRES_HOST: "postgres"
@@ -67,10 +66,19 @@ variables:
   # - OP_SERVICE_ACCOUNT_TOKEN
   #   - https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=hpszegtzzarkgua2ckg57gxpxe&h=magic.1password.eu
 
-image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
+image: mcr.microsoft.com/playwright/python:v1.52.0-noble
+
+.before_script_python: &before_script_python
+  - apt-get update
+
+  # setup UV
+  - curl -LsSfo uv.tar.gz https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-unknown-linux-gnu.tar.gz
+  - tar -xzf uv.tar.gz
+  - mv uv-x86_64-unknown-linux-gnu/uv uv-x86_64-unknown-linux-gnu/uvx /usr/local/bin
+  - uv --version
 
 .before_script_testing: &before_script_testing
-  - apt-get update
+  - *before_script_python
 
   # setup locale
   - apt-get install -y locales
@@ -80,9 +88,8 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   - export LANGUAGE=en_GB:en
   - export LC_ALL=en_GB.UTF-8
 
-  # setup app deps
+  # setup app dep libs
   - apt-get install -y gcc libkrb5-dev
-  - uv sync --all-groups
 
   # setup postgres
   - apt-get install -y postgresql-client
@@ -99,6 +106,9 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
   - $PSQL_SU_BASE -d assets_tracking_test -c "CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;"
   - uv run python -c 'from assets_tracking_service.config import Config; c = Config(); print(c.DB_DSN_SAFE)'
+
+  # setup app deps
+  - uv sync --all-groups --python $PYTHON_VERSION
 
 .before_script_deploy: &before_script_deploy
   - apt-get update
@@ -165,6 +175,8 @@ pytest:
 ruff:
   stage: 📋 lint
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - $RUFF_BIN check $RUFF_TARGETS
     - $RUFF_BIN format --check $RUFF_TARGETS
@@ -177,6 +189,8 @@ ruff:
 sqlfluff:
   stage: 📋 lint
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - uv run --only-group dev --frozen sqlfluff lint src/assets_tracking_service/resources/db_migrations
   rules:
@@ -188,6 +202,8 @@ sqlfluff:
 safety:
   stage: 📋 lint
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - uv run --only-group dev --frozen safety --stage cicd scan --detailed-output
   rules:
@@ -200,6 +216,8 @@ safety:
 build:
   stage: 🏗 build
   needs: []
+  before_script:
+    - *before_script_python
   script:
     - uv build
   artifacts:
@@ -219,6 +237,8 @@ publish:
   needs:
     - job: build
       artifacts: true
+  before_script:
+    - *before_script_python
   script:
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   retry:
@@ -230,10 +250,10 @@ prerelease:
   stage: 📦 publish
   needs: []
   before_script:
+    - *before_script_python
     - apt-get update && apt-get install -y git gcc libkrb5-dev
     - scripts/create-release.py prerelease
     - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
-    - uv --version
   script:
     - uv build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN

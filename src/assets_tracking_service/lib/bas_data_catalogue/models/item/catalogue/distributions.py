@@ -2,6 +2,8 @@ import base64
 import re
 from abc import ABC, abstractmethod
 
+from humanize import naturalsize
+
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import DistributionType
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import (
@@ -66,19 +68,56 @@ class Distribution(ABC):
         return "default"
 
     @property
+    @abstractmethod
     def action_btn_icon(self) -> str:
         """
         Font Awesome icon classes to display in action link or trigger.
 
         See https://fontawesome.com/v5/search?o=r&s=regular for choices (in available version and recommended style).
         """
-        return "far fa-download"
+        ...
 
     @property
     @abstractmethod
     def access_target(self) -> str | None:
         """Optional DOM selector of element showing more information on accessing distribution."""
         ...
+
+
+class FileDistribution(Distribution, ABC):
+    """
+    Base (abstract) file based distribution option.
+
+    Represents common properties of file based distribution types supported by the BAS Data Catalogue.
+    """
+
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution]) -> None:
+        self._option = option
+
+    @property
+    def size(self) -> str:
+        """Size if known."""
+        size = self._option.transfer_option.size
+        if size is None:
+            return ""
+        if size.unit == "bytes":
+            return naturalsize(size.magnitude)
+        return f"{size.magnitude} {size.unit}"
+
+    @property
+    def action(self) -> Link:
+        """Link to distribution."""
+        return Link(value="Download", href=self._option.transfer_option.online_resource.href)
+
+    @property
+    def action_btn_icon(self) -> str:
+        """Action button icon classes."""
+        return "far fa-download"
+
+    @property
+    def access_target(self) -> None:
+        """Not applicable for files."""
+        return None
 
 
 class ArcGisFeatureLayer(Distribution):
@@ -102,7 +141,7 @@ class ArcGisFeatureLayer(Distribution):
         item_hrefs = [
             option.format.href
             for option in [option, *other_options]
-            if hasattr(option, "format") and hasattr(option.format, "href")
+            if option.format is not None and option.format.href is not None
         ]
 
         match = all(href in item_hrefs for href in target_hrefs)
@@ -127,7 +166,7 @@ class ArcGisFeatureLayer(Distribution):
     @property
     def size(self) -> str:
         """Not applicable."""
-        return "N/A"
+        return "-"
 
     @property
     def item_link(self) -> Link:
@@ -184,7 +223,7 @@ class ArcGisOgcApiFeatures(Distribution):
         item_hrefs = [
             option.format.href
             for option in [option, *other_options]
-            if hasattr(option, "format") and hasattr(option.format, "href")
+            if option.format is not None and option.format.href is not None
         ]
 
         match = all(href in item_hrefs for href in target_hrefs)
@@ -209,7 +248,7 @@ class ArcGisOgcApiFeatures(Distribution):
     @property
     def size(self) -> str:
         """Not applicable."""
-        return "N/A"
+        return "-"
 
     @property
     def item_link(self) -> Link:
@@ -241,3 +280,186 @@ class ArcGisOgcApiFeatures(Distribution):
     def access_target(self) -> str:
         """DOM selector of element showing more information on accessing layer."""
         return f"#item-data-info-{self._encode_url(self.item_link.href)}"
+
+
+class BasPublishedMap(Distribution):
+    """
+    BAS published map distribution option.
+
+    Provides information to users on how to purchase BAS maps.
+    """
+
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution]) -> None:
+        self.option = option
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        return (
+            option.transfer_option.online_resource.href
+            == "https://www.bas.ac.uk/data/our-data/maps/how-to-order-a-map/"
+        )
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        return DistributionType.X_PAPER_MAP
+
+    @property
+    def size(self) -> str:
+        """Not applicable."""
+        return "-"
+
+    @property
+    def action(self) -> Link:
+        """Link to distribution without href due to using `access_trigger`."""
+        return Link(value="Purchase Options", href=None)
+
+    @property
+    def action_btn_icon(self) -> str:
+        """Action button icon classes."""
+        return "far fa-shopping-basket"
+
+    @property
+    def access_target(self) -> str | None:
+        """DOM selector of element showing more information on purchasing item."""
+        return "#item-data-info-map-purchase"
+
+
+class GeoJson(FileDistribution):
+    """GeoJSON distribution option."""
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        return (
+            option.format is not None
+            and option.format.href == "https://www.iana.org/assignments/media-types/application/geo+json"
+        )
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        return DistributionType.GEOJSON
+
+
+class GeoPackage(FileDistribution):
+    """
+    GeoPackage distribution option.
+
+    With support for optional zip compression.
+    """
+
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution]) -> None:
+        super().__init__(option, other_options)
+        self._compressed = self._is_compressed(option)
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        target_hrefs = [
+            "https://www.iana.org/assignments/media-types/application/geopackage+sqlite3",
+            "https://metadata-resources.data.bas.ac.uk/media-types/application/geopackage+sqlite3+zip",
+        ]
+        return option.format is not None and option.format.href in target_hrefs
+
+    @staticmethod
+    def _is_compressed(option: RecordDistribution) -> bool:
+        """Check if GeoPackage is compressed based on self-reported format."""
+        target_href = "https://metadata-resources.data.bas.ac.uk/media-types/application/geopackage+sqlite3+zip"
+        return option.format.href == target_href
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        if self._compressed:
+            return DistributionType.GEOPACKAGE_ZIP
+        return DistributionType.GEOPACKAGE
+
+
+class Jpeg(FileDistribution):
+    """JPEG distribution option."""
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        return (
+            option.format is not None
+            and option.format.href == "https://www.iana.org/assignments/media-types/image/jpeg"
+        )
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        return DistributionType.JPEG
+
+
+class Pdf(FileDistribution):
+    """
+    PDF distribution option.
+
+    With support for distinguishing optional georeferencing.
+    """
+
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution]) -> None:
+        super().__init__(option, other_options)
+        self._georeferenced = self._is_georeferenced(option)
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        target_hrefs = [
+            "https://www.iana.org/assignments/media-types/application/pdf",
+            "https://metadata-resources.data.bas.ac.uk/media-types/application/pdf+geo",
+        ]
+        return option.format is not None and option.format.href in target_hrefs
+
+    @staticmethod
+    def _is_georeferenced(option: RecordDistribution) -> bool:
+        """Check if PDF is georeferenced based on self-reported format."""
+        target_href = "https://metadata-resources.data.bas.ac.uk/media-types/application/pdf+geo"
+        return option.format.href == target_href
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        if self._georeferenced:
+            return DistributionType.PDF_GEO
+        return DistributionType.PDF
+
+
+class Png(FileDistribution):
+    """PNG distribution option."""
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        return (
+            option.format is not None and option.format.href == "https://www.iana.org/assignments/media-types/image/png"
+        )
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        return DistributionType.PNG
+
+
+class Shapefile(FileDistribution):
+    """
+    Shapefile distribution option.
+
+    Supports zip compressed shapefiles only.
+    """
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Whether this class matches the distribution option."""
+        return (
+            option.format is not None
+            and option.format.href == "https://metadata-resources.data.bas.ac.uk/media-types/application/shapefile+zip"
+        )
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format type."""
+        return DistributionType.SHAPEFILE_ZIP

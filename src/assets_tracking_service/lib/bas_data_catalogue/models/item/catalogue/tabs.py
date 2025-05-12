@@ -10,15 +10,22 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements im
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distributions import (
     ArcGisFeatureLayer,
     ArcGisOgcApiFeatures,
+    BasPublishedMap,
     Distribution,
+    GeoJson,
+    GeoPackage,
+    Jpeg,
+    Pdf,
+    Png,
+    Shapefile,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Aggregations,
     Dates,
+    FormattedDate,
     Identifiers,
     ItemSummaryCatalogue,
     Maintenance,
-    format_date,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence, ResourceTypeIcon
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Series
@@ -56,7 +63,7 @@ class Tab(ABC):
 
     @property
     @abstractmethod
-    def icon(self) -> bool:
+    def icon(self) -> str:
         """Tab icon class."""
         ...
 
@@ -99,7 +106,17 @@ class DataTab(Tab):
 
     def __init__(self, distributions: list[RecordDistribution]) -> None:
         self._resource_distributions = distributions
-        self._supported_distributions = [ArcGisFeatureLayer, ArcGisOgcApiFeatures]
+        self._supported_distributions = [
+            ArcGisFeatureLayer,
+            ArcGisOgcApiFeatures,
+            BasPublishedMap,
+            GeoPackage,
+            GeoJson,
+            Jpeg,
+            Pdf,
+            Png,
+            Shapefile,
+        ]
         self._processed_distributions = self._process_distributions()
 
     def _process_distributions(self) -> list[Distribution]:
@@ -390,7 +407,7 @@ class AdditionalInfoTab(Tab):
     @property
     def series(self) -> str | None:
         """Descriptive series if set."""
-        return f"{self._series.name} ({self._series.edition})" if self._series is not None else None
+        return f"{self._series.name} ({self._series.edition})" if self._series.name is not None else None
 
     @property
     def scale(self) -> str | None:
@@ -444,7 +461,7 @@ class AdditionalInfoTab(Tab):
         return self._identifiers.gitlab_issues
 
     @property
-    def dates(self) -> dict[str, str]:
+    def dates(self) -> dict[str, FormattedDate]:
         """Dates."""
         return self._dates.as_dict_labeled()
 
@@ -463,9 +480,9 @@ class AdditionalInfoTab(Tab):
         return self._maintenance.frequency
 
     @property
-    def datestamp(self) -> str:
+    def datestamp(self) -> FormattedDate:
         """Metadata datestamp."""
-        return format_date(Date(date=self._datestamp))
+        return FormattedDate.from_rec_date(Date(date=self._datestamp))
 
     @property
     def standard(self) -> str | None:

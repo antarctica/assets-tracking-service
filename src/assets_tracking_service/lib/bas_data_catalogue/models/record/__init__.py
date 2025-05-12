@@ -60,35 +60,51 @@ class Record:
     [1] https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json
     [2] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L1430
     [3] https://www.datypic.com/sc/niem21/e-gmd_MD_Metadata.html
-    [4] Supported elements:
-        - `$schema`
-        - `*.character_set` (hard-coded)
+    [4] Supported elements (not exhaustive):
         - `*.citation.title`
         - `*.citation.dates`
         - `*.citation.edition`
         - `*.citation.contacts` (except `contact.position`)
         - `*.citation.identifiers`
-        - `common.online_resource.protocol`
+        - `*.citation.series`
+
+        - `$schema`
+        - `file_identifier`
+        - `hierarchy_level`
+        - `metadata.character_set` (hard-coded)
+        - `metadata.language` (hard-coded)
+        - `metadata.contacts` (see `*.citation.contacts`)
+        - `metadata.date_stamp`
+        - `metadata.metadata_standard`
+        - `reference_system_info`
+        - `identification.title` (via `*.citation.title`)
+        - `identification.dates` (via `*.citation.dates`)
+        - `identification.edition` (via `*.citation.edition`)
+        - `identification.identifiers` (via `*.citation.identifiers`)
+        - `identification.contacts` (except `*.citation.contacts`)
+        - `identification.abstract`
+        - `identification.purpose`
+        - `identification.other_citation_details`
+        - `identification.supplemental_information`
+        - `identification.constraints` (except permissions)
+        - `identification.aggregations`
+        - `identification.extents` (temporal and bounding box extents only)
+        - `identification.graphic_overviews`
+        - `identification.spatial_resolution`
+        - `identification.maintenance`
+        - `identification.character_set` (hard-coded)
+        - `identification.language` (hard-coded)
         - `(identification.)data_quality.domain_consistency`
         - `(identification.)data_quality.lineage.statement`
         - `distribution.distributor`
-        - `distributor.format` (`format` and `href` only)
-        - `distributor.transfer_option`
-        - `file_identifier`
-        - `hierarchy_level`
-        - `identification.abstract`
-        - `identification.aggregations`
-        - `identification.constraints` (except permissions)
-        - `identification.extent` (temporal and bounding box extents only)
-        - `identification.graphic_overviews`
-        - `identification.maintenance`
-        - `identification.purpose`
-        - `identification.other_citation_details`
-        - `language` (hard-coded)
-        - `metadata.date_stamp`
-        - `metadata.metadata.standard`
-    [5] Unsupported elements:
-        - `contact.position`
+        - `distribution.format` (`format` and `href` only)
+        - `distribution.transfer_option`
+
+    ? online resource ?
+
+    [5] Unsupported elements (not exhaustive):
+        - `*.contact.position`
+        - `*.online_resource.protocol`
         - `(identification.)data_quality.lineage.process_step`
         - `(identification.)data_quality.lineage.sources`
         - `distribution.format` (except name and URL)
@@ -99,10 +115,7 @@ class Record:
         - `identification.keywords`
         - `identification.resource_formats`
         - `identification.spatial_representation_type`
-        - `identification.spatial_resolution`
-        - `identification.series`
         - `identification.status`
-        - `identification.supplemental_information`
         - `identification.topics`
         - `metadata.maintenance` (identification only)
     """
@@ -207,6 +220,36 @@ class Record:
         return converter.unstructure(self)
 
     @staticmethod
+    def _normalise_static_config_values(value: dict) -> dict:
+        """Adjust properties that will be set by default to allow for accurate config comparisons."""
+        normalised = deepcopy(value)
+        normalised["metadata"]["character_set"] = "utf8"
+        normalised["metadata"]["language"] = "eng"
+        normalised["metadata"]["metadata_standard"] = {
+            "name": "ISO 19115-2 Geographic Information - Metadata - Part 2: Extensions for Imagery and Gridded Data",
+            "version": "ISO 19115-2:2009(E)",
+        }
+        normalised["identification"]["character_set"] = "utf8"
+        normalised["identification"]["language"] = "eng"
+
+        if "maintenance" in normalised["metadata"]:
+            del normalised["metadata"]["maintenance"]
+
+        return normalised
+
+    @staticmethod
+    def config_supported(config: dict) -> bool:
+        """
+        Check if the record configuration is supported by this class.
+
+        To ensure an accurate comparison, default/hard-coded values are added to a copy of the config before comparison.
+        """
+        record = Record.loads(config)
+        check = record.dumps()
+        normalised = Record._normalise_static_config_values(config)
+        return normalised == check
+
+    @staticmethod
     def _get_resource_contents(file: str) -> dict:
         """Get contents of package resource file."""
         package_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.schemas"
@@ -297,7 +340,11 @@ class RecordSummary:
     @classmethod
     def loads(cls: type[TRecordSummary], record: Record) -> "RecordSummary":
         """Create a RecordSummary from a Record."""
-        graphic = record.identification.graphic_overviews[0].href if record.identification.graphic_overviews else None
+        overview_href = next(
+            (graphic.href for graphic in record.identification.graphic_overviews if graphic.identifier == "overview"),
+            None,
+        )
+
         return cls(
             file_identifier=record.file_identifier,
             hierarchy_level=record.hierarchy_level,
@@ -308,7 +355,7 @@ class RecordSummary:
             creation=record.identification.dates.creation,
             revision=record.identification.dates.revision,
             publication=record.identification.dates.publication,
-            graphic_overview_href=graphic,
+            graphic_overview_href=overview_href,
         )
 
     @property

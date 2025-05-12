@@ -174,6 +174,25 @@ class TestRecord:
 
         assert config == expected
 
+    @pytest.mark.cov()
+    @pytest.mark.parametrize("maintenance", [False, True])
+    def test_normalise_static_config_values(self, fx_lib_record_config_minimal_iso: dict, maintenance: bool):
+        """Can normalise record."""
+        if maintenance:
+            fx_lib_record_config_minimal_iso["metadata"]["maintenance"] = {"progress": ProgressCode.ON_GOING.value}
+
+        result = Record._normalise_static_config_values(fx_lib_record_config_minimal_iso)
+        assert "maintenance" not in result["metadata"]
+
+    @pytest.mark.parametrize("supported", [False, True])
+    def test_config_supported(self, fx_lib_record_config_minimal_iso: dict, supported: bool):
+        """Can determine if a record config is supported or not."""
+        if not supported:
+            fx_lib_record_config_minimal_iso["hierarchy_level"] = HierarchyLevelCode.SERIES
+
+        result = Record.config_supported(fx_lib_record_config_minimal_iso)
+        assert result == supported
+
     def test_validate_min_iso(self):
         """A minimally valid ISO record can be validated."""
         record = Record(
@@ -880,15 +899,7 @@ class TestRecord:
         expected = values
 
         if run == "minimal-iso" or run == "minimal-magic":
-            # add properties that will be set by default to allow for accurate comparison
-            expected["metadata"]["character_set"] = "utf8"
-            expected["metadata"]["language"] = "eng"
-            expected["metadata"]["metadata_standard"] = {
-                "name": "ISO 19115-2 Geographic Information - Metadata - Part 2: Extensions for Imagery and Gridded Data",
-                "version": "ISO 19115-2:2009(E)",
-            }
-            expected["identification"]["character_set"] = "utf8"
-            expected["identification"]["language"] = "eng"
+            expected = Record._normalise_static_config_values(expected)
 
         assert result == expected
 
@@ -967,7 +978,7 @@ class TestRecordSummary:
                 ),
                 edition=expected,
                 purpose=expected,
-                graphic_overviews=GraphicOverviews([GraphicOverview(identifier="x", href=expected, mime_type="x")]),
+                graphic_overviews=GraphicOverviews([]),
             ),
         )
 
@@ -982,7 +993,36 @@ class TestRecordSummary:
         assert record_summary.purpose == expected
         assert record_summary.publication == Date(date=expected_time)
         assert record_summary.revision == Date(date=expected_time)
-        assert record_summary.graphic_overview_href is expected
+        assert record_summary.graphic_overview_href is None
+
+    @pytest.mark.parametrize(
+        ("graphics", "expected"),
+        [
+            (GraphicOverviews([]), None),
+            (GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")]), None),
+            (GraphicOverviews([GraphicOverview(identifier="overview", href="x", mime_type="x")]), "x"),
+        ],
+    )
+    def test_loads_graphics(self, graphics: GraphicOverviews, expected: str | None):
+        """Can get graphic overview if a graphic with suitable identifier is in record."""
+        record = Record(
+            hierarchy_level=HierarchyLevelCode.DATASET,
+            metadata=Metadata(
+                contacts=Contacts(
+                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
+                ),
+                date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
+            ),
+            identification=Identification(
+                title="x",
+                abstract="x",
+                dates=Dates(creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())),
+                graphic_overviews=graphics,
+            ),
+        )
+
+        record_summary = RecordSummary.loads(record)
+        assert record_summary.graphic_overview_href == expected
 
     @pytest.mark.parametrize(("purpose", "expected"), [("x", "x"), (None, "y")])
     def test_purpose_abstract(self, purpose: str | None, expected: str):

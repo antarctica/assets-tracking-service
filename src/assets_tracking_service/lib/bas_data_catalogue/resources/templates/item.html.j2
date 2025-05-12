@@ -1,19 +1,10 @@
-{% import '_macros/common.html.j2' as com %}
-{% import '_macros/site.html.j2' as site %}
+{% extends "_layouts/base.html.j2" %}
 {% import '_macros/item.html.j2' as page %}
 
-<!DOCTYPE html>
-<html lang="en">
-  {{ site.html_head(title=item.html_title) }}
-  <body id="{{ com.back_to_top_id() }}" class="font-sans text-base text-grey-900 bg-white">
-    <div class="flex flex-col min-h-screen space-y-12">
-      {{ site.header() }}
-      <article class="{{ com.container_classes() }} flex-1 space-y-12">
-        {{ page.header(item.page_header) }}
-        {{ page.top_bit({'summary': item.summary, 'graphics': item.graphics}) }}
-        {{ page.tabs({'tabs': item.tabs, 'default_anchor': item.default_tab_anchor}) }}
-      </article>
-      {{ site.footer(current_year) }}
-    </div>
-  </body>
-</html>
+{% block content %}
+  <article class="{{ com.container_classes() }} px-2 lg:px-0 flex-1 space-y-8 lg:space-y-12">
+    {{ page.header(item.page_header) }}
+    {{ page.top_bit({'summary': item.summary, 'graphics': item.graphics}) }}
+    {{ page.tabs({'tabs': item.tabs, 'default_anchor': item.default_tab_anchor}) }}
+  </article>
+{% endblock %}
