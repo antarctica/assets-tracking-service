@@ -54,8 +54,9 @@ class S3Utils:
             return
 
         with resources_as_file(resources_files(src_ref)) as resources_path:
-            for path in resources_path.glob("*"):
-                self._s3.upload_file(Filename=path, Bucket=self._bucket, Key=base_key + "/" + path.name)
+            for path in resources_path.glob("**/*.*"):
+                relative_path = path.relative_to(resources_path)
+                self._s3.upload_file(Filename=path, Bucket=self._bucket, Key=f"{base_key}/{relative_path}")
 
 
 class Exporter:

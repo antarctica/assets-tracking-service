@@ -1052,7 +1052,6 @@ def fx_lib_exporter_iso_xml_html(
     with TemporaryDirectory() as tmp_path:
         base_path = Path(tmp_path)
         exports_path = base_path.joinpath("exports")
-        stylesheets_path = base_path.joinpath("static")
     mock_config = mocker.Mock()
     type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=base_path)
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
@@ -1062,7 +1061,6 @@ def fx_lib_exporter_iso_xml_html(
         s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=exports_path,
-        stylesheets_base=stylesheets_path,
     )
 
 

@@ -86,15 +86,8 @@ class RecordsExporter:
 
     def _get_iso_xml_html_exporter(self, record: Record) -> IsoXmlHtmlExporter:
         """Record as ISO XML with HTML stylesheet."""
-        stylesheets_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("static/xsl/iso-html")
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        return IsoXmlHtmlExporter(
-            config=self._config,
-            s3=self._s3,
-            record=record,
-            export_base=output_path,
-            stylesheets_base=stylesheets_path,
-        )
+        return IsoXmlHtmlExporter(config=self._config, s3=self._s3, record=record, export_base=output_path)
 
     def _get_exporters(self, record: Record) -> list[Exporter]:
         """Get exporters for record."""

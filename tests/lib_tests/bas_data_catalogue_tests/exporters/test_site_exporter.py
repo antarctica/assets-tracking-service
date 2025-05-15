@@ -190,6 +190,13 @@ class TestSiteResourcesExporter:
         fx_lib_exporter_site_resources._dump_txt()
         assert expected.exists()
 
+    def test_dump_xsl(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
+        """Can copy XSL files to output path."""
+        expected = fx_lib_exporter_site_resources._export_base.joinpath("xsl/iso-html/xml-to-html-ISO.xsl")
+
+        fx_lib_exporter_site_resources._dump_xsl()
+        assert expected.exists()
+
     def test_publish_css(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can upload CSS to S3."""
         expected = "static/css/main.css"
@@ -240,6 +247,16 @@ class TestSiteResourcesExporter:
         )
         assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
 
+    def test_publish_xsl(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
+        """Can upload XSL files to S3."""
+        expected = "static/xsl/iso-html/xml-to-html-ISO.xsl"
+
+        fx_lib_exporter_site_resources._publish_xsl()
+        result = fx_lib_exporter_site_resources._s3_utils._s3.get_object(
+            Bucket=fx_lib_exporter_site_resources._s3_utils._bucket, Key=expected
+        )
+        assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
+
     def test_export(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can copy resources to output path."""
         fx_lib_exporter_site_resources.export()
@@ -247,6 +264,7 @@ class TestSiteResourcesExporter:
         assert fx_lib_exporter_site_resources._export_base.joinpath("fonts/open-sans.ttf").exists()
         assert fx_lib_exporter_site_resources._export_base.joinpath("img/favicon.ico").exists()
         assert fx_lib_exporter_site_resources._export_base.joinpath("txt/heartbeat.txt").exists()
+        assert fx_lib_exporter_site_resources._export_base.joinpath("xsl/iso-html/xml-to-html-ISO.xsl").exists()
 
     def test_publish(self, fx_s3_bucket_name: str, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can upload resources to S3."""
@@ -255,6 +273,7 @@ class TestSiteResourcesExporter:
             "static/fonts/open-sans.ttf",
             "static/img/favicon.ico",
             "static/txt/heartbeat.txt",
+            "static/xsl/iso-html/xml-to-html-ISO.xsl",
         ]
 
         fx_lib_exporter_site_resources.publish()

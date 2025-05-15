@@ -34,6 +34,7 @@ class SiteResourcesExporter:
         self._fonts_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.fonts"
         self._img_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.img"
         self._txt_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.txt"
+        self._xsl_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl"
         self._export_base = config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("static")
 
     def _dump_css(self) -> None:
@@ -75,6 +76,10 @@ class SiteResourcesExporter:
         """Copy text files to directory if not already present."""
         BaseExporter._dump_package_resources(src_ref=self._txt_src_ref, dest_path=self._export_base.joinpath("txt"))
 
+    def _dump_xsl(self) -> None:
+        """Copy XML XSL files to directory if not already present."""
+        BaseExporter._dump_package_resources(src_ref=self._xsl_src_ref, dest_path=self._export_base.joinpath("xsl"))
+
     def _publish_css(self) -> None:
         """Upload CSS as an S3 object."""
         name = "main.css"
@@ -115,6 +120,12 @@ class SiteResourcesExporter:
             src_ref=self._txt_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("txt"))
         )
 
+    def _publish_xsl(self) -> None:
+        """Upload XML XSL files as S3 objects if they do not already exist."""
+        self._s3_utils.upload_package_resources(
+            src_ref=self._xsl_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("xsl"))
+        )
+
     @property
     def name(self) -> str:
         """Exporter name."""
@@ -127,6 +138,7 @@ class SiteResourcesExporter:
         self._dump_favicon_ico()
         self._dump_img()
         self._dump_txt()
+        self._dump_xsl()
 
     def publish(self) -> None:
         """Copy site resources to S3 bucket."""
@@ -135,6 +147,7 @@ class SiteResourcesExporter:
         self._publish_favicon_ico()
         self._publish_img()
         self._publish_txt()
+        self._publish_xsl()
 
 
 class SiteIndexExporter:

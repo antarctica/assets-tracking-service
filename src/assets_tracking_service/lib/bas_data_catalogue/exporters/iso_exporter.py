@@ -44,12 +44,11 @@ class IsoXmlHtmlExporter(Exporter):
 
     Intended for human inspection of ISO records, typically for evaluation or debugging.
 
-    As browsers do not support loading XML stylesheets across origins, this exporter copies the stylesheet, and it's
-    parts to a specified path/prefix. The `dumps()` method adds this location to the record to ensure consistency.
+    As browsers do not support loading XML stylesheets across origins, a local copy is created by the
+    `SiteResourcesExporter()` exporter. This exporter adds this location to the record within each record.
 
     This exporter intentionally uses a `.html` file extension despite being an `application/xml` media type so that
     both the styled (.html) and un-styled (.xml) files can be named after the record identifier in the same location.
-
     I.e. `/some/path/123.html` and `/some/path/123.xml`.
 
     [1] https://metadata-standards.data.bas.ac.uk/standards/iso-19115-19139#iso-html
@@ -61,29 +60,11 @@ class IsoXmlHtmlExporter(Exporter):
         s3: S3Client,
         record: Record,
         export_base: Path,
-        stylesheets_base: Path,
     ) -> None:
-        """
-        Initialise exporter.
-
-        `stylesheets_base` is the output directory for XML stylesheets, separate from records with this stylesheet
-        applied (which is configured by `export_base`). As with `export_base`, this MUST be relative to
-        `Config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` so that a base S3 key can be generated from it.
-        """
+        """Initialise exporter."""
         export_name = f"{record.file_identifier}.html"
         super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
-        self._stylesheets_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl.iso-html"
-        self._stylesheets_path = stylesheets_base
-        self._stylesheets_base_key = self._s3_utils.calc_key(stylesheets_base)
-        self._stylesheet_url = f"{self._stylesheets_base_key}/xml-to-html-ISO.xsl"
-
-    def _dump_xsl(self) -> None:
-        """Copy XML stylesheets to directory if not already present."""
-        self._dump_package_resources(src_ref=self._stylesheets_src_ref, dest_path=self._stylesheets_path)
-
-    def _publish_xsl(self) -> None:
-        """Upload stylesheets as S3 objects if they do not already exist."""
-        self._s3_utils.upload_package_resources(src_ref=self._stylesheets_src_ref, base_key=self._stylesheets_base_key)
+        self._stylesheet_url = "static/xsl/iso-html/xml-to-html-ISO.xsl"
 
     @property
     def name(self) -> str:
@@ -104,19 +85,3 @@ class IsoXmlHtmlExporter(Exporter):
         root = doc.getroot()
         root.addprevious(ProcessingInstruction("xml-stylesheet", f'type="text/xsl" href="{self._stylesheet_url}"'))
         return tostring(doc, pretty_print=True, xml_declaration=True, encoding="utf-8").decode()
-
-    def export(self) -> None:
-        """Write record and stylesheets to their respective directories."""
-        super().export()
-        self._dump_xsl()
-
-    def publish(self) -> None:
-        """
-        Upload record and stylesheets to S3.
-
-        `BaseExporter.publish()` not used for encoded record so we can override content type.
-        """
-        self._s3_utils.upload_content(
-            key=self._s3_utils.calc_key(self._export_path), content_type="application/xml", body=self.dumps()
-        )
-        self._publish_xsl()
