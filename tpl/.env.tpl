@@ -29,6 +29,8 @@ ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID="op://Infrastructu
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET="op://Infrastructure/Assets Tracking Service - Catalogue Test/credential"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET="op://Infrastructure/Assets Tracking Service - Catalogue Test/bucket"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT="op://Shared/SCAR ADD Metadata Toolbox - Power Automate item feedback flow/password"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN="op://Infrastructure/SCAR ADD Metadata Toolbox - Plausible domain/password"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_SENTRY_SRC="op://Infrastructure/SCAR ADD Metadata Toolbox - Sentry JS CDN URL/password"
 
 ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_USERNAME="op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/username"
 ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD="op://Infrastructure/vcadxkix3qwguf4trgspkcdxr4/password"

@@ -218,16 +218,19 @@ class SitePagesExporter:
 
         self._templates = ["404.html.j2", "legal/cookies.html.j2", "legal/copyright.html.j2", "legal/privacy.html.j2"]
 
-    @staticmethod
-    def _get_page_metadata(template_path: str) -> PageMetadata:
+    def _get_page_metadata(self, template_path: str) -> PageMetadata:
         """Get metadata for a page based on its template."""
         mapping = {
-            "404.html.j2": PageMetadata(html_title="Not Found"),
-            "legal/cookies.html.j2": PageMetadata(html_title="Cookies Policy"),
-            "legal/copyright.html.j2": PageMetadata(html_title="Copyright Policy"),
-            "legal/privacy.html.j2": PageMetadata(html_title="Privacy Policy"),
+            "404.html.j2": "Not Found",
+            "legal/cookies.html.j2": "Cookies Policy",
+            "legal/copyright.html.j2": "Copyright Policy",
+            "legal/privacy.html.j2": "Privacy Policy",
         }
-        return mapping[template_path]
+        return PageMetadata(
+            sentry_src=self._config.EXPORTER_DATA_CATALOGUE_SENTRY_SRC,
+            plausible_domain=self._config.EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN,
+            html_title=mapping[template_path],
+        )
 
     def _get_page_path(self, template_path: str) -> Path:
         """Get path within exported site for a page based on its template."""

@@ -44,9 +44,8 @@ class HtmlExporter(Exporter):
     def dumps(self) -> str:
         """Encode record as data catalogue item in HTML."""
         return ItemCatalogue(
+            config=self._config,
             record=self._record,
-            embedded_maps_endpoint=self._config.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
-            item_contact_endpoint=self._config.EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT,
             get_record_summary=self._get_summary,
         ).render()
 
