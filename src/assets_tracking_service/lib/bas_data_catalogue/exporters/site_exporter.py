@@ -159,7 +159,7 @@ class SiteIndexExporter:
             relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
 
-        self._summaries = summaries
+        self._summaries: list[RecordSummary] = summaries
         self._index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
 
     @property

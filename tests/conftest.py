@@ -1271,12 +1271,6 @@ def fx_lib_exporter_static_site(
 
 
 @pytest.fixture(scope="module")
-def fx_lib_exporter_static_hostname() -> str:
-    """Hostname for static site."""
-    return "localhost"
-
-
-@pytest.fixture(scope="module")
 def fx_lib_exporter_static_server(fx_lib_exporter_static_site: TemporaryDirectory):
     """Expose static site from a local server."""
     site_dir = fx_lib_exporter_static_site.name
@@ -1285,6 +1279,7 @@ def fx_lib_exporter_static_server(fx_lib_exporter_static_site: TemporaryDirector
         # In CI, requests to this local server won't resolve, instead we need to symlink the site_dir to within the
         # build/ directory and then return (don't need to clean up the temp dir given the container is destroyed)
         link = Path(os.environ["STATIC_SITE_PATH"])
+        link.unlink(missing_ok=True)
         link.symlink_to(site_dir)
         yield None
     else:
