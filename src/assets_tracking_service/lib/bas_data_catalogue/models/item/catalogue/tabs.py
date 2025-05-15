@@ -592,7 +592,7 @@ class ContactTab(Tab):
     @property
     def form_params(self) -> dict[str, str]:
         """Contact form required parameters."""
-        return {"item-id": self._id, **self._form_required_params}
+        return {"item-id": self._id, "item-poc": self._contact.email, **self._form_required_params}
 
     @property
     def subject_default(self) -> str:

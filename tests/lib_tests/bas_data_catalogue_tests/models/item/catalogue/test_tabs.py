@@ -617,8 +617,8 @@ class TestContactTab:
     @pytest.mark.parametrize(
         ("endpoint", "action", "params"),
         [
-            ("x", "://x", {"item-id": "x"}),
-            ("https://example.com?x=x", "https://example.com", {"item-id": "x", "x": "x"}),
+            ("x", "://x", {"item-id": "x", "item-poc": "x"}),
+            ("https://example.com?x=x", "https://example.com", {"item-id": "x", "item-poc": "x", "x": "x"}),
         ],
     )
     def test_form(self, endpoint: str, action: str, params: dict[str, str]) -> None:
