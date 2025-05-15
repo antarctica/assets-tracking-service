@@ -165,6 +165,19 @@ class TestBaseExporter:
 
         assert dest_path.exists()
 
+    @pytest.mark.cov()
+    def test_dump_package_resources_repeat(self, fx_lib_exporter_base: Exporter):
+        """Can skip coping package resources to directory if already present."""
+        src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl.iso-html"
+        dest_path = fx_lib_exporter_base._export_path / "xsl" / "iso-html"
+        fx_lib_exporter_base._dump_package_resources(src_ref=src_ref, dest_path=dest_path)
+        init_time = dest_path.stat().st_mtime
+
+        fx_lib_exporter_base._dump_package_resources(src_ref=src_ref, dest_path=dest_path)
+        rpt_time = dest_path.stat().st_mtime
+
+        assert init_time == rpt_time
+
     def test_dumps_invalid(self, mocker: MockerFixture, fx_lib_record_minimal_item: Record):
         """Cannot generate a record in a derived format from base exporter."""
         with TemporaryDirectory() as tmp_path:
