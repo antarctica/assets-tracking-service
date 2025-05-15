@@ -29,6 +29,7 @@ variables:
   APP_DB_PASSWORD: "password"
   APP_DB_DATABASE: "assets_tracking_dev"  # intentionally different to service DB as not used for tests
   ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$APP_DB_USERNAME:$APP_DB_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
+  STATIC_SITE_PATH: "$CI_PROJECT_DIR/_site"
 
   # Linting
   RUFF_BIN: "uv run --only-group dev --frozen ruff"
@@ -109,6 +110,9 @@ image: mcr.microsoft.com/playwright/python:v1.52.0-noble
 
   # setup app deps
   - uv sync --all-groups --python $PYTHON_VERSION
+
+  # start static site for e2e tests
+  - python -m http.server 8123 --directory "$STATIC_SITE_PATH" &
 
 .before_script_deploy: &before_script_deploy
   - apt-get update

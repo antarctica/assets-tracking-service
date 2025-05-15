@@ -353,7 +353,7 @@ class TestLicenceTab:
         )
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
-        assert html.find(name="strong", text="Item licence") is not None
+        assert html.find(name="strong", string="Item licence") is not None
 
         licence = html.select_one(f"a[href='{value}']")
         assert licence is not None
@@ -684,7 +684,7 @@ class TestInfoTab:
         isbn = html.select_one("#info-isbn")
         if expected:
             for item in expected:
-                assert isbn.find(name="li", text=item) is not None
+                assert isbn.find(name="li", string=item) is not None
         else:
             assert isbn is None
 
@@ -715,7 +715,7 @@ class TestInfoTab:
         issues = html.select_one("#info-issues")
         if expected:
             for item in expected:
-                assert issues.find(name="li", text=item) is not None
+                assert issues.find(name="li", string=item) is not None
         else:
             assert issues is None
 

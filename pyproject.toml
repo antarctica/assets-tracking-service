@@ -168,7 +168,7 @@ markers = [
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:mygeotab.*",
-    "ignore::DeprecationWarning:arcgis.*", # arcgis
+    "ignore::DeprecationWarning:.*.arcgis.*", # arcgis
     "ignore::DeprecationWarning:jupyter_client.*", # arcgis
     "ignore::DeprecationWarning:notebook.*", # arcgis
     "ignore::FutureWarning:dask.*", # arcgis

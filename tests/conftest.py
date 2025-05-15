@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import time
 from contextlib import suppress
@@ -1270,32 +1271,49 @@ def fx_lib_exporter_static_site(
 
 
 @pytest.fixture(scope="module")
+def fx_lib_exporter_static_hostname() -> str:
+    """Hostname for static site."""
+    return "localhost"
+
+
+@pytest.fixture(scope="module")
 def fx_lib_exporter_static_server(fx_lib_exporter_static_site: TemporaryDirectory):
     """Expose static site from a local server."""
-    retries = 5
-    python_bin = sys.executable
     site_dir = fx_lib_exporter_static_site.name
-    process = Popen([python_bin, "-m", "http.server", "8123", "--directory", site_dir], stdout=PIPE)  # noqa: S603
 
-    while retries > 0:
-        conn = HTTPConnection("localhost:8123")
-        try:
-            conn.request("HEAD", "/")
-            response = conn.getresponse()
-            if response is not None:
-                yield process
-                break
-        except ConnectionRefusedError:
-            time.sleep(1)
-            retries -= 1
-
-    if not retries:
-        msg = "Failed to start http server"
-        raise RuntimeError(msg) from None
+    if os.environ.get("CI"):
+        # In CI, requests to this local server won't resolve, instead we need to symlink the site_dir to within the
+        # build/ directory and then return (don't need to clean up the temp dir given the container is destroyed)
+        link = Path(os.environ["STATIC_SITE_PATH"])
+        link.symlink_to(site_dir)
+        yield None
     else:
-        process.terminate()
-        process.wait()
-        fx_lib_exporter_static_site.cleanup()
+        python_bin = sys.executable
+        args = [python_bin, "-m", "http.server", "8123", "--directory", site_dir]
+        process = Popen(args, stdout=PIPE)  # noqa: S603
+        retries = 5
+
+        while retries > 0:
+            try:
+                conn = HTTPConnection("localhost:8123")
+                conn.request("HEAD", "/")
+                response = conn.getresponse()
+                if response is not None:
+                    break
+            except ConnectionRefusedError:
+                time.sleep(1)
+                retries -= 1
+        if not retries:
+            process.terminate()
+            process.wait()
+            msg = "Failed to start http server"
+            raise RuntimeError(msg) from None
+        try:
+            yield process
+        finally:
+            process.terminate()
+            process.wait()
+            fx_lib_exporter_static_site.cleanup()
 
 
 @pytest.fixture()
