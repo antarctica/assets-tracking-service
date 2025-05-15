@@ -95,11 +95,15 @@
         }
       };
 
-      document.addEventListener("DOMContentLoaded", function () {
+      const handleHashChange = () => {
         const hash = window.location.hash;
         if (hash) {
           selectTab(hash.substring(1)); // Remove '#' from hash
         }
+      };
+
+      document.addEventListener("DOMContentLoaded", function () {
+        handleHashChange(); // Handle initial hash on page load
 
         const tabLabels = document.querySelectorAll('label[for^="tab-"]');
         tabLabels.forEach((label) => {
@@ -108,6 +112,9 @@
             selectTab(tabId);
           });
         });
+
+        // Listen for hash changes
+        window.addEventListener("hashchange", handleHashChange);
       });
     })();
   </script>

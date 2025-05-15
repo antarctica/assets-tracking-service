@@ -29,7 +29,7 @@ class TestMacrosSite:
         assert html.head.meta["charset"] == "utf-8"
 
     def test_head_title(self):
-        """Can get <title> with expected value from item."""
+        """Can get <title> with expected value from page."""
         expected = "x | BAS Data Catalogue"
         template = """{% import '_macros/site.html.j2' as site %}{{ site.head_title(meta.html_title) }}"""
         meta = PageMetadata(html_title="x")
@@ -39,7 +39,7 @@ class TestMacrosSite:
 
     def test_head_open_graph(self):
         """
-        Can get Open Graph <meta> tags with expected values from item.
+        Can get Open Graph <meta> tags with expected values from page.
 
         This only checks that Open Graph properties are rendered. The specific properties that should (not) be
         included are tested elsewhere.
@@ -73,7 +73,7 @@ class TestMacrosSite:
 
     def test_head_schema_org(self):
         """
-        Can get schema.org script content with expected values from item.
+        Can get schema.org script content with expected values from page.
 
         This only checks that schema.org properties are rendered. The specific properties that should (not) be
         included are tested elsewhere.

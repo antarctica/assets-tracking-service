@@ -33,7 +33,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.templates import Page
 
 
 class ItemInvalidError(Exception):
-    """Raised when a item is based on an invalid record."""
+    """Raised when an item is based on an invalid record."""
 
     def __init__(self, validation_error: Exception) -> None:
         self.validation_error = validation_error

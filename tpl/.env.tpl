@@ -24,7 +24,7 @@ ASSETS_TRACKING_SERVICE_PROVIDER_RVDAS_URL="op://Infrastructure/Assets Tracking 
 
 ASSETS_TRACKING_SERVICE_EXPORTER_GEOJSON_OUTPUT_PATH="./exports/file.geojson"  # set to local file
 
-ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH="./exports/records"  # set to local dir
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH="./exports/site"  # set to local dir
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID="op://Infrastructure/Assets Tracking Service - Catalogue Test/username"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET="op://Infrastructure/Assets Tracking Service - Catalogue Test/credential"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET="op://Infrastructure/Assets Tracking Service - Catalogue Test/bucket"

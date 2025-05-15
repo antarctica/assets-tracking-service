@@ -196,9 +196,6 @@
   .relative {
     position: relative;
   }
-  .sticky {
-    position: sticky;
-  }
   .col-span-1 {
     grid-column: span 1 / span 1;
   }
@@ -961,6 +958,10 @@
   .gap-y-4 {
     row-gap: calc(var(--spacing) * 4);
   }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
   .border-1 {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -1128,7 +1129,7 @@
     --tw-prose-links: var(--color-sky-blue-500);
     --tw-prose-bold: var(--color-grey-900);
     --tw-prose-counters: var(--color-grey-500);
-    --tw-prose-bullets: var(--color-grey-500);
+    --tw-prose-bullets: var(--color-grey-900);
     --tw-prose-hr: var(--color-grey-300);
     --tw-prose-quotes: var(--color-grey-900);
     --tw-prose-quote-borders: var(--color-grey-300);
@@ -1630,6 +1631,16 @@
     & :is(:where(h1, h2, h3, h4, h5, h6, th):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
       --tw-font-weight: var(--font-weight-bold);
       font-weight: var(--font-weight-bold);
+    }
+  }
+  .prose-li\:mt-0 {
+    & :is(:where(li):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
+      margin-top: calc(var(--spacing) * 0);
+    }
+  }
+  .prose-li\:mb-1 {
+    & :is(:where(li):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
+      margin-bottom: calc(var(--spacing) * 1);
     }
   }
 }
