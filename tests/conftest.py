@@ -965,24 +965,22 @@ def _lib_item_catalogue_min() -> ItemCatalogue:
     Standalone method to allow use outside of fixtures in test parametrisation.
     """
     return ItemCatalogue(
+        config=Config(),
         record=LibRecord.loads(
             _lib_record_config_minimal_item_catalogue(_lib_record_config_minimal_item(_lib_record_config_minimal_iso()))
         ),
-        embedded_maps_endpoint="x",
-        item_contact_endpoint="x",
         get_record_summary=_lib_get_record_summary,
     )
 
 
 @pytest.fixture()
 def fx_lib_item_catalogue_min(
-    fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
+    fx_config: Config, fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
 ) -> ItemCatalogue:
     """ItemCatalogue based on minimal catalogue record."""
     return ItemCatalogue(
+        config=fx_config,
         record=fx_lib_record_minimal_item_catalogue,
-        embedded_maps_endpoint="x",
-        item_contact_endpoint="x",
         get_record_summary=fx_lib_get_record_summary,
     )
 
