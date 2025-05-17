@@ -34,12 +34,3 @@ class PlainTextExtension(Extension):
 
         # Prevent rewriting serializer we have just changed
         md.set_output_format = lambda x: x
-
-
-def convert_to_plain_text(text: str) -> str:
-    """Convert Markdown formatted text to plain text."""
-    if text is None:
-        return ""
-
-    md = Markdown(extensions=[PlainTextExtension()])
-    return md.convert(text)

@@ -1,6 +1,7 @@
 import pytest
+from markdown import Markdown
 
-from assets_tracking_service.lib.markdown.formats.plaintext import convert_to_plain_text
+from assets_tracking_service.lib.markdown.formats.plaintext import PlainTextExtension
 
 
 class TestPlainTextExtension:
@@ -9,6 +10,7 @@ class TestPlainTextExtension:
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
+            ("", ""),  # empty
             ("x", "x"),  # plain
             ("_x_", "x"),  # italic
             ("*x*", "x"),  # italic
@@ -37,15 +39,5 @@ class TestPlainTextExtension:
     )
     def test_conversion(self, value: str, expected: str):
         """Can remove Markdown formatting as per commonmark spec."""
-        result = convert_to_plain_text(value)
-        assert result == expected
-
-    def test_conversion_empty(self):
-        """Can handle an empty string."""
-        result = convert_to_plain_text("")
-        assert result == ""
-
-    def test_conversion_none(self):
-        """Can handle a None value."""
-        result = convert_to_plain_text(None)
-        assert result == ""
+        md = Markdown(extensions=[PlainTextExtension()])
+        assert md.convert(value) == expected

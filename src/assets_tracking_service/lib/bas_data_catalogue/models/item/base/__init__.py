@@ -2,7 +2,7 @@ import json
 from json import JSONDecodeError
 from urllib.parse import unquote
 
-from markdown import markdown
+from markdown import Markdown, markdown
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.const import (
     PERMISSIONS_BAS_GROUP,
@@ -35,7 +35,9 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintRestrictionCode,
     ConstraintTypeCode,
 )
-from assets_tracking_service.lib.markdown.formats.plaintext import convert_to_plain_text as markdown_plaintext
+from assets_tracking_service.lib.markdown.extensions.links import LinkifyExtension
+from assets_tracking_service.lib.markdown.extensions.prepend_new_line import PrependNewLineExtension
+from assets_tracking_service.lib.markdown.formats.plaintext import PlainTextExtension
 
 
 def md_as_html(string: str) -> str:
@@ -44,12 +46,16 @@ def md_as_html(string: str) -> str:
 
     At a minimum the string will be returned as a paragraph.
     """
-    return markdown(string, output_format="html", extensions=["tables"])
+    return markdown(string, output_format="html", extensions=["tables", PrependNewLineExtension(), LinkifyExtension()])
 
 
-def md_as_plain(string: str) -> str:
+def md_as_plain(string: str | None) -> str:
     """Strip possible Markdown formatting from a string."""
-    return markdown_plaintext(string)
+    if string is None:
+        return ""
+
+    md = Markdown(extensions=[PlainTextExtension()])
+    return md.convert(string)
 
 
 class ItemBase:

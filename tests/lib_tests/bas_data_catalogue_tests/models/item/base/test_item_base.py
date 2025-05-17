@@ -68,17 +68,26 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projec
 class TestMdAsHtml:
     """Test _md_as_html util function."""
 
-    def test_md_as_html(self):
-        """Can convert Markdown to HTML."""
-        assert md_as_html("_x_") == "<p><em>x</em></p>"
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("_x_", "<p><em>x</em></p>"),
+            ("https://example.com", '<p><a href="https://example.com" rel="nofollow">https://example.com</a></p>'),
+            ("x\n* x", "<p>x</p>\n<ul>\n<li>x</li>\n</ul>"),
+        ],
+    )
+    def test_md_as_html(self, value: str, expected: str):
+        """Can convert Markdown to HTML with extensions."""
+        assert md_as_html(value) == expected
 
 
 class TestMdAsPlain:
     """Test _md_as_plain util function."""
 
-    def test_md_as_plain(self):
+    @pytest.mark.parametrize(("value", "expected"), [("_x_", "x"), (None, "")])
+    def test_md_as_plain(self, value: str | None, expected: str):
         """Can convert Markdown to plain text."""
-        assert md_as_plain("_x_") == "x"
+        assert md_as_plain(value) == expected
 
 
 class TestItemBase:

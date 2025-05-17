@@ -34,6 +34,10 @@ Headings:
 
 Link: [Some link](#).
 
+Auto-link: https://www.example.com.
+
+Auto mailto: conwat@example.com.
+
 Bold: No, I was ashamed to be **SEEN** with you. I like being **WITH** you.
 
 Italics: _(Guy's a pro.)_
@@ -45,8 +49,13 @@ Inline code: `print("Hello Rencia.")`
 Blockquote:
 > Heyyyyy campers!
 
-Unordered list:
+Unordered list (with a two new lines between this paragraph and the start of the list):
 
+* Say something that will terrify me.
+* Lindsay: Kiss me.
+* Tobias: No, that didn't do it.
+
+Unordered list (with a single new line between this paragraph and the start of the list):
 * Say something that will terrify me.
 * Lindsay: Kiss me.
 * Tobias: No, that didn't do it.
