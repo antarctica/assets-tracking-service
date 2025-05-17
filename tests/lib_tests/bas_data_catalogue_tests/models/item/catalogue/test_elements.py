@@ -9,7 +9,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import
     Dates,
     Extent,
     PageHeader,
-    Summary,
+    PageSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     FormattedDate,
@@ -110,19 +110,13 @@ class TestAggregations:
         assert aggregations._aggregations[0] == expected_aggregation
         assert aggregations._summaries["x"]._record_summary == expected_summary
 
-    def test_as_links(self):
-        """Can get any item summaries as generic links."""
         expected = Aggregation(
             identifier=Identifier(identifier="x", href="x", namespace="x"),
-            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
             initiative_type=AggregationInitiativeCode.COLLECTION,
         )
         record_aggregations = RecordAggregations([expected])
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
-        links = aggregations.as_links(aggregations.collections)
-
-        assert all(isinstance(link, Link) for link in links)
 
     def test_collections(self):
         """Can get any collection aggregations (item is part of)."""
@@ -465,7 +459,7 @@ class TestPageHeader:
         assert header.subtitle == (expected_type, expected_icon)
 
 
-class TestSummary:
+class TestPageSummary:
     """Test Catalogue Item summary panel."""
 
     @pytest.mark.parametrize(
@@ -528,7 +522,7 @@ class TestSummary:
         collections = aggregations.as_links(aggregations.collections)
         items_count = len(aggregations.items)
 
-        summary = Summary(
+        summary = PageSummary(
             item_type=item_type,
             edition=edition,
             published_date=published,
@@ -641,7 +635,7 @@ class TestSummary:
         expected: bool,
     ):
         """Can show combination of publication and revision date if relevant."""
-        summary = Summary(
+        summary = PageSummary(
             item_type=item_type,
             edition=edition,
             published_date=published,
@@ -692,7 +686,7 @@ class TestSummary:
         expected: str,
     ):
         """Can show combination of publication and revision date if relevant."""
-        summary = Summary(
+        summary = PageSummary(
             item_type=item_type,
             edition=None,
             published_date=published,

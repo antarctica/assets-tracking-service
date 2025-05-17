@@ -115,7 +115,7 @@ class SiteResourcesExporter:
         )
 
     def _publish_txt(self) -> None:
-        """Upload fonts as S3 objects if they do not already exist."""
+        """Upload text files as S3 objects if they do not already exist."""
         self._s3_utils.upload_package_resources(
             src_ref=self._txt_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("txt"))
         )

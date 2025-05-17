@@ -13,7 +13,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Identifiers,
     Maintenance,
     PageHeader,
-    Summary,
+    PageSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
     AdditionalInfoTab,
@@ -335,9 +335,9 @@ class ItemCatalogue(ItemBase):
         return PageHeader(title=self.title_html, item_type=self.resource_type)
 
     @property
-    def summary(self) -> Summary:
+    def summary(self) -> PageSummary:
         """Item summary."""
-        return Summary(
+        return PageSummary(
             item_type=self.resource_type,
             edition=self.edition,
             published_date=self._dates.publication,

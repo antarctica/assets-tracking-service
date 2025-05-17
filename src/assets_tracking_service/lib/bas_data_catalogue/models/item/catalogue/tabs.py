@@ -305,7 +305,7 @@ class RelatedTab(Tab):
         self._aggregations = aggregations
 
     def __getattribute__(self, name: str) -> str | int | None:
-        """Proxy calls to self._aggregations and convert ItemSummaries to Links, if applicable."""
+        """Proxy calls to self._aggregations if applicable."""
         aggregation = object.__getattribute__(self, "_aggregations")
         if hasattr(aggregation, name):
             return getattr(aggregation, name)

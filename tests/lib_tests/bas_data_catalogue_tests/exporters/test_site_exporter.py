@@ -185,10 +185,14 @@ class TestSiteResourcesExporter:
 
     def test_dump_txt(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can copy text files to output path."""
-        expected = fx_lib_exporter_site_resources._export_base.joinpath("txt/heartbeat.txt")
+        expected = [
+            fx_lib_exporter_site_resources._export_base.joinpath("txt/heartbeat.txt"),
+            fx_lib_exporter_site_resources._export_base.joinpath("txt/manifest.webmanifest"),
+        ]
 
         fx_lib_exporter_site_resources._dump_txt()
-        assert expected.exists()
+        for path in expected:
+            assert path.exists()
 
     def test_dump_xsl(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can copy XSL files to output path."""
@@ -239,13 +243,14 @@ class TestSiteResourcesExporter:
 
     def test_publish_txt(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can upload text files to S3."""
-        expected = "static/txt/heartbeat.txt"
+        expected = ["static/txt/heartbeat.txt", "static/txt/manifest.webmanifest"]
 
         fx_lib_exporter_site_resources._publish_txt()
-        result = fx_lib_exporter_site_resources._s3_utils._s3.get_object(
-            Bucket=fx_lib_exporter_site_resources._s3_utils._bucket, Key=expected
-        )
-        assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
+        for key in expected:
+            result = fx_lib_exporter_site_resources._s3_utils._s3.get_object(
+                Bucket=fx_lib_exporter_site_resources._s3_utils._bucket, Key=key
+            )
+            assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
 
     def test_publish_xsl(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can upload XSL files to S3."""

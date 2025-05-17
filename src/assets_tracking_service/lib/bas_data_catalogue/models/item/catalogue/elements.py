@@ -199,11 +199,6 @@ class Aggregations:
         """Count."""
         return len(self._aggregations)
 
-    @staticmethod
-    def as_links(summaries: list[ItemSummaryCatalogue]) -> list[Link]:
-        """Structure item summaries as generic links."""
-        return [Link(value=summary.title_html, href=summary.href) for summary in summaries]
-
     def _filter(
         self,
         namespace: str | None = None,
@@ -429,7 +424,7 @@ class PageHeader:
         return self._item_type.value, ResourceTypeIcon[self._item_type.name].value
 
 
-class Summary:
+class PageSummary:
     """Item summary information."""
 
     def __init__(

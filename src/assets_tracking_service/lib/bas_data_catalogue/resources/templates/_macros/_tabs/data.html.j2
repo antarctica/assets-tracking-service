@@ -1,7 +1,7 @@
 {% import '_macros/common.html.j2' as com %}
 
 {% macro item(data) %}
-  {% call com.item_border(classes="col-span-3 grid grid-cols-3 items-center") %}
+  {% call com.item_border(classes="col-span-3 grid grid-cols-3 items-center data-option") %}
     <div class="text-left">{{ data.format_type.value }}</div>
     <div class="text-center">{{ data.size }}</div>
     <div class="text-right">{{ action(data) }}</div>

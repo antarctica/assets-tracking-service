@@ -160,9 +160,9 @@ class Record:
     @classmethod
     def structure(cls: type[TRecord], value: dict) -> "Record":
         """
-        Parse Record class from plain types.
+        Create a Record instance from plain types.
 
-        Returns a new class instance with parsed data. Intended to be used as a cattrs structure hook.
+        Intended to be used as a cattrs structure hook.
         E.g. `converter.register_structure_hook(Record, lambda d, t: Record.structure(d))`
         """
         value_ = deepcopy(value)
@@ -201,27 +201,28 @@ class Record:
             value["identification"] = {**value["identification"], **value["data_quality"]}
             del value["data_quality"]
 
-        # rename keys
-        value["$schema"] = value.pop("_schema", None)
+        # rename keys (ensuring order)
+        schema = value.pop("_schema", None)
+        value = {"$schema": schema, **value}
 
-        return value
+        return value  # noqa: RET504
 
     @classmethod
     def loads(cls, value: dict) -> "Record":
-        """Create a Record from a dict loaded from a JSON schema instance."""
+        """Create a Record from a JSON schema instance."""
         converter = cattrs.Converter()
         converter.register_structure_hook(Record, lambda d, t: Record.structure(d))
         return converter.structure(value, cls)
 
     def dumps(self) -> dict:
-        """Create a dict from a Record for a JSON schema instance."""
+        """Create a JSON schema instance from Record using compatible types."""
         converter = cattrs.Converter()
         converter.register_unstructure_hook(Record, lambda d: d.unstructure())
         return converter.unstructure(self)
 
     @staticmethod
     def _normalise_static_config_values(value: dict) -> dict:
-        """Adjust properties that will be set by default to allow for accurate config comparisons."""
+        """Adjust properties that will be set by default within a Record to allow for accurate config comparisons."""
         normalised = deepcopy(value)
         normalised["metadata"]["character_set"] = "utf8"
         normalised["metadata"]["language"] = "eng"
@@ -240,7 +241,7 @@ class Record:
     @staticmethod
     def config_supported(config: dict) -> bool:
         """
-        Check if the record configuration is supported by this class.
+        Check if a record configuration is supported by this class.
 
         To ensure an accurate comparison, default/hard-coded values are added to a copy of the config before comparison.
         """
@@ -250,8 +251,8 @@ class Record:
         return normalised == check
 
     @staticmethod
-    def _get_resource_contents(file: str) -> dict:
-        """Get contents of package resource file."""
+    def _get_schema_contents(file: str) -> dict:
+        """Get contents of a schema from a package resource file."""
         package_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.schemas"
         with (
             resources_as_file(resources_files(package_ref)) as resources_path,
@@ -261,7 +262,11 @@ class Record:
 
     @property
     def _profile_schemas(self) -> list[RecordSchema]:
-        """Determine any schemas to validate a record against based on any domain consistency elements."""
+        """
+        Load any validation schemas based on any domain consistency elements within the Record.
+
+        Applicable and supported schemas are loaded locally from within this package.
+        """
         if self.data_quality is None:
             return []
 
@@ -275,7 +280,7 @@ class Record:
     def _get_validation_schemas(
         self, use_profiles: bool = True, force_schemas: list[RecordSchema] | None = None
     ) -> list[dict]:
-        """Load validation schemas."""
+        """Get contents of selected validation schemas."""
         selected_schemas = [RecordSchema.ISO_2_V4]
         if use_profiles:
             selected_schemas.extend(self._profile_schemas)
@@ -284,22 +289,19 @@ class Record:
 
         schemas = []
         for schema in selected_schemas:
-            schemas.append(self._get_resource_contents(file=f"{schema.value}.json"))
+            schemas.append(self._get_schema_contents(file=f"{schema.value}.json"))
         return schemas
 
     def validate(self, use_profiles: bool = True, force_schemas: list[RecordSchema] | None = None) -> None:
         """
-        Validate record against JSON Schemas.
+        Validate Record against JSON Schemas.
 
         By default, records are validated against the BAS Metadata Library ISO 19115:2003 / 19115-2:2009 v4 schema,
         plus schemas matched from any domain consistency elements. Set `use_profiles = False`to disable.
 
-        Use `force_schemas` to select specific schemas to validating against.
+        Use `force_schemas` to select specific schemas to validate against.
 
-        Failed validation will raise a `RecordInvalidError` exception.
-
-        validate(instance=config, schema=schemas["magic_v1"])
-        - the MAGIC Discovery Profile v1 schema
+        Any failed validation will raise a `RecordInvalidError` exception.
         """
         config = self.dumps()
         schemas = self._get_validation_schemas(use_profiles=use_profiles, force_schemas=force_schemas)
