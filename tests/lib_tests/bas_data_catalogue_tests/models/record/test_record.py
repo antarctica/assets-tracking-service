@@ -27,6 +27,8 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_
     Lineage,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+    Aggregation,
+    Aggregations,
     BoundingBox,
     Constraint,
     Constraints,
@@ -40,6 +42,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.ident
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.metadata import Metadata
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
+    AggregationAssociationCode,
     ConstraintRestrictionCode,
     ConstraintTypeCode,
     ContactRoleCode,
@@ -915,12 +918,14 @@ class TestRecordSummary:
 
         record_summary = RecordSummary(
             hierarchy_level=expected_hierarchy_level,
+            date_stamp=expected_date.date,
             title=expected,
             abstract=expected,
             creation=expected_date,
         )
 
         assert record_summary.hierarchy_level == expected_hierarchy_level
+        assert record_summary.date_stamp == expected_date.date
         assert record_summary.title == expected
         assert record_summary.abstract == expected
         assert record_summary.creation == expected_date
@@ -930,15 +935,18 @@ class TestRecordSummary:
         assert record_summary.publication is None
         assert record_summary.revision is None
         assert record_summary.graphic_overview_href is None
+        assert record_summary.child_aggregations_count == 0
 
     def test_complete(self):
         """Can create a RecordSummary element with all optional properties directly assigned."""
         expected = "x"
         expected_hierarchy_level = HierarchyLevelCode.DATASET
         expected_date = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
+        expected_count = 1
 
         record_summary = RecordSummary(
             hierarchy_level=expected_hierarchy_level,
+            date_stamp=expected_date.date,
             title=expected,
             abstract=expected,
             creation=expected_date,
@@ -947,6 +955,7 @@ class TestRecordSummary:
             publication=expected_date,
             revision=expected_date,
             graphic_overview_href=expected,
+            child_aggregations_count=1,
         )
 
         assert record_summary.edition is expected
@@ -954,35 +963,20 @@ class TestRecordSummary:
         assert record_summary.publication is expected_date
         assert record_summary.revision is expected_date
         assert record_summary.graphic_overview_href is expected
+        assert record_summary.child_aggregations_count == expected_count
 
-    def test_loads(self):
+    def test_loads(self, fx_lib_record_minimal_iso: Record):
         """Can create a RecordSummary from a Record."""
         expected = "x"
         expected_hierarchy_level = HierarchyLevelCode.DATASET
         expected_time = datetime(2014, 6, 30, 14, 30, 45, tzinfo=UTC)
-        record = Record(
-            hierarchy_level=expected_hierarchy_level,
-            metadata=Metadata(
-                contacts=Contacts(
-                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
-                ),
-                date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
-            ),
-            identification=Identification(
-                title=expected,
-                abstract=expected,
-                dates=Dates(
-                    creation=Date(date=expected_time.date()),
-                    revision=Date(date=expected_time),
-                    publication=Date(date=expected_time),
-                ),
-                edition=expected,
-                purpose=expected,
-                graphic_overviews=GraphicOverviews([]),
-            ),
-        )
 
-        record_summary = RecordSummary.loads(record)
+        fx_lib_record_minimal_iso.identification.edition = expected
+        fx_lib_record_minimal_iso.identification.purpose = expected
+        fx_lib_record_minimal_iso.identification.dates.publication = Date(date=expected_time)
+        fx_lib_record_minimal_iso.identification.dates.revision = Date(date=expected_time)
+
+        record_summary = RecordSummary.loads(fx_lib_record_minimal_iso)
 
         assert isinstance(record_summary, RecordSummary)
         assert record_summary.hierarchy_level == expected_hierarchy_level
@@ -994,6 +988,7 @@ class TestRecordSummary:
         assert record_summary.publication == Date(date=expected_time)
         assert record_summary.revision == Date(date=expected_time)
         assert record_summary.graphic_overview_href is None
+        assert record_summary.child_aggregations_count == 0
 
     @pytest.mark.parametrize(
         ("graphics", "expected"),
@@ -1003,37 +998,49 @@ class TestRecordSummary:
             (GraphicOverviews([GraphicOverview(identifier="overview", href="x", mime_type="x")]), "x"),
         ],
     )
-    def test_loads_graphics(self, graphics: GraphicOverviews, expected: str | None):
+    def test_loads_graphics(self, fx_lib_record_minimal_iso: Record, graphics: GraphicOverviews, expected: str | None):
         """Can get graphic overview if a graphic with suitable identifier is in record."""
-        record = Record(
-            hierarchy_level=HierarchyLevelCode.DATASET,
-            metadata=Metadata(
-                contacts=Contacts(
-                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
-                ),
-                date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
-            ),
-            identification=Identification(
-                title="x",
-                abstract="x",
-                dates=Dates(creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())),
-                graphic_overviews=graphics,
-            ),
-        )
-
-        record_summary = RecordSummary.loads(record)
+        fx_lib_record_minimal_iso.identification.graphic_overviews = graphics
+        record_summary = RecordSummary.loads(fx_lib_record_minimal_iso)
         assert record_summary.graphic_overview_href == expected
+
+    @pytest.mark.parametrize(
+        ("aggregations", "expected_child_count"),
+        [
+            (Aggregations([]), 0),
+            (
+                Aggregations(
+                    [
+                        Aggregation(
+                            identifier=Identifier(identifier="x", namespace="x"),
+                            association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                        )
+                    ]
+                ),
+                1,
+            ),
+        ],
+    )
+    def test_loads_aggregations(
+        self, fx_lib_record_minimal_iso: Record, aggregations: Aggregations, expected_child_count: int
+    ):
+        """Can get count of any suitable child aggregations in record."""
+        fx_lib_record_minimal_iso.identification.aggregations = aggregations
+        record_summary = RecordSummary.loads(fx_lib_record_minimal_iso)
+        assert record_summary.child_aggregations_count == expected_child_count
 
     @pytest.mark.parametrize(("purpose", "expected"), [("x", "x"), (None, "y")])
     def test_purpose_abstract(self, purpose: str | None, expected: str):
         """Can get either purpose or abstract depending on which values are set."""
         abstract = "y"
+        date = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
 
         record_summary = RecordSummary(
             hierarchy_level=HierarchyLevelCode.DATASET,
             title="x",
+            date_stamp=date.date,
             abstract=abstract,
-            creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
+            creation=date,
             purpose=purpose,
         )
 
@@ -1047,11 +1054,14 @@ class TestRecordSummary:
     )
     def test_revision_creation(self, revision: Date | None, expected: Date):
         """Can get either revision or creation date depending on which values are set."""
+        date = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
+
         record_summary = RecordSummary(
             hierarchy_level=HierarchyLevelCode.DATASET,
             title="x",
+            date_stamp=date.date,
             abstract="x",
-            creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
+            creation=date,
             revision=revision,
         )
 

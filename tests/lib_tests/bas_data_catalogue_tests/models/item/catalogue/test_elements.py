@@ -110,15 +110,19 @@ class TestAggregations:
         assert aggregations._aggregations[0] == expected_aggregation
         assert aggregations._summaries["x"]._record_summary == expected_summary
 
+    def test_peer_collections(self):
+        """Can get any collection aggregations (item is part of)."""
         expected = Aggregation(
             identifier=Identifier(identifier="x", href="x", namespace="x"),
+            association_type=AggregationAssociationCode.CROSS_REFERENCE,
             initiative_type=AggregationInitiativeCode.COLLECTION,
         )
         record_aggregations = RecordAggregations([expected])
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
+        assert len(aggregations.peer_collections) > 0
 
-    def test_collections(self):
+    def test_parent_collections(self):
         """Can get any collection aggregations (item is part of)."""
         expected = Aggregation(
             identifier=Identifier(identifier="x", href="x", namespace="x"),
@@ -128,9 +132,9 @@ class TestAggregations:
         record_aggregations = RecordAggregations([expected])
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
-        assert len(aggregations.collections) > 0
+        assert len(aggregations.parent_collections) > 0
 
-    def test_items(self):
+    def test_child_items(self):
         """Can get any item aggregations (item is made up of)."""
         expected = Aggregation(
             identifier=Identifier(identifier="x", href="x", namespace="x"),
@@ -140,7 +144,7 @@ class TestAggregations:
         record_aggregations = RecordAggregations([expected])
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
-        assert len(aggregations.items) > 0
+        assert len(aggregations.child_items) > 0
 
 
 class TestDates:
@@ -282,13 +286,16 @@ class TestItemSummaryCatalogue:
             assert summary._date is None
 
     @pytest.mark.parametrize(
-        ("resource_type", "edition", "exp_edition", "has_pub", "exp_published"),
+        ("resource_type", "edition", "exp_edition", "has_pub", "exp_published", "child_count", "exp_child_count"),
         [
-            (HierarchyLevelCode.PRODUCT, "x", "vx", True, "30 June 2014"),
-            (HierarchyLevelCode.PRODUCT, "x", "vx", False, None),
-            (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014"),
-            (HierarchyLevelCode.COLLECTION, "x", None, True, None),
-            (HierarchyLevelCode.COLLECTION, "x", None, False, None),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", False, None, 0, None),
+            (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.COLLECTION, "x", None, True, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, "x", None, False, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 1, "1 item"),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 2, "2 items"),
         ],
     )
     def test_fragments(
@@ -299,12 +306,15 @@ class TestItemSummaryCatalogue:
         exp_edition: str | None,
         has_pub: bool,
         exp_published: FormattedDate | None,
+        child_count: int,
+        exp_child_count: str | None,
     ):
         """Can get fragments to use as part of item summary UI."""
         fx_lib_record_summary_minimal_item.hierarchy_level = resource_type
         fx_lib_record_summary_minimal_item.edition = edition
         if has_pub:
             fx_lib_record_summary_minimal_item.publication = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
+        fx_lib_record_summary_minimal_item.child_aggregations_count = child_count
         summary = ItemSummaryCatalogue(fx_lib_record_summary_minimal_item)
 
         result = summary.fragments
@@ -315,6 +325,7 @@ class TestItemSummaryCatalogue:
             assert result.published.value == exp_published
         else:
             assert result.published is None
+        assert result.children == exp_child_count
 
     @pytest.mark.parametrize(
         ("href", "expected"),
@@ -519,8 +530,8 @@ class TestPageSummary:
         citation: str | None,
     ):
         """Can create class for summary panel."""
-        collections = aggregations.as_links(aggregations.collections)
-        items_count = len(aggregations.items)
+        collections = [Link(value=summary.title_html, href=summary.href) for summary in aggregations.parent_collections]
+        items_count = len(aggregations.child_items)
 
         summary = PageSummary(
             item_type=item_type,

@@ -497,6 +497,43 @@ class TestRelatedTab:
                 [
                     Aggregation(
                         identifier=Identifier(identifier="x", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                        initiative_type=AggregationInitiativeCode.COLLECTION,
+                    ),
+                    Aggregation(
+                        identifier=Identifier(identifier="y", href="y", namespace="y"),
+                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                        initiative_type=AggregationInitiativeCode.COLLECTION,
+                    ),
+                ]
+            ),
+        ],
+    )
+    def test_peer_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
+        """
+        Can get optional peer collections with expected values from item.
+
+        Detailed item summary tests are run in common macro tests.
+        """
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        expected = fx_lib_item_catalogue_min._related.peer_collections
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        collections = html.select_one("#related-peer-collections")
+        if len(expected) > 0:
+            for item in expected:
+                assert collections.select_one(f"a[href='{item.href}']") is not None
+        else:
+            assert collections is None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Aggregations([]),
+            Aggregations(
+                [
+                    Aggregation(
+                        identifier=Identifier(identifier="x", href="x", namespace="x"),
                         association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
                         initiative_type=AggregationInitiativeCode.COLLECTION,
                     )
@@ -527,7 +564,7 @@ class TestRelatedTab:
                         initiative_type=AggregationInitiativeCode.COLLECTION,
                     ),
                     Aggregation(
-                        identifier=Identifier(identifier="y", href="x", namespace="y"),
+                        identifier=Identifier(identifier="y", href="y", namespace="y"),
                         association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
                         initiative_type=AggregationInitiativeCode.COLLECTION,
                     ),
@@ -535,17 +572,17 @@ class TestRelatedTab:
             ),
         ],
     )
-    def test_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
+    def test_parent_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
         """
-        Can get optional related collections with expected values from item.
+        Can get optional parent collections with expected values from item.
 
         Detailed item summary tests are run in common macro tests.
         """
         fx_lib_item_catalogue_min._record.identification.aggregations = value
-        expected = fx_lib_item_catalogue_min._related.collections
+        expected = fx_lib_item_catalogue_min._related.parent_collections
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
-        collections = html.select_one("#related-collections")
+        collections = html.select_one("#related-parent-collections")
         if len(expected) > 0:
             for item in expected:
                 assert collections.select_one(f"a[href='{item.href}']") is not None

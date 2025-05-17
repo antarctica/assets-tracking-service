@@ -6,7 +6,7 @@ import pytest
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue, ItemInvalidError
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
-    Summary,
+    PageSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
     AdditionalInfoTab,
@@ -234,7 +234,7 @@ class TestItemCatalogue:
 
         Summary element is checked in more detail in catalogue element tests.
         """
-        assert isinstance(fx_lib_item_catalogue_min.summary, Summary)
+        assert isinstance(fx_lib_item_catalogue_min.summary, PageSummary)
 
     def test_tabs(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get list of tabs."""

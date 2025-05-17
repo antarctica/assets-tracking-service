@@ -2,6 +2,7 @@ import contextlib
 import json
 from copy import deepcopy
 from dataclasses import dataclass
+from datetime import date
 from enum import Enum
 from typing import TypeVar
 
@@ -17,7 +18,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distr
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Identification
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.metadata import Metadata
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.projection import ReferenceSystemInfo
-from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import HierarchyLevelCode
+from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
+    AggregationAssociationCode,
+    HierarchyLevelCode,
+)
 
 TRecord = TypeVar("TRecord", bound="Record")
 TRecordSummary = TypeVar("TRecordSummary", bound="RecordSummary")
@@ -330,6 +334,7 @@ class RecordSummary:
 
     file_identifier: str | None = None
     hierarchy_level: HierarchyLevelCode
+    date_stamp: date
     title: str
     abstract: str
     purpose: str | None = None
@@ -338,6 +343,7 @@ class RecordSummary:
     revision: Date | None = None
     publication: Date | None = None
     graphic_overview_href: str | None = None
+    child_aggregations_count: int = 0
 
     @classmethod
     def loads(cls: type[TRecordSummary], record: Record) -> "RecordSummary":
@@ -347,9 +353,14 @@ class RecordSummary:
             None,
         )
 
+        child_aggregations_count = len(
+            record.identification.aggregations.filter(associations=AggregationAssociationCode.IS_COMPOSED_OF)
+        )
+
         return cls(
             file_identifier=record.file_identifier,
             hierarchy_level=record.hierarchy_level,
+            date_stamp=record.metadata.date_stamp,
             title=record.identification.title,
             abstract=record.identification.abstract,
             purpose=record.identification.purpose,
@@ -358,6 +369,7 @@ class RecordSummary:
             revision=record.identification.dates.revision,
             publication=record.identification.dates.publication,
             graphic_overview_href=overview_href,
+            child_aggregations_count=child_aggregations_count,
         )
 
     @property

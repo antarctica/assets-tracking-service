@@ -148,3 +148,15 @@ for collection_member in collection_members:
             initiative_type=AggregationInitiativeCode.COLLECTION,
         ),
     )
+# add a related collection
+record.identification.aggregations.append(
+    Aggregation(
+        identifier=Identifier(
+            identifier="8fd6a7cc-e696-4a82-b5f6-fb04dfa4cbea",
+            href="https://data.bas.ac.uk/items/8fd6a7cc-e696-4a82-b5f6-fb04dfa4cbea",
+            namespace="data.bas.ac.uk",
+        ),
+        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+        initiative_type=AggregationInitiativeCode.COLLECTION,
+    )
+)

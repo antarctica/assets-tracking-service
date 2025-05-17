@@ -83,6 +83,7 @@ class ItemSummaryFragments:
     item_type_icon: str
     edition: str | None
     published: FormattedDate | None
+    children: str | None
 
 
 class ItemSummaryCatalogue(ItemSummaryBase):
@@ -119,6 +120,20 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return f"v{self.edition}"
 
     @property
+    def _children(self) -> str | None:
+        """
+        Count of items contained within item.
+
+        E.g. For collections, the number of items it contains.
+        """
+        count = self._record_summary.child_aggregations_count
+        if count == 1:
+            return "1 item"
+        if count > 1:
+            return f"{count} items"
+        return None
+
+    @property
     def fragments(self) -> ItemSummaryFragments:
         """UI fragments (icons and labels) for item summary."""
         published = self._date if self.resource_type != HierarchyLevelCode.COLLECTION else None
@@ -127,6 +142,7 @@ class ItemSummaryCatalogue(ItemSummaryBase):
             item_type_icon=self._resource_type_icon,
             edition=self._edition,
             published=published,
+            children=self._children,
         )
 
     @property
@@ -214,16 +230,24 @@ class Aggregations:
         return [self._summaries[aggregation.identifier.identifier] for aggregation in results]
 
     @property
-    def collections(self) -> list[ItemSummaryCatalogue]:
-        """Collection aggregations."""
+    def peer_collections(self) -> list[ItemSummaryCatalogue]:
+        """Collections item is related with."""
+        return self._filter(
+            associations=AggregationAssociationCode.CROSS_REFERENCE,
+            initiatives=AggregationInitiativeCode.COLLECTION,
+        )
+
+    @property
+    def parent_collections(self) -> list[ItemSummaryCatalogue]:
+        """Collections item is contained within."""
         return self._filter(
             associations=AggregationAssociationCode.LARGER_WORK_CITATION,
             initiatives=AggregationInitiativeCode.COLLECTION,
         )
 
     @property
-    def items(self) -> list[ItemSummaryCatalogue]:
-        """Item aggregations."""
+    def child_items(self) -> list[ItemSummaryCatalogue]:
+        """Items contained within item."""
         return self._filter(
             associations=AggregationAssociationCode.IS_COMPOSED_OF,
             initiatives=AggregationInitiativeCode.COLLECTION,
@@ -482,12 +506,12 @@ class PageSummary:
     @property
     def collections(self) -> list[Link]:
         """Collections item is part of."""
-        return self._aggregations.as_links(self._aggregations.collections)
+        return [Link(value=summary.title_html, href=summary.href) for summary in self._aggregations.parent_collections]
 
     @property
     def items_count(self) -> int:
         """Number of items that form item."""
-        return len(self._aggregations.items)
+        return len(self._aggregations.child_items)
 
     @property
     def citation(self) -> str | None:

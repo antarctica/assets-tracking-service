@@ -54,16 +54,18 @@ class TestPageHeader:
         assert html.select_one("#z") is not None
 
 
-class TestItemSummaryMacro:
+class TestItemSummary:
     """Test item summary common macro."""
 
+    date_ = Date(date=date(2023, 10, 31))
     summary_base = ItemSummaryCatalogue(
         record_summary=RecordSummary(
             file_identifier="x",
             hierarchy_level=HierarchyLevelCode.PRODUCT,
+            date_stamp=date_.date,
             title="y",
             abstract="z",
-            creation=Date(date=date(2023, 10, 31)),
+            creation=date_,
         )
     )
 
@@ -124,3 +126,16 @@ class TestItemSummaryMacro:
         if expected:
             assert html.select_one("time").text.strip() == expected.value
             assert html.select_one("time")["datetime"] == expected.datetime
+
+    @pytest.mark.parametrize("value", [0, 1, 2])
+    def test_items(self, value: int | None):
+        """Can get optional child item count with expected value from summary."""
+        summary = deepcopy(self.summary_base)
+        summary._record_summary.child_aggregations_count = value
+        expected = summary.fragments.children
+        html = BeautifulSoup(self._render(summary), parser="html.parser", features="lxml")
+
+        if expected:
+            assert html.find(name="span", string=expected) is not None
+        else:
+            assert html.find(name="span", string="0 items") is None

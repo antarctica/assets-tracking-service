@@ -82,6 +82,7 @@ from tests.pytest_pg_factories import (  # noqa: F401
 from tests.resources.examples.example_exporter import ExampleExporter
 from tests.resources.examples.example_provider import ExampleProvider
 from tests.resources.lib.data_catalogue.records.item_cat_collection_all import record as collection_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_collection_min import record as collection_min_supported
 from tests.resources.lib.data_catalogue.records.item_cat_data import record as data_all_supported
 from tests.resources.lib.data_catalogue.records.item_cat_formatting import record as formatting_supported
 from tests.resources.lib.data_catalogue.records.item_cat_licence import (
@@ -928,12 +929,14 @@ def _lib_get_record_summary(identifier: str) -> RecordSummary:
 
     Standalone method to allow use outside of fixtures.
     """
+    date_ = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
     return RecordSummary(
         file_identifier=identifier,
         hierarchy_level=HierarchyLevelCode.PRODUCT,
+        date_stamp=date_.date,
         title="x",
         abstract="x",
-        creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
+        creation=date_,
     )
 
 
@@ -1201,6 +1204,7 @@ def fx_lib_exporter_site(
 def lib_exporter_static_site_records() -> list[LibRecord]:
     """Records for populating static site exporter."""  # noqa: D401
     return [
+        collection_min_supported,
         collection_all_supported,
         product_min_supported,
         product_all_supported,

@@ -73,7 +73,7 @@ class ItemsTab(Tab):
 
     def __init__(self, aggregations: Aggregations) -> None:
         self._aggregations = aggregations
-        self._items = self._aggregations.items
+        self._items = self._aggregations.child_items
 
     @property
     def enabled(self) -> bool:
@@ -319,7 +319,7 @@ class RelatedTab(Tab):
         all_agg = len(self._aggregations)
         if self._item_type == HierarchyLevelCode.COLLECTION:
             # if all aggregations are a collections items, disable tab as these are shown in item tab
-            return len(self._aggregations.items) != all_agg
+            return len(self.child_items) != all_agg
         return all_agg > 0
 
     @property

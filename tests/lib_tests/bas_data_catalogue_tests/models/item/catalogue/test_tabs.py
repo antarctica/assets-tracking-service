@@ -340,11 +340,62 @@ class TestRelatedTab:
         tab = RelatedTab(aggregations=aggregations, item_type=HierarchyLevelCode.PRODUCT)
 
         assert tab.enabled is True
-        assert len(tab.collections) > 0
-        assert all(isinstance(collection, ItemSummaryCatalogue) for collection in tab.collections)
+        assert len(tab.parent_collections) > 0
+        assert all(isinstance(collection, ItemSummaryCatalogue) for collection in tab.parent_collections)
         # cov
         assert tab.title != ""
         assert tab.icon != ""
+
+    @pytest.mark.parametrize(
+        ("level", "value", "expected"),
+        [
+            (HierarchyLevelCode.DATASET, RecordAggregations([]), False),
+            (
+                HierarchyLevelCode.DATASET,
+                RecordAggregations(
+                    [
+                        Aggregation(
+                            identifier=Identifier(identifier="x", href="x", namespace="x"),
+                            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                            initiative_type=AggregationInitiativeCode.COLLECTION,
+                        )
+                    ]
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                RecordAggregations(
+                    [
+                        Aggregation(
+                            identifier=Identifier(identifier="x", href="x", namespace="x"),
+                            association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                            initiative_type=AggregationInitiativeCode.COLLECTION,
+                        )
+                    ]
+                ),
+                False,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                RecordAggregations(
+                    [
+                        Aggregation(
+                            identifier=Identifier(identifier="x", href="x", namespace="x"),
+                            association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                            initiative_type=AggregationInitiativeCode.COLLECTION,
+                        )
+                    ]
+                ),
+                True,
+            ),
+        ],
+    )
+    def test_enabled(self, level: HierarchyLevelCode, value: RecordAggregations, expected: bool):
+        """Can disable related tab if not applicable."""
+        aggregations = Aggregations(aggregations=value, get_summary=_lib_get_record_summary)
+        tab = RelatedTab(aggregations=aggregations, item_type=level)
+        assert tab.enabled is expected
 
 
 class TestAdditionalInfoTab:

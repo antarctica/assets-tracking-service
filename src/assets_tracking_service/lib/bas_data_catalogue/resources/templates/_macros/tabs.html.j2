@@ -79,20 +79,23 @@
   </section>
 {% endmacro %}
 
+{% macro related_section(data) %}
+  {% if data.related %}
+    <section id="related-{{ data.id }}" class="space-y-8">
+      {% call com.item_title() %}{{ data.title }}{% endcall %}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
+        {% for item in data.related %}
+          {{ com.item_summary(item) }}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+{% endmacro %}
+
 {% macro related(data) %}
-  <section id="tab-content-related">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
-      {% if data.collections %}
-        <div id="related-collections" class="p-2 col-span-1 space-y-8">
-          {% call com.item_title() %}Collections this Item is part of{% endcall %}
-          <div class="space-y-4">
-            {% for item in data.collections %}
-              {{ com.item_summary(item) }}
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-    </div>
+  <section id="tab-content-related" class="space-y-8">
+    {{ related_section({'id': 'parent-collections', 'title': 'Collections this Item is a part of', 'related': data.parent_collections}) }}
+    {{ related_section({'id': 'peer-collections', 'title': 'Related Collections', 'related': data.peer_collections}) }}
   </section>
 {% endmacro %}
 
