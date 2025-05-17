@@ -196,6 +196,9 @@
   .relative {
     position: relative;
   }
+  .sticky {
+    position: sticky;
+  }
   .col-span-1 {
     grid-column: span 1 / span 1;
   }
@@ -1633,14 +1636,9 @@
       font-weight: var(--font-weight-bold);
     }
   }
-  .prose-li\:mt-0 {
+  .prose-li\:my-0 {
     & :is(:where(li):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-      margin-top: calc(var(--spacing) * 0);
-    }
-  }
-  .prose-li\:mb-1 {
-    & :is(:where(li):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-      margin-bottom: calc(var(--spacing) * 1);
+      margin-block: calc(var(--spacing) * 0);
     }
   }
 }
