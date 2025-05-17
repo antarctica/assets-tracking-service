@@ -341,7 +341,7 @@ class TestDistributionShapefile:
     def test_init(self):
         """Can create a distribution."""
         dist = Shapefile(
-            option=_make_dist("https://metadata-resources.data.bas.ac.uk/media-types/application/shapefile+zip"),
+            option=_make_dist("https://metadata-resources.data.bas.ac.uk/media-types/application/vnd.shp+zip"),
             other_options=[],
         )
         assert dist.format_type == DistributionType.SHAPEFILE_ZIP

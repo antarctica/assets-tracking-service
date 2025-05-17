@@ -462,7 +462,7 @@ record.distribution = [
         ),
         format=Format(
             format="Shapefile (Zipped)",
-            href="https://metadata-resources.data.bas.ac.uk/media-types/application/shapefile+zip",
+            href="https://metadata-resources.data.bas.ac.uk/media-types/application/vnd.shp+zip",
         ),
         transfer_option=TransferOption(
             size=Size(unit="bytes", magnitude=3),

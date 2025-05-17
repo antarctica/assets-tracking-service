@@ -456,7 +456,7 @@ class Shapefile(FileDistribution):
         """Whether this class matches the distribution option."""
         return (
             option.format is not None
-            and option.format.href == "https://metadata-resources.data.bas.ac.uk/media-types/application/shapefile+zip"
+            and option.format.href == "https://metadata-resources.data.bas.ac.uk/media-types/application/vnd.shp+zip"
         )
 
     @property
