@@ -178,6 +178,13 @@ class TestDataTab:
                 ["https://www.bas.ac.uk/data/our-data/maps/how-to-order-a-map/"],
                 "This item is currently only available to purchase as a physical paper map",
             ),
+            (
+                [
+                    "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+tile+vector",
+                    "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector",
+                ],
+                "ArcGIS Vector Tiles",
+            ),
         ],
     )
     def test_data_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[str], text: str):

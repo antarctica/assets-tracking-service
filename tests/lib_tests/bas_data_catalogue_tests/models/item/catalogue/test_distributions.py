@@ -4,6 +4,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements im
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distributions import (
     ArcGisFeatureLayer,
     ArcGisOgcApiFeatures,
+    ArcGisVectorTileLayer,
     Distribution,
     FileDistribution,
     GeoJson,
@@ -250,6 +251,73 @@ class TestDistributionArcGisOgcApiFeatures:
     def test_matches(self, main: RecordDistribution, others: list[Distribution], expected: bool):
         """Can determine if a record distribution matches this catalogue distribution."""
         result = ArcGisOgcApiFeatures.matches(main, others)
+        assert result == expected
+
+
+class TestDistributionArcGisVectorTileLayer:
+    """Test ArcGIS Vector Tile Layer catalogue distribution."""
+
+    def test_init(self):
+        """Can create a distribution."""
+        main = _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+tile+vector")
+        others = [
+            _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector")
+        ]
+
+        dist = ArcGisVectorTileLayer(main, others)
+
+        # cov
+        assert dist.format_type == DistributionType.ARCGIS_VECTOR_TILE_LAYER
+        assert dist.size == "-"
+        assert dist.item_link.href == main.transfer_option.online_resource.href
+        assert dist.service_endpoint == others[0].transfer_option.online_resource.href
+        assert isinstance(dist.action, Link)
+        assert dist.action_btn_variant != ""
+        assert dist.action_btn_icon != ""
+        assert dist.access_target != ""
+
+    def test_init_no_service(self):
+        """Cannot create a distribution without the required additional service distribution."""
+        main = _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+tile+vector")
+        others = [_make_dist("x")]
+
+        with pytest.raises(
+            ValueError, match="Required corresponding service option not found in resource distributions."
+        ):
+            ArcGisVectorTileLayer(main, others)
+
+    @pytest.mark.parametrize(
+        ("main", "others", "expected"),
+        [
+            (
+                _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+tile+vector"),
+                [
+                    _make_dist(
+                        "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector"
+                    )
+                ],
+                True,
+            ),
+            (
+                _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+tile+vector"),
+                [_make_dist("x")],
+                False,
+            ),
+            (
+                _make_dist("x"),
+                [
+                    _make_dist(
+                        "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector"
+                    )
+                ],
+                False,
+            ),
+            (_make_dist("x"), [_make_dist("y")], False),
+        ],
+    )
+    def test_matches(self, main: RecordDistribution, others: list[Distribution], expected: bool):
+        """Can determine if a record distribution matches this catalogue distribution."""
+        result = ArcGisVectorTileLayer.matches(main, others)
         assert result == expected
 
 

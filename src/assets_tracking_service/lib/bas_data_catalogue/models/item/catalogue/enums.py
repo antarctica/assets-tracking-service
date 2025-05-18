@@ -17,6 +17,7 @@ class DistributionType(Enum):
     JPEG = "JPEG"
     PDF = "PDF"
     PDF_GEO = "PDF (Georeferenced)"
+    ARCGIS_VECTOR_TILE_LAYER = "ArcGIS Vector Tile Layer"
     GEOJSON = "GeoJSON"
     GEOPACKAGE = "GeoPackage"
     GEOPACKAGE_ZIP = "GeoPackage (Zipped)"
