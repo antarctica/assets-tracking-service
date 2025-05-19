@@ -219,6 +219,48 @@ class TestDataTab:
         assert html.find(name="div", string=expected.format_type.value) is not None
         assert str(html).count(text) == 1
 
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
+                    statement="Open Access",
+                ),
+                False,
+            ),
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                    statement="Closed Access",
+                ),
+                True,
+            ),
+        ],
+    )
+    def test_restricted_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Constraint, expected: bool):
+        """Shows restricted access panel if item is restricted."""
+        fx_lib_item_catalogue_min._record.distribution.append(
+            Distribution(
+                distributor=Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.DISTRIBUTOR]),
+                format=Format(format="x", href="https://www.iana.org/assignments/media-types/image/png"),
+                transfer_option=TransferOption(
+                    size=Size(unit="bytes", magnitude=1024),
+                    online_resource=OnlineResource(href="x", function=OnlineResourceFunctionCode.DOWNLOAD),
+                ),
+            )
+        )
+        fx_lib_item_catalogue_min._record.identification.constraints = Constraints([value])
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        result = html.select_one("#data-restricted-info")
+        if expected:
+            assert result is not None
+        else:
+            assert result is None
+
 
 class TestAuthorsTab:
     """Test authors tab template macros."""

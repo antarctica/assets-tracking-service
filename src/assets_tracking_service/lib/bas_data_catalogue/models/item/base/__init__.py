@@ -125,6 +125,36 @@ class ItemBase:
 
         return permissions
 
+    @staticmethod
+    def _parse_access(constraints: Constraints) -> AccessType:
+        """
+        Determine item access based on access constraints.
+
+        Defaults to no access if no access constraints are set.
+        Sets public access if a single unrestricted access constraint is set.
+        Sets intentionally ambiguous 'BAS_SOME' access if a single restricted constraint is set without permissions.
+        May set other options based on any permissions set in constraints.
+        """
+        if len(constraints) == 0:
+            return AccessType.NONE
+
+        if len(constraints) == 1 and constraints[0].restriction_code == ConstraintRestrictionCode.UNRESTRICTED:
+            return AccessType.PUBLIC
+
+        if (
+            len(constraints) == 1
+            and constraints[0].restriction_code == ConstraintRestrictionCode.RESTRICTED
+            and constraints[0].href is None
+        ):
+            return AccessType.BAS_SOME
+
+        permissions = [perm for constraint in constraints for perm in ItemBase._parse_permissions(constraint.href)]
+        if AccessType.BAS_ALL in permissions:
+            return AccessType.BAS_ALL
+
+        # fail-safe
+        return AccessType.NONE
+
     @property
     def abstract_raw(self) -> str:
         """Raw Abstract."""
@@ -141,25 +171,9 @@ class ItemBase:
         return md_as_html(self.abstract_md)
 
     @property
-    def access(self) -> AccessType:
-        """
-        Access constraint.
-
-        Defaults to no access if not set in record.
-        """
-        access = self.constraints.filter(types=ConstraintTypeCode.ACCESS)
-        if len(access) == 0:
-            return AccessType.NONE
-
-        if access[0].restriction_code == ConstraintRestrictionCode.UNRESTRICTED:
-            return AccessType.PUBLIC
-
-        permissions = self._parse_permissions(access[0].href)
-        if AccessType.BAS_ALL in permissions:
-            return AccessType.BAS_ALL
-
-        # fail-safe
-        return AccessType.NONE
+    def access_type(self) -> AccessType:
+        """Resource access."""
+        return self._parse_access(self.constraints.filter(types=ConstraintTypeCode.ACCESS))
 
     @property
     def aggregations(self) -> Aggregations:
@@ -393,6 +407,12 @@ class ItemSummaryBase:
         if self.resource_id is None:
             msg = "Item Summaries require a file_identifier."
             raise ValueError(msg)
+
+    @property
+    def access(self) -> AccessType:
+        """Resource access."""
+        # noinspection PyProtectedMember
+        return ItemBase._parse_access(self._record_summary.constraints.filter(types=ConstraintTypeCode.ACCESS))
 
     @property
     def date(self) -> Date | None:

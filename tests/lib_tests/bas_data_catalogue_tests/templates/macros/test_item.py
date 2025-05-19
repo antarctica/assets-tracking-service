@@ -99,6 +99,31 @@ class TestMacrosItem:
             assert html.select_one("#summary-published").text.strip() == expected.value
             assert html.select_one("#summary-published")["datetime"] == expected.datetime
 
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Constraint(
+                type=ConstraintTypeCode.ACCESS,
+                restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
+                statement="Open Access",
+            ),
+            Constraint(
+                type=ConstraintTypeCode.ACCESS,
+                restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                statement="Closed Access",
+            ),
+        ],
+    )
+    def test_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Constraint):
+        """Can get item access with expected value from item."""
+        fx_lib_item_catalogue_min._record.identification.constraints.append(value)
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        if value.restriction_code == ConstraintRestrictionCode.UNRESTRICTED:
+            assert html.select_one("#summary-access") is None
+        else:
+            assert html.select_one("#summary-access").text.strip() == "Restricted"
+
     @pytest.mark.parametrize("value", [None, "x"])
     def test_citation(self, fx_lib_item_catalogue_min: ItemCatalogue, value: str | None):
         """Can get item citation with expected value from item."""

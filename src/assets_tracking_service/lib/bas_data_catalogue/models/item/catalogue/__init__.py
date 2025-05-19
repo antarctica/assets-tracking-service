@@ -178,7 +178,7 @@ class ItemCatalogue(ItemBase):
     @property
     def _data(self) -> DataTab:
         """Data tab."""
-        return DataTab(self.distributions)
+        return DataTab(access_type=self.access_type, distributions=self.distributions)
 
     @property
     def _authors(self) -> AuthorsTab:
@@ -344,6 +344,7 @@ class ItemCatalogue(ItemBase):
             published_date=self._dates.publication,
             revision_date=self._dates.revision,
             aggregations=self._aggregations,
+            access_type=self.access_type,
             citation=self.citation_html,
             abstract=self.abstract_html,
         )

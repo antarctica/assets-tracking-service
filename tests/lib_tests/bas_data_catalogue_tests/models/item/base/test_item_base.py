@@ -122,10 +122,105 @@ class TestItemBase:
             ),
         ],
     )
-    def test_parse_permissions(self, fx_lib_record_minimal_item: Record, value: str, expected: list[AccessType]):
+    def test_parse_permissions(self, value: str, expected: list[AccessType]):
         """Can parse permissions string."""
-        item = ItemBase(fx_lib_record_minimal_item)
-        result = item._parse_permissions(value)
+        result = ItemBase._parse_permissions(value)
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (Constraints([]), AccessType.NONE),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        )
+                    ]
+                ),
+                AccessType.PUBLIC,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.NONE,
+            ),
+            (
+                Constraints(
+                    [Constraint(type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED)]
+                ),
+                AccessType.BAS_SOME,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.NONE,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.NONE,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS,
+                            restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                            href=f"#{json.dumps([{'scheme': 'ms_graph', 'schemeVersion': '1', 'directoryId': 'b311db95-32ad-438f-a101-7ba061712a4e', 'objectId': '6fa3b48c-393c-455f-b787-c006f839b51f'}])}",
+                        ),
+                    ]
+                ),
+                AccessType.BAS_ALL,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS,
+                            restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                            href=f"#{json.dumps([{'scheme': 'ms_graph', 'schemeVersion': '1', 'directoryId': 'b311db95-32ad-438f-a101-7ba061712a4e', 'objectId': '6fa3b48c-393c-455f-b787-c006f839b51f'}])}",
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.BAS_ALL,
+            ),
+        ],
+    )
+    def test_parse_access(self, value: Constraints, expected: AccessType):
+        """Can resolve access type from constraints."""
+        result = ItemBase._parse_access(value)
         assert result == expected
 
     def test_abstract_raw(self, fx_lib_record_minimal_item: Record):
@@ -156,18 +251,9 @@ class TestItemBase:
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
-            (Constraint(type=ConstraintTypeCode.ACCESS), AccessType.NONE),
             (
                 Constraint(type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED),
                 AccessType.PUBLIC,
-            ),
-            (
-                Constraint(
-                    type=ConstraintTypeCode.ACCESS,
-                    restriction_code=ConstraintRestrictionCode.RESTRICTED,
-                    href='%5B{"scheme"%3A"ms_graph"%2C"schemeVersion"%3A"1"%2C"directoryId"%3A"b311db95-32ad-438f-a101-7ba061712a4e"%2C"objectId"%3A"6fa3b48c-393c-455f-b787-c006f839b51f"}%5D',
-                ),
-                AccessType.BAS_ALL,
             ),
             (None, AccessType.NONE),
         ],
@@ -530,6 +616,26 @@ class TestItemSummaryBase:
         fx_lib_record_summary_minimal_item.file_identifier = None
         with pytest.raises(ValueError, match="Item Summaries require a file_identifier."):
             ItemSummaryBase(fx_lib_record_summary_minimal_item)
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (
+                Constraint(type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED),
+                AccessType.PUBLIC,
+            ),
+            (None, AccessType.NONE),
+        ],
+    )
+    def test_access(
+        self, fx_lib_record_summary_minimal_item: RecordSummary, value: Constraint | None, expected: AccessType
+    ):
+        """Can get optional access constraint and any associated permissions."""
+        if value is not None:
+            fx_lib_record_summary_minimal_item.constraints = Constraints([value])
+        item = ItemSummaryBase(fx_lib_record_summary_minimal_item)
+
+        assert item.access == expected
 
     @pytest.mark.parametrize("has_pub", [True, False])
     def test_date(self, fx_lib_record_summary_minimal_item: RecordSummary, has_pub: bool):

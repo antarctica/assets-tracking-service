@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Contact, Contacts, Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
@@ -116,7 +117,7 @@ class TestDataTab:
             )
         ]
 
-        tab = DataTab(distributions=distributions)
+        tab = DataTab(access_type=AccessType.PUBLIC, distributions=distributions)
 
         assert tab.enabled is False
         # cov
@@ -147,11 +148,12 @@ class TestDataTab:
                 ),
             ),
         ]
-        tab = DataTab(distributions=distributions)
+        tab = DataTab(access_type=AccessType.PUBLIC, distributions=distributions)
         assert tab.enabled is True
 
     def test_items(self):
         """Can get processed distribution options."""
+        access_type = AccessType.PUBLIC
         distributions = [
             RecordDistribution(
                 distributor=RecordContact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.DISTRIBUTOR]),
@@ -174,11 +176,17 @@ class TestDataTab:
                 ),
             ),
         ]
-        expected = ArcGisFeatureLayer(distributions[0], [distributions[1]])
-        tab = DataTab(distributions=distributions)
+        expected = ArcGisFeatureLayer(distributions[0], [distributions[1]], access_type=access_type)
+        tab = DataTab(access_type=access_type, distributions=distributions)
 
         assert tab.items[0].format_type == expected.format_type
         assert tab.items[0].action.href == expected.action.href
+
+    def test_access(self):
+        """Can get item access type."""
+        expected = AccessType.PUBLIC
+        tab = DataTab(access_type=expected, distributions=[])
+        assert tab.access == expected
 
 
 class TestExtentTab:

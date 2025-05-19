@@ -93,6 +93,7 @@ from tests.resources.lib.data_catalogue.records.item_cat_licence import (
 )
 from tests.resources.lib.data_catalogue.records.item_cat_product_all import record as product_all_supported
 from tests.resources.lib.data_catalogue.records.item_cat_product_min import record as product_min_supported
+from tests.resources.lib.data_catalogue.records.item_cat_product_restricted import record as product_restricted
 from tests.resources.lib.data_catalogue.records.item_cat_pub_map import record as product_published_map
 
 # override `postgresql` fixture with either a local (proc) or remote (noproc) fixture depending on if in CI.
@@ -1206,6 +1207,7 @@ def lib_exporter_static_site_records() -> list[LibRecord]:
         collection_min_supported,
         collection_all_supported,
         product_min_supported,
+        product_restricted,
         product_all_supported,
         formatting_supported,
         data_all_supported,

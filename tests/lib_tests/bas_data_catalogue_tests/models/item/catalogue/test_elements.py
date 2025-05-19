@@ -2,6 +2,7 @@ from datetime import UTC, date, datetime
 
 import pytest
 
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import (
@@ -474,7 +475,7 @@ class TestPageSummary:
     """Test Catalogue Item summary panel."""
 
     @pytest.mark.parametrize(
-        ("item_type", "edition", "published", "aggregations", "citation"),
+        ("item_type", "edition", "published", "aggregations", "access", "citation"),
         [
             (
                 HierarchyLevelCode.PRODUCT,
@@ -492,6 +493,7 @@ class TestPageSummary:
                     ),
                     get_summary=_lib_get_record_summary,
                 ),
+                AccessType.PUBLIC,
                 "x",
             ),
             (
@@ -499,6 +501,7 @@ class TestPageSummary:
                 None,
                 None,
                 Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                AccessType.BAS_SOME,
                 None,
             ),
             (
@@ -517,6 +520,7 @@ class TestPageSummary:
                     ),
                     get_summary=_lib_get_record_summary,
                 ),
+                AccessType.PUBLIC,
                 "x",
             ),
         ],
@@ -527,6 +531,7 @@ class TestPageSummary:
         edition: str | None,
         published: str | None,
         aggregations: Aggregations,
+        access: AccessType,
         citation: str | None,
     ):
         """Can create class for summary panel."""
@@ -539,6 +544,7 @@ class TestPageSummary:
             published_date=published,
             revision_date=None,
             aggregations=aggregations,
+            access_type=access,
             citation=citation,
             abstract="x",
         )
@@ -546,6 +552,7 @@ class TestPageSummary:
         assert summary.abstract == "x"
         assert summary.collections == collections
         assert summary.items_count == items_count
+        assert summary.access == access
 
         if item_type != HierarchyLevelCode.COLLECTION:
             assert summary.edition == edition
@@ -557,13 +564,13 @@ class TestPageSummary:
             assert summary.citation is None
 
     @pytest.mark.parametrize(
-        ("item_type", "edition", "published", "aggregations", "expected"),
+        ("item_type", "edition", "published", "access", "aggregations", "expected"),
         [
             (
                 HierarchyLevelCode.PRODUCT,
                 "1",
                 "x",
-                # add collection and item aggregations
+                AccessType.PUBLIC,
                 Aggregations(
                     aggregations=RecordAggregations(
                         [
@@ -587,7 +594,7 @@ class TestPageSummary:
                 HierarchyLevelCode.PRODUCT,
                 "1",
                 None,
-                # add collection aggregation
+                AccessType.PUBLIC,
                 Aggregations(
                     aggregations=RecordAggregations(
                         [
@@ -606,7 +613,7 @@ class TestPageSummary:
                 HierarchyLevelCode.PRODUCT,
                 None,
                 "x",
-                # add item aggregation
+                AccessType.PUBLIC,
                 Aggregations(
                     aggregations=RecordAggregations(
                         [
@@ -625,6 +632,7 @@ class TestPageSummary:
                 HierarchyLevelCode.PRODUCT,
                 None,
                 None,
+                AccessType.PUBLIC,
                 Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
                 False,
             ),
@@ -632,8 +640,17 @@ class TestPageSummary:
                 HierarchyLevelCode.COLLECTION,
                 "1",
                 "x",
+                AccessType.PUBLIC,
                 Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
                 False,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                "1",
+                "x",
+                AccessType.BAS_SOME,
+                Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                True,
             ),
         ],
     )
@@ -642,6 +659,7 @@ class TestPageSummary:
         item_type: HierarchyLevelCode,
         edition: str | None,
         published: str | None,
+        access: AccessType,
         aggregations: Aggregations,
         expected: bool,
     ):
@@ -651,6 +669,7 @@ class TestPageSummary:
             edition=edition,
             published_date=published,
             revision_date=None,
+            access_type=access,
             aggregations=aggregations,
             citation=None,
             abstract="x",
@@ -702,6 +721,7 @@ class TestPageSummary:
             edition=None,
             published_date=published,
             revision_date=revision,
+            access_type=AccessType.PUBLIC,
             aggregations=Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
             citation=None,
             abstract="x",

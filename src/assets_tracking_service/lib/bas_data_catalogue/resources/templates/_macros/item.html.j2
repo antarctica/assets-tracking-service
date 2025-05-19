@@ -40,6 +40,9 @@
     {% if data.published %}
       {{ published(data.published) }}
     {% endif %}
+    {% if data.access.name != 'PUBLIC' %}
+      {{ access() }}
+    {% endif %}
   </section>
 {% endmacro %}
 
@@ -63,6 +66,13 @@
   <div class="font-bold">Published</div>
   <div>{{ com.time(data, id='summary-published') }}</div>
 {% endmacro %}
+
+{% macro access() %}
+  <div class="font-bold">Access</div>
+  <div id="summary-access">
+    <span class="bg-yellow-500 px-2 py-1 text-sm"><i class="far fa-lock-alt"></i> Restricted</span>
+  </div>
+{% endmacro %}x
 
 {% macro citation(value) %}
   <section class="space-y-2">

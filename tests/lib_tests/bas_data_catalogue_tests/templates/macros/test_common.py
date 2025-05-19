@@ -13,6 +13,11 @@ from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import ItemSummaryCatalogue
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Constraint, Constraints
+from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
+    ConstraintRestrictionCode,
+    ConstraintTypeCode,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
@@ -139,3 +144,40 @@ class TestItemSummary:
             assert html.find(name="span", string=expected) is not None
         else:
             assert html.find(name="span", string="0 items") is None
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
+                    statement="Open Access",
+                ),
+                False,
+            ),
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                    statement="Closed Access",
+                ),
+                True,
+            ),
+        ],
+    )
+    def test_access(self, value: Constraint, expected: bool):
+        """
+        Can get access type with expected value from summary.
+
+        Only shown if restricted.
+        """
+        summary = deepcopy(self.summary_base)
+        summary._record_summary.constraints = Constraints([value])
+        html = BeautifulSoup(self._render(summary), parser="html.parser", features="lxml")
+
+        result = html.find(lambda tag: tag.name == "span" and "Restricted" in tag.get_text())
+        if expected:
+            assert result is not None
+        else:
+            assert result is None

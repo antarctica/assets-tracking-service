@@ -5,6 +5,7 @@ from urllib.parse import parse_qs, urlparse
 
 from jinja2 import Environment
 
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Contact, Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distributions import (
@@ -105,7 +106,8 @@ class ItemsTab(Tab):
 class DataTab(Tab):
     """Data tab."""
 
-    def __init__(self, distributions: list[RecordDistribution]) -> None:
+    def __init__(self, access_type: AccessType, distributions: list[RecordDistribution]) -> None:
+        self._access = access_type
         self._resource_distributions = distributions
         self._supported_distributions = [
             ArcGisFeatureLayer,
@@ -131,7 +133,11 @@ class DataTab(Tab):
         for dist_option in self._resource_distributions:
             for dist_type in self._supported_distributions:
                 if dist_type.matches(option=dist_option, other_options=self._resource_distributions):
-                    processed.append(dist_type(option=dist_option, other_options=self._resource_distributions))
+                    processed.append(
+                        dist_type(
+                            option=dist_option, other_options=self._resource_distributions, access_type=self._access
+                        )
+                    )
         return processed
 
     @property
@@ -153,6 +159,11 @@ class DataTab(Tab):
     def icon(self) -> str:
         """Tab icon class."""
         return "far fa-cube"
+
+    @property
+    def access(self) -> AccessType:
+        """Access restrictions for item."""
+        return self._access
 
     @property
     def items(self) -> list[Distribution]:
