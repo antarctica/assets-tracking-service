@@ -18,7 +18,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Maintenance,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -47,6 +46,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     MaintenanceFrequencyCode,
     ProgressCode,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from tests.conftest import _lib_get_record_summary
 
 

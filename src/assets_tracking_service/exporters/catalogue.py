@@ -9,7 +9,7 @@ from assets_tracking_service.exporters.base_exporter import Exporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter, HtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlExporter, IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.json_exporter import JsonExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Contacts,
     Date,
@@ -45,6 +45,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.contac
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.distribution import make_esri_feature_layer
 from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projections import EPSG_4326
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.models.layer import LayersClient
 from assets_tracking_service.models.record import RecordsClient
 

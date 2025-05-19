@@ -27,9 +27,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs i
     RelatedTab,
     Tab,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import GraphicOverview
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import ContactRoleCode
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.templates import PageMetadata
 
 

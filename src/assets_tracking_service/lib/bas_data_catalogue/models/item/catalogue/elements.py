@@ -8,7 +8,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base import Item
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link, unpack
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -29,6 +28,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     MaintenanceFrequencyCode,
     ProgressCode,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 TFormattedDate = TypeVar("TFormattedDate", bound="FormattedDate")
 

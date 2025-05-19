@@ -51,7 +51,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Identifiers as ItemCatIdentifiers,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record as LibRecord
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Date,
     Dates,
@@ -59,6 +58,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Identifiers,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import HierarchyLevelCode
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
 from assets_tracking_service.models.asset import Asset, AssetNew, AssetsClient
@@ -935,7 +935,6 @@ def _lib_get_record_summary(identifier: str) -> RecordSummary:
         hierarchy_level=HierarchyLevelCode.PRODUCT,
         date_stamp=date_.date,
         title="x",
-        abstract="x",
         creation=date_,
     )
 

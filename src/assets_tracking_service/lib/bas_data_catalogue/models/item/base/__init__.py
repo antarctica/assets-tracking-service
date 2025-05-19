@@ -19,7 +19,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     Distribution,
     HierarchyLevelCode,
     Record,
-    RecordSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Identifiers
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
@@ -35,6 +34,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintRestrictionCode,
     ConstraintTypeCode,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.lib.markdown.extensions.links import LinkifyExtension
 from assets_tracking_service.lib.markdown.extensions.prepend_new_line import PrependNewLineExtension
 from assets_tracking_service.lib.markdown.formats.plaintext import PlainTextExtension

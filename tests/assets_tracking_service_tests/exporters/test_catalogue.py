@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestCollectionRecord:

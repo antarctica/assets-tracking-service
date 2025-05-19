@@ -8,8 +8,9 @@ from pytest_mock import MockerFixture
 
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Identifier
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestRecordsExporter:

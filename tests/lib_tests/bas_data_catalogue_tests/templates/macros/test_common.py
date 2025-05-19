@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import ItemSummaryCatalogue
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Date, HierarchyLevelCode, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestPageHeader:

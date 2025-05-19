@@ -7,7 +7,8 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter impo
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter, HtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlExporter, IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.json_exporter import JsonExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class RecordsExporter:

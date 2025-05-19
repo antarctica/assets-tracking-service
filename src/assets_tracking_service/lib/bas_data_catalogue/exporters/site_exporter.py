@@ -11,7 +11,8 @@ from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter as BaseExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.templates import PageMetadata
 
 

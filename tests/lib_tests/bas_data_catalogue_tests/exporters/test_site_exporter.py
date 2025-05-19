@@ -12,7 +12,8 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter impo
     SitePagesExporter,
     SiteResourcesExporter,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestSiteIndexExporter:

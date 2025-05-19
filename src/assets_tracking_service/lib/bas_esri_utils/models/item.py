@@ -252,7 +252,7 @@ class Item(ItemBase):
     @property
     def sharing_level(self) -> SharingLevel:
         """ArcGIS sharing level based on item access type."""
-        access_type = self._access_type if self._access_type is not None else super().access
+        access_type = self._access_type if self._access_type is not None else super().access_type
 
         if access_type == AccessType.PUBLIC:
             return SharingLevel.EVERYONE

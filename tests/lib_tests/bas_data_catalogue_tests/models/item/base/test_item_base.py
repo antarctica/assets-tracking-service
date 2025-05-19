@@ -19,7 +19,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums impor
 from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     DataQuality,
     Record,
-    RecordSummary,
     ReferenceSystemInfo,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contact as RecordContact
@@ -63,6 +62,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     OnlineResourceFunctionCode,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projections import EPSG_4326
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestMdAsHtml:
@@ -178,7 +178,7 @@ class TestItemBase:
             fx_lib_record_minimal_item.identification.constraints = Constraints([value])
         item = ItemBase(fx_lib_record_minimal_item)
 
-        assert item.access == expected
+        assert item.access_type == expected
 
     def test_aggregations(self, fx_lib_record_minimal_item: Record):
         """Can get aggregations from record."""

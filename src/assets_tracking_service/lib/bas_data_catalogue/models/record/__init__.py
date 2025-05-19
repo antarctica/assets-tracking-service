@@ -2,7 +2,6 @@ import contextlib
 import json
 from copy import deepcopy
 from dataclasses import dataclass
-from datetime import date
 from enum import Enum
 from typing import TypeVar
 
@@ -12,19 +11,15 @@ from importlib_resources import files as resources_files
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, clean_dict
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import clean_dict
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import DataQuality
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import Distribution
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Identification
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.metadata import Metadata
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.projection import ReferenceSystemInfo
-from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
-    AggregationAssociationCode,
-    HierarchyLevelCode,
-)
+from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import HierarchyLevelCode
 
 TRecord = TypeVar("TRecord", bound="Record")
-TRecordSummary = TypeVar("TRecordSummary", bound="RecordSummary")
 
 
 class RecordInvalidError(Exception):
@@ -315,69 +310,3 @@ class Record:
                 validate(instance=config, schema=schema)
             except ValidationError as e:
                 raise RecordInvalidError(e) from e
-
-
-@dataclass(kw_only=True)
-class RecordSummary:
-    """
-    Summary of a resource within the BAS Data Catalogue / Metadata ecosystem.
-
-    RecordSummaries are a low-level view of key aspects of a resource, using the ISO 19115 information model. They are
-    intended to be used where full records are unnecessary or would be impractical - such as describing/listing large
-    numbers of resources, or for resources related to a selected resource.
-
-    RecordSummaries can be created independently but are intended to be derived from a Record instance using `loads()`.
-    This class does not support loading/dumping record configurations encoded in JSON or XML.
-
-    When derived from a Record, the `graphic_overview_href` is populated from the first graphic overview, if any exist.
-    """
-
-    file_identifier: str | None = None
-    hierarchy_level: HierarchyLevelCode
-    date_stamp: date
-    title: str
-    abstract: str
-    purpose: str | None = None
-    edition: str | None = None
-    creation: Date
-    revision: Date | None = None
-    publication: Date | None = None
-    graphic_overview_href: str | None = None
-    child_aggregations_count: int = 0
-
-    @classmethod
-    def loads(cls: type[TRecordSummary], record: Record) -> "RecordSummary":
-        """Create a RecordSummary from a Record."""
-        overview_href = next(
-            (graphic.href for graphic in record.identification.graphic_overviews if graphic.identifier == "overview"),
-            None,
-        )
-
-        child_aggregations_count = len(
-            record.identification.aggregations.filter(associations=AggregationAssociationCode.IS_COMPOSED_OF)
-        )
-
-        return cls(
-            file_identifier=record.file_identifier,
-            hierarchy_level=record.hierarchy_level,
-            date_stamp=record.metadata.date_stamp,
-            title=record.identification.title,
-            abstract=record.identification.abstract,
-            purpose=record.identification.purpose,
-            edition=record.identification.edition,
-            creation=record.identification.dates.creation,
-            revision=record.identification.dates.revision,
-            publication=record.identification.dates.publication,
-            graphic_overview_href=overview_href,
-            child_aggregations_count=child_aggregations_count,
-        )
-
-    @property
-    def purpose_abstract(self) -> str:
-        """Purpose, or abstract if not defined."""
-        return self.purpose if self.purpose else self.abstract
-
-    @property
-    def revision_creation(self) -> Date:
-        """Revision date, or creation if not defined."""
-        return self.revision if self.revision else self.creation
