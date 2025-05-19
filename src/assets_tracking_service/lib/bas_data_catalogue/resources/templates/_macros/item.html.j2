@@ -10,7 +10,7 @@
   }}
 {% endmacro %}
 
-{% macro top_bit(data) %}
+{% macro not_tabs(data) %}
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-y-4 lg:gap-x-4">
     {{ summary(data.summary) }}
     {{ graphics(data.graphics) }}
@@ -18,7 +18,7 @@
 {% endmacro %}
 
 {% macro summary(data) %}
-  <section class="col-span-2 bg-grey-100 space-y-8 p-4">
+  <section id="item-summary" class="col-span-2 bg-grey-100 space-y-8 p-4">
     {% if data.grid_enabled %}
       {{ summary_grid(data) }}
     {% endif %}

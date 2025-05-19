@@ -13,10 +13,12 @@ from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import ItemSummaryCatalogue
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Constraint, Constraints
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintRestrictionCode,
     ConstraintTypeCode,
+    HierarchyLevelCode,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
@@ -69,7 +71,7 @@ class TestItemSummary:
             hierarchy_level=HierarchyLevelCode.PRODUCT,
             date_stamp=date_.date,
             title="y",
-            abstract="z",
+            purpose="z",
             creation=date_,
         )
     )

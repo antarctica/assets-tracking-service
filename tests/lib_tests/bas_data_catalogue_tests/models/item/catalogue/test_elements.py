@@ -29,6 +29,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.ident
     BoundingBox,
     ExtentGeographic,
     ExtentTemporal,
+    GraphicOverview,
     TemporalPeriod,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
@@ -315,6 +316,13 @@ class TestItemSummaryCatalogue:
         fx_lib_record_summary_minimal_item.edition = edition
         if has_pub:
             fx_lib_record_summary_minimal_item.publication = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
+        for _ in range(child_count):
+            fx_lib_record_summary_minimal_item.aggregations.append(
+                Aggregation(
+                    identifier=Identifier(identifier="x", namespace="x"),
+                    association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                )
+            )
         fx_lib_record_summary_minimal_item.child_aggregations_count = child_count
         summary = ItemSummaryCatalogue(fx_lib_record_summary_minimal_item)
 
@@ -340,8 +348,13 @@ class TestItemSummaryCatalogue:
     )
     def test_href_graphic(self, fx_lib_record_summary_minimal_item: RecordSummary, href: str | None, expected: str):
         """Can get href graphic."""
-        fx_lib_record_summary_minimal_item.graphic_overview_href = href
+        if href is not None:
+            fx_lib_record_summary_minimal_item.graphic_overviews.append(
+                GraphicOverview(identifier="overview", href=href, mime_type="x")
+            )
+
         summary = ItemSummaryCatalogue(fx_lib_record_summary_minimal_item)
+
         if href is not None:
             assert summary.href_graphic == expected
         else:

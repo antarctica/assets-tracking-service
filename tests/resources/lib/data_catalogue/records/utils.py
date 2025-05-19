@@ -1,11 +1,12 @@
 from datetime import UTC, date, datetime
 
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Date, HierarchyLevelCode, Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Address,
     Contact,
     ContactIdentity,
     Contacts,
+    Date,
     Dates,
     Identifier,
     OnlineResource,
@@ -28,6 +29,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintTypeCode,
     ContactRoleCode,
     DatePrecisionCode,
+    HierarchyLevelCode,
     MaintenanceFrequencyCode,
     OnlineResourceFunctionCode,
     ProgressCode,

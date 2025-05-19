@@ -128,7 +128,7 @@ class ItemSummaryCatalogue(ItemSummaryBase):
 
         E.g. For collections, the number of items it contains.
         """
-        count = self._record_summary.child_aggregations_count
+        count = len(self._record_summary.aggregations.filter(associations=AggregationAssociationCode.IS_COMPOSED_OF))
         if count == 1:
             return "1 item"
         if count > 1:
@@ -479,7 +479,7 @@ class PageSummary:
         """
         Whether to show summary grid section in UI.
 
-        The grid consists of all properties except the abstract/purpose and citation.
+        Contains all properties except abstract and citation.
         """
         if self.access != AccessType.PUBLIC:
             return True

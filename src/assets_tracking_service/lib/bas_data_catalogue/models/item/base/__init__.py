@@ -430,9 +430,12 @@ class ItemSummaryBase:
         return f"/items/{self.resource_id}/"
 
     @property
-    def href_graphic(self) -> str:
+    def href_graphic(self) -> str | None:
         """Graphic URL."""
-        return self._record_summary.graphic_overview_href
+        for graphic in self._record_summary.graphic_overviews:
+            if graphic.identifier == "overview":
+                return graphic.href
+        return None
 
     @property
     def resource_id(self) -> str:
@@ -453,24 +456,24 @@ class ItemSummaryBase:
         return self._record_summary.hierarchy_level
 
     @property
-    def summary_raw(self) -> str:
-        """Raw Summary."""
-        return self._record_summary.purpose_abstract
+    def summary_raw(self) -> str | None:
+        """Raw Summary, if present."""
+        return self._record_summary.purpose
 
     @property
-    def summary_md(self) -> str:
-        """Summary with Markdown formatting."""
+    def summary_md(self) -> str | None:
+        """Summary with Markdown formatting, if present."""
         return self.summary_raw
 
     @property
     def summary_html(self) -> str | None:
         """Summary with Markdown formatting, if present, encoded as HTML."""
-        return md_as_html(self.summary_md)
+        return md_as_html(self.summary_md) if self.summary_md is not None else None
 
     @property
-    def summary_plain(self) -> str:
-        """Summary without Markdown formatting."""
-        return md_as_plain(self.summary_md)
+    def summary_plain(self) -> str | None:
+        """Summary without Markdown formatting, if present."""
+        return md_as_plain(self.summary_md) if self.summary_md is not None else None
 
     @property
     def title_raw(self) -> str:

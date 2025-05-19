@@ -4,17 +4,19 @@ import pytest
 from bs4 import BeautifulSoup
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue, Tab
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Date
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Identifier
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
     Aggregations,
+    Constraint,
     GraphicOverview,
     GraphicOverviews,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
     AggregationInitiativeCode,
+    ConstraintRestrictionCode,
+    ConstraintTypeCode,
 )
 from tests.conftest import _lib_item_catalogue_min
 

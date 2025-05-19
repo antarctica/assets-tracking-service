@@ -662,10 +662,19 @@ class TestItemSummaryBase:
 
         assert summary.href == expected
 
-    @pytest.mark.parametrize("expected", ["x", None])
-    def test_href_graphic(self, fx_lib_record_summary_minimal_item: RecordSummary, expected: str | None):
-        """Can get href to graphic overview if defined."""
-        fx_lib_record_summary_minimal_item.graphic_overview_href = expected
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (GraphicOverviews([]), None),
+            (GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")]), None),
+            (GraphicOverviews([GraphicOverview(identifier="overview", href="x", mime_type="x")]), "x"),
+        ],
+    )
+    def test_href_graphic(
+        self, fx_lib_record_summary_minimal_item: RecordSummary, value: GraphicOverviews, expected: str | None
+    ):
+        """Can get href to overview graphic if defined."""
+        fx_lib_record_summary_minimal_item.graphic_overviews = value
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.href_graphic == expected
@@ -680,43 +689,37 @@ class TestItemSummaryBase:
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
         assert summary.resource_type == fx_lib_record_summary_minimal_item.hierarchy_level
 
-    @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, "y")])
+    @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, None)])
     def test_summary_raw(self, fx_lib_record_summary_minimal_item: RecordSummary, value: str | None, expected: str):
         """Can get summary as either purpose or if not set, abstract."""
         fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "y"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_raw == expected
 
-    @pytest.mark.parametrize(("value", "expected"), [("_x_", "_x_"), (None, "_y_")])
+    @pytest.mark.parametrize(("value", "expected"), [("_x_", "_x_"), (None, None)])
     def test_summary_md(self, fx_lib_record_summary_minimal_item: RecordSummary, value: str | None, expected: str):
         """Can get optional summary (purpose) with Markdown formatting."""
         fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "_y_"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_md == expected
 
-    @pytest.mark.parametrize(
-        ("value", "expected"), [("x", "<p>x</p>"), ("_x_", "<p><em>x</em></p>"), (None, "<p>y</p>")]
-    )
+    @pytest.mark.parametrize(("value", "expected"), [("x", "<p>x</p>"), ("_x_", "<p><em>x</em></p>"), (None, None)])
     def test_summary_html(
         self, fx_lib_record_summary_minimal_item: RecordSummary, value: str | None, expected: str | None
     ):
         """Can get summary (purpose) with Markdown formatting, if present, encoded as HTML."""
         if expected is not None:
             fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "y"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_html == expected
 
-    @pytest.mark.parametrize(("value", "expected"), [("_x_", "x"), (None, "y")])
+    @pytest.mark.parametrize(("value", "expected"), [("_x_", "x"), (None, None)])
     def test_summary_plain(self, fx_lib_record_summary_minimal_item: RecordSummary, value: str, expected: str):
         """Can get optional summary (purpose) without Markdown formatting."""
         fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "_y_"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_plain == expected

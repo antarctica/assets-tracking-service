@@ -187,7 +187,7 @@ class TestDataTab:
             ),
         ],
     )
-    def test_data_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[str], text: str):
+    def test_data_info(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[str], text: str):
         """
         Can get matching data access template based on values from item.
 
@@ -200,7 +200,7 @@ class TestDataTab:
         Using a single distribution option set, with an otherwise minimal item, can hopefully limit irrelevant content.
 
         Note: This test does not check the contents of the rendered template, except for the freetext value. For
-        example it does not verify a service endpoint (if used) is populated correctly.
+        example, it doesn't verify a service endpoint (if used) is populated correctly.
         """
         for href in value:
             fx_lib_item_catalogue_min._record.distribution.append(
