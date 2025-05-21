@@ -20,10 +20,10 @@
   <div class="max-w-none prose prose-base prose-headings:font-bold prose-li:my-0">{{ value }}</div>
 {% endmacro %}
 
-{% macro dl_item(title, id) %}
+{% macro dl_item(title, id, dd_class=None) %}
   <div class="space-y-2">
     <dt class="font-bold">{{ title }}</dt>
-    <dd id="{{ id }}">{{ caller() }}</dd>
+    <dd {% if dd_class %}class="{{ dd_class }}"{% endif %} id="{{ id }}">{{ caller() }}</dd>
   </div>
 {% endmacro %}
 

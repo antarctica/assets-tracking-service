@@ -52,7 +52,7 @@
       {% call com.dl_item(title='ArcGIS Item', id=id_base + '-portal-item') %}
         {{ com.ext_link_a(href=data.item_link.href, value=data.item_link.value) }}
       {% endcall %}
-      {% call com.dl_item(title='Service Endpoint', id=id_base + '-server-endpoint') %}
+      {% call com.dl_item(title='Service Endpoint', id=id_base + '-server-endpoint', dd_class="overflow-x-scroll") %}
         <code>{{ data.service_endpoint }}</code>
       {% endcall %}
       {% call com.dl_item(title='Instructions', id=id_base + '-instructions') %}
@@ -71,7 +71,7 @@
     <p>This item can be added to a desktop or online GIS that supports using <a class="{{ com.link_classes() }}" href="https://ogcapi.ogc.org/features/">OGC API Features {{ com.ext_link_i() }}</a> services.</p>
     <p><strong>Note:</strong> This service is implemented using ArcGIS Server.</p>
     <dl class="space-y-4">
-      {% call com.dl_item(title='Service Endpoint', id=id_base + '-server-endpoint') %}
+      {% call com.dl_item(title='Service Endpoint', id=id_base + '-server-endpoint', dd_class="overflow-x-scroll") %}
         <code>{{ data.service_endpoint }}</code>
       {% endcall %}
       {% call com.dl_item(title='Instructions', id=id_base + '-instructions') %}
@@ -92,7 +92,7 @@
       {% call com.dl_item(title='ArcGIS Item', id=id_base + '-portal-item') %}
         {{ com.ext_link_a(href=data.item_link.href, value=data.item_link.value) }}
       {% endcall %}
-      {% call com.dl_item(title='Service Endpoint', id=id_base + '-server-endpoint') %}
+      {% call com.dl_item(title='Service Endpoint', id=id_base + '-server-endpoint', dd_class="overflow-x-scroll") %}
         <code>{{ data.service_endpoint }}</code>
       {% endcall %}
       {% call com.dl_item(title='Instructions', id=id_base + '-instructions') %}

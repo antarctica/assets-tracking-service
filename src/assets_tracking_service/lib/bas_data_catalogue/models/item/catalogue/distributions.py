@@ -111,8 +111,7 @@ class FileDistribution(Distribution, ABC):
     @property
     def action(self) -> Link:
         """Link to distribution."""
-        value = "Download" if self._access == AccessType.PUBLIC else "Restricted Download"
-        return Link(value=value, href=self._option.transfer_option.online_resource.href)
+        return Link(value="Download", href=self._option.transfer_option.online_resource.href)
 
     @property
     def action_btn_variant(self) -> str:

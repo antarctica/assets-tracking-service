@@ -24,8 +24,8 @@
               Do not any include any sensitive information in your message.
             </div>
           </div>
-          {{ form_input(id="message-sender-name", name="Your name", placeholder="Connie Watson") }}
-          {{ form_input(id="message-sender-email", name="Your email address", placeholder="conwat@bas.ac.uk", required=True) }}
+          {{ form_input(id="message-sender-name", name="Your name", placeholder="Your Name") }}
+          {{ form_input(id="message-sender-email", name="Your email address", placeholder="your.name@example.org", required=True) }}
           <div>
             <button class="{{ com.btn_primary_classes() }} p-4" type="submit">
                 Send Message <i class="fas fa-arrow-right"></i>
