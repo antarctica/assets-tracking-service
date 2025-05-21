@@ -126,7 +126,7 @@ class TestFileDistribution:
         assert dist.size == expected
 
     @pytest.mark.parametrize(
-        ("access", "expected"), [(AccessType.PUBLIC, "Download"), (AccessType.BAS_SOME, "Restricted Download")]
+        ("access", "expected"), [(AccessType.PUBLIC, "Download"), (AccessType.BAS_SOME, "Download")]
     )
     def test_action(self, access: AccessType, expected: str):
         """Can get action link."""
