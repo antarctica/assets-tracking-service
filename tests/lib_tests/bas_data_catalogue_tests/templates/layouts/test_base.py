@@ -14,6 +14,8 @@ class TestMacrosSite:
         """Get page metadata."""
         return PageMetadata(
             html_title="x",
+            sentry_src="x",
+            plausible_domain="x",
             html_open_graph={"x": "y"},
             html_schema_org=json.dumps({"x": "y"}),
         )

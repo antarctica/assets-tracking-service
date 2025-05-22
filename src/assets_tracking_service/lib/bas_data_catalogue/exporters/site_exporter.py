@@ -11,7 +11,8 @@ from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter as BaseExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.templates import PageMetadata
 
 
@@ -34,6 +35,7 @@ class SiteResourcesExporter:
         self._fonts_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.fonts"
         self._img_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.img"
         self._txt_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.txt"
+        self._xsl_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.xsl"
         self._export_base = config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("static")
 
     def _dump_css(self) -> None:
@@ -75,6 +77,10 @@ class SiteResourcesExporter:
         """Copy text files to directory if not already present."""
         BaseExporter._dump_package_resources(src_ref=self._txt_src_ref, dest_path=self._export_base.joinpath("txt"))
 
+    def _dump_xsl(self) -> None:
+        """Copy XML XSL files to directory if not already present."""
+        BaseExporter._dump_package_resources(src_ref=self._xsl_src_ref, dest_path=self._export_base.joinpath("xsl"))
+
     def _publish_css(self) -> None:
         """Upload CSS as an S3 object."""
         name = "main.css"
@@ -110,9 +116,15 @@ class SiteResourcesExporter:
         )
 
     def _publish_txt(self) -> None:
-        """Upload fonts as S3 objects if they do not already exist."""
+        """Upload text files as S3 objects if they do not already exist."""
         self._s3_utils.upload_package_resources(
             src_ref=self._txt_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("txt"))
+        )
+
+    def _publish_xsl(self) -> None:
+        """Upload XML XSL files as S3 objects if they do not already exist."""
+        self._s3_utils.upload_package_resources(
+            src_ref=self._xsl_src_ref, base_key=self._s3_utils.calc_key(self._export_base.joinpath("xsl"))
         )
 
     @property
@@ -127,6 +139,7 @@ class SiteResourcesExporter:
         self._dump_favicon_ico()
         self._dump_img()
         self._dump_txt()
+        self._dump_xsl()
 
     def publish(self) -> None:
         """Copy site resources to S3 bucket."""
@@ -135,6 +148,7 @@ class SiteResourcesExporter:
         self._publish_favicon_ico()
         self._publish_img()
         self._publish_txt()
+        self._publish_xsl()
 
 
 class SiteIndexExporter:
@@ -218,16 +232,19 @@ class SitePagesExporter:
 
         self._templates = ["404.html.j2", "legal/cookies.html.j2", "legal/copyright.html.j2", "legal/privacy.html.j2"]
 
-    @staticmethod
-    def _get_page_metadata(template_path: str) -> PageMetadata:
+    def _get_page_metadata(self, template_path: str) -> PageMetadata:
         """Get metadata for a page based on its template."""
         mapping = {
-            "404.html.j2": PageMetadata(html_title="Not Found"),
-            "legal/cookies.html.j2": PageMetadata(html_title="Cookies Policy"),
-            "legal/copyright.html.j2": PageMetadata(html_title="Copyright Policy"),
-            "legal/privacy.html.j2": PageMetadata(html_title="Privacy Policy"),
+            "404.html.j2": "Not Found",
+            "legal/cookies.html.j2": "Cookies Policy",
+            "legal/copyright.html.j2": "Copyright Policy",
+            "legal/privacy.html.j2": "Privacy Policy",
         }
-        return mapping[template_path]
+        return PageMetadata(
+            sentry_src=self._config.EXPORTER_DATA_CATALOGUE_SENTRY_SRC,
+            plausible_domain=self._config.EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN,
+            html_title=mapping[template_path],
+        )
 
     def _get_page_path(self, template_path: str) -> Path:
         """Get path within exported site for a page based on its template."""

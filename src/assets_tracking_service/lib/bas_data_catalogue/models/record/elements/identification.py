@@ -493,6 +493,44 @@ class Identification(Citation):
     spatial_resolution: int | None = None
     supplemental_information: str | None = None
 
+    @staticmethod
+    def _reorder_elements(value: dict) -> dict:
+        """
+        Reorder keys in unstructured dict to follow conventional element order.
+
+        As this class extends Citation, the order of elements in an unstructured dict doesn't follow the JSON schema.
+        This doesn't affect validation but does make it harder to compare against records made prior to this class.
+        """
+        order = [
+            "title",
+            "abstract",
+            "purpose",
+            # credit (not yet implemented)
+            # status (not yet implemented)
+            "dates",
+            "edition",
+            "series",
+            "other_citation_details",
+            "identifiers",
+            "contacts",
+            "maintenance",
+            "graphic_overviews",
+            # resource_formats (not yet implemented)
+            # keywords (not yet implemented)
+            "constraints",
+            "aggregations",
+            "supplemental_information",
+            # spatial representation type (not yet implemented)
+            "spatial_resolution",
+            "character_set",
+            "language",
+            # topics (not yet implemented)
+            "extents",
+        ]
+
+        # redefine value based on order for keys defined in value
+        return {key: value[key] for key in order if key in value}
+
     @classmethod
     def structure(cls: type[TIdentification], value: dict) -> "Identification":
         """
@@ -539,4 +577,4 @@ class Identification(Citation):
         title = value.pop("title")
         value["title"] = {"value": title}
 
-        return value
+        return self._reorder_elements(value)

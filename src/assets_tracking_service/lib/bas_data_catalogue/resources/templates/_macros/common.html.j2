@@ -8,6 +8,8 @@
 
 {% macro btn_primary_classes() %}{{ btn_base_classes() }} bg-turquoise-500 text-white hover:bg-turquoise-700{% endmacro %}
 
+{% macro btn_warning_classes() %}{{ btn_base_classes() }} bg-yellow-500 text-black hover:bg-yellow-700{% endmacro %}
+
 {% macro footer_link_classes() %}text-sky-blue-300 hover:underline{% endmacro %}
 
 {% macro back_to_top_id() %}site-top{% endmacro %}
@@ -15,13 +17,13 @@
 {% macro sentry_trigger() %}site-feedback-trigger{% endmacro %}
 
 {% macro prose(value) %}
-  <div class="max-w-none prose prose-base prose-headings:font-bold prose-li:mt-0 prose-li:mb-1">{{ value }}</div>
+  <div class="max-w-none prose prose-base prose-headings:font-bold prose-li:my-0">{{ value }}</div>
 {% endmacro %}
 
-{% macro dl_item(title, id) %}
+{% macro dl_item(title, id, dd_class=None) %}
   <div class="space-y-2">
     <dt class="font-bold">{{ title }}</dt>
-    <dd id="{{ id }}">{{ caller() }}</dd>
+    <dd {% if dd_class %}class="{{ dd_class }}"{% endif %} id="{{ id }}">{{ caller() }}</dd>
   </div>
 {% endmacro %}
 
@@ -80,6 +82,14 @@
   {% if data.published %}
     <span class="text-grey-100">|</span>
     {{ time(data.published) }}
+  {% endif %}
+  {% if data.children %}
+    <span class="text-grey-100">|</span>
+    <span>{{ data.children }}</span>
+  {% endif %}
+  {% if data.access.name != 'PUBLIC' %}
+    <span class="text-grey-100">|</span>
+    <span><i class="far fa-lock-alt"></i> Restricted</span>
   {% endif %}
 {% endmacro %}
 

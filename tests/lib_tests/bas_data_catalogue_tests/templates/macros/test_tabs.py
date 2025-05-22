@@ -178,9 +178,16 @@ class TestDataTab:
                 ["https://www.bas.ac.uk/data/our-data/maps/how-to-order-a-map/"],
                 "This item is currently only available to purchase as a physical paper map",
             ),
+            (
+                [
+                    "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+tile+vector",
+                    "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector",
+                ],
+                "ArcGIS Vector Tiles",
+            ),
         ],
     )
-    def test_data_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[str], text: str):
+    def test_data_info(self, fx_lib_item_catalogue_min: ItemCatalogue, value: list[str], text: str):
         """
         Can get matching data access template based on values from item.
 
@@ -193,7 +200,7 @@ class TestDataTab:
         Using a single distribution option set, with an otherwise minimal item, can hopefully limit irrelevant content.
 
         Note: This test does not check the contents of the rendered template, except for the freetext value. For
-        example it does not verify a service endpoint (if used) is populated correctly.
+        example, it doesn't verify a service endpoint (if used) is populated correctly.
         """
         for href in value:
             fx_lib_item_catalogue_min._record.distribution.append(
@@ -211,6 +218,48 @@ class TestDataTab:
         assert html.select_one(f"button[data-target='{expected.access_target}']") is not None
         assert html.find(name="div", string=expected.format_type.value) is not None
         assert str(html).count(text) == 1
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
+                    statement="Open Access",
+                ),
+                False,
+            ),
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                    statement="Closed Access",
+                ),
+                True,
+            ),
+        ],
+    )
+    def test_restricted_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Constraint, expected: bool):
+        """Shows restricted access panel if item is restricted."""
+        fx_lib_item_catalogue_min._record.distribution.append(
+            Distribution(
+                distributor=Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.DISTRIBUTOR]),
+                format=Format(format="x", href="https://www.iana.org/assignments/media-types/image/png"),
+                transfer_option=TransferOption(
+                    size=Size(unit="bytes", magnitude=1024),
+                    online_resource=OnlineResource(href="x", function=OnlineResourceFunctionCode.DOWNLOAD),
+                ),
+            )
+        )
+        fx_lib_item_catalogue_min._record.identification.constraints = Constraints([value])
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        result = html.select_one("#data-restricted-info")
+        if expected:
+            assert result is not None
+        else:
+            assert result is None
 
 
 class TestAuthorsTab:
@@ -497,6 +546,43 @@ class TestRelatedTab:
                 [
                     Aggregation(
                         identifier=Identifier(identifier="x", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                        initiative_type=AggregationInitiativeCode.COLLECTION,
+                    ),
+                    Aggregation(
+                        identifier=Identifier(identifier="y", href="y", namespace="y"),
+                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                        initiative_type=AggregationInitiativeCode.COLLECTION,
+                    ),
+                ]
+            ),
+        ],
+    )
+    def test_peer_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
+        """
+        Can get optional peer collections with expected values from item.
+
+        Detailed item summary tests are run in common macro tests.
+        """
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        expected = fx_lib_item_catalogue_min._related.peer_collections
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        collections = html.select_one("#related-peer-collections")
+        if len(expected) > 0:
+            for item in expected:
+                assert collections.select_one(f"a[href='{item.href}']") is not None
+        else:
+            assert collections is None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Aggregations([]),
+            Aggregations(
+                [
+                    Aggregation(
+                        identifier=Identifier(identifier="x", href="x", namespace="x"),
                         association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
                         initiative_type=AggregationInitiativeCode.COLLECTION,
                     )
@@ -527,7 +613,7 @@ class TestRelatedTab:
                         initiative_type=AggregationInitiativeCode.COLLECTION,
                     ),
                     Aggregation(
-                        identifier=Identifier(identifier="y", href="x", namespace="y"),
+                        identifier=Identifier(identifier="y", href="y", namespace="y"),
                         association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
                         initiative_type=AggregationInitiativeCode.COLLECTION,
                     ),
@@ -535,17 +621,17 @@ class TestRelatedTab:
             ),
         ],
     )
-    def test_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
+    def test_parent_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
         """
-        Can get optional related collections with expected values from item.
+        Can get optional parent collections with expected values from item.
 
         Detailed item summary tests are run in common macro tests.
         """
         fx_lib_item_catalogue_min._record.identification.aggregations = value
-        expected = fx_lib_item_catalogue_min._related.collections
+        expected = fx_lib_item_catalogue_min._related.parent_collections
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
-        collections = html.select_one("#related-collections")
+        collections = html.select_one("#related-parent-collections")
         if len(expected) > 0:
             for item in expected:
                 assert collections.select_one(f"a[href='{item.href}']") is not None

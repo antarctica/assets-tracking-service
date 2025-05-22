@@ -12,7 +12,8 @@ from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter impo
     SitePagesExporter,
     SiteResourcesExporter,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestSiteIndexExporter:
@@ -185,9 +186,20 @@ class TestSiteResourcesExporter:
 
     def test_dump_txt(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can copy text files to output path."""
-        expected = fx_lib_exporter_site_resources._export_base.joinpath("txt/heartbeat.txt")
+        expected = [
+            fx_lib_exporter_site_resources._export_base.joinpath("txt/heartbeat.txt"),
+            fx_lib_exporter_site_resources._export_base.joinpath("txt/manifest.webmanifest"),
+        ]
 
         fx_lib_exporter_site_resources._dump_txt()
+        for path in expected:
+            assert path.exists()
+
+    def test_dump_xsl(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
+        """Can copy XSL files to output path."""
+        expected = fx_lib_exporter_site_resources._export_base.joinpath("xsl/iso-html/xml-to-html-ISO.xsl")
+
+        fx_lib_exporter_site_resources._dump_xsl()
         assert expected.exists()
 
     def test_publish_css(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
@@ -232,9 +244,20 @@ class TestSiteResourcesExporter:
 
     def test_publish_txt(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can upload text files to S3."""
-        expected = "static/txt/heartbeat.txt"
+        expected = ["static/txt/heartbeat.txt", "static/txt/manifest.webmanifest"]
 
         fx_lib_exporter_site_resources._publish_txt()
+        for key in expected:
+            result = fx_lib_exporter_site_resources._s3_utils._s3.get_object(
+                Bucket=fx_lib_exporter_site_resources._s3_utils._bucket, Key=key
+            )
+            assert result["ResponseMetadata"]["HTTPStatusCode"] == 200
+
+    def test_publish_xsl(self, fx_lib_exporter_site_resources: SiteResourcesExporter):
+        """Can upload XSL files to S3."""
+        expected = "static/xsl/iso-html/xml-to-html-ISO.xsl"
+
+        fx_lib_exporter_site_resources._publish_xsl()
         result = fx_lib_exporter_site_resources._s3_utils._s3.get_object(
             Bucket=fx_lib_exporter_site_resources._s3_utils._bucket, Key=expected
         )
@@ -247,6 +270,7 @@ class TestSiteResourcesExporter:
         assert fx_lib_exporter_site_resources._export_base.joinpath("fonts/open-sans.ttf").exists()
         assert fx_lib_exporter_site_resources._export_base.joinpath("img/favicon.ico").exists()
         assert fx_lib_exporter_site_resources._export_base.joinpath("txt/heartbeat.txt").exists()
+        assert fx_lib_exporter_site_resources._export_base.joinpath("xsl/iso-html/xml-to-html-ISO.xsl").exists()
 
     def test_publish(self, fx_s3_bucket_name: str, fx_lib_exporter_site_resources: SiteResourcesExporter):
         """Can upload resources to S3."""
@@ -255,6 +279,7 @@ class TestSiteResourcesExporter:
             "static/fonts/open-sans.ttf",
             "static/img/favicon.ico",
             "static/txt/heartbeat.txt",
+            "static/xsl/iso-html/xml-to-html-ISO.xsl",
         ]
 
         fx_lib_exporter_site_resources.publish()

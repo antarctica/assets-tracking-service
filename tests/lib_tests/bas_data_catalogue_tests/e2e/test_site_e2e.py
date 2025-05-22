@@ -9,9 +9,7 @@ class TestSentry:
     def test_widget(self, fx_lib_exporter_static_server: Popen, page: Page):
         """Can open feedback widget between tabs."""
         page.goto("http://localhost:8123/legal/privacy/index.html")
-
-        # wait for Sentry to init
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(1000)  # wait for Sentry to init
 
         page.locator("text=Is something wrong with this page?").click()
         expect(page.locator("text=Add a screenshot")).to_be_visible()

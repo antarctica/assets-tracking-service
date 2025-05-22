@@ -2,7 +2,7 @@ import json
 from json import JSONDecodeError
 from urllib.parse import unquote
 
-from markdown import markdown
+from markdown import Markdown, markdown
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.const import (
     PERMISSIONS_BAS_GROUP,
@@ -19,7 +19,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     Distribution,
     HierarchyLevelCode,
     Record,
-    RecordSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Identifiers
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
@@ -35,7 +34,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintRestrictionCode,
     ConstraintTypeCode,
 )
-from assets_tracking_service.lib.markdown.formats.plaintext import convert_to_plain_text as markdown_plaintext
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
+from assets_tracking_service.lib.markdown.extensions.links import LinkifyExtension
+from assets_tracking_service.lib.markdown.extensions.prepend_new_line import PrependNewLineExtension
+from assets_tracking_service.lib.markdown.formats.plaintext import PlainTextExtension
 
 
 def md_as_html(string: str) -> str:
@@ -44,12 +46,16 @@ def md_as_html(string: str) -> str:
 
     At a minimum the string will be returned as a paragraph.
     """
-    return markdown(string, output_format="html", extensions=["tables"])
+    return markdown(string, output_format="html", extensions=["tables", PrependNewLineExtension(), LinkifyExtension()])
 
 
-def md_as_plain(string: str) -> str:
+def md_as_plain(string: str | None) -> str:
     """Strip possible Markdown formatting from a string."""
-    return markdown_plaintext(string)
+    if string is None:
+        return ""
+
+    md = Markdown(extensions=[PlainTextExtension()])
+    return md.convert(string)
 
 
 class ItemBase:
@@ -119,6 +125,36 @@ class ItemBase:
 
         return permissions
 
+    @staticmethod
+    def _parse_access(constraints: Constraints) -> AccessType:
+        """
+        Determine item access based on access constraints.
+
+        Defaults to no access if no access constraints are set.
+        Sets public access if a single unrestricted access constraint is set.
+        Sets intentionally ambiguous 'BAS_SOME' access if a single restricted constraint is set without permissions.
+        May set other options based on any permissions set in constraints.
+        """
+        if len(constraints) == 0:
+            return AccessType.NONE
+
+        if len(constraints) == 1 and constraints[0].restriction_code == ConstraintRestrictionCode.UNRESTRICTED:
+            return AccessType.PUBLIC
+
+        if (
+            len(constraints) == 1
+            and constraints[0].restriction_code == ConstraintRestrictionCode.RESTRICTED
+            and constraints[0].href is None
+        ):
+            return AccessType.BAS_SOME
+
+        permissions = [perm for constraint in constraints for perm in ItemBase._parse_permissions(constraint.href)]
+        if AccessType.BAS_ALL in permissions:
+            return AccessType.BAS_ALL
+
+        # fail-safe
+        return AccessType.NONE
+
     @property
     def abstract_raw(self) -> str:
         """Raw Abstract."""
@@ -135,25 +171,9 @@ class ItemBase:
         return md_as_html(self.abstract_md)
 
     @property
-    def access(self) -> AccessType:
-        """
-        Access constraint.
-
-        Defaults to no access if not set in record.
-        """
-        access = self.constraints.filter(types=ConstraintTypeCode.ACCESS)
-        if len(access) == 0:
-            return AccessType.NONE
-
-        if access[0].restriction_code == ConstraintRestrictionCode.UNRESTRICTED:
-            return AccessType.PUBLIC
-
-        permissions = self._parse_permissions(access[0].href)
-        if AccessType.BAS_ALL in permissions:
-            return AccessType.BAS_ALL
-
-        # fail-safe
-        return AccessType.NONE
+    def access_type(self) -> AccessType:
+        """Resource access."""
+        return self._parse_access(self.constraints.filter(types=ConstraintTypeCode.ACCESS))
 
     @property
     def aggregations(self) -> Aggregations:
@@ -389,6 +409,12 @@ class ItemSummaryBase:
             raise ValueError(msg)
 
     @property
+    def access(self) -> AccessType:
+        """Resource access."""
+        # noinspection PyProtectedMember
+        return ItemBase._parse_access(self._record_summary.constraints.filter(types=ConstraintTypeCode.ACCESS))
+
+    @property
     def date(self) -> Date | None:
         """Item publication date if available."""
         return self._record_summary.publication
@@ -404,9 +430,12 @@ class ItemSummaryBase:
         return f"/items/{self.resource_id}/"
 
     @property
-    def href_graphic(self) -> str:
+    def href_graphic(self) -> str | None:
         """Graphic URL."""
-        return self._record_summary.graphic_overview_href
+        for graphic in self._record_summary.graphic_overviews:
+            if graphic.identifier == "overview":
+                return graphic.href
+        return None
 
     @property
     def resource_id(self) -> str:
@@ -427,24 +456,24 @@ class ItemSummaryBase:
         return self._record_summary.hierarchy_level
 
     @property
-    def summary_raw(self) -> str:
-        """Raw Summary."""
-        return self._record_summary.purpose_abstract
+    def summary_raw(self) -> str | None:
+        """Raw Summary, if present."""
+        return self._record_summary.purpose
 
     @property
-    def summary_md(self) -> str:
-        """Summary with Markdown formatting."""
+    def summary_md(self) -> str | None:
+        """Summary with Markdown formatting, if present."""
         return self.summary_raw
 
     @property
     def summary_html(self) -> str | None:
         """Summary with Markdown formatting, if present, encoded as HTML."""
-        return md_as_html(self.summary_md)
+        return md_as_html(self.summary_md) if self.summary_md is not None else None
 
     @property
-    def summary_plain(self) -> str:
-        """Summary without Markdown formatting."""
-        return md_as_plain(self.summary_md)
+    def summary_plain(self) -> str | None:
+        """Summary without Markdown formatting, if present."""
+        return md_as_plain(self.summary_md) if self.summary_md is not None else None
 
     @property
     def title_raw(self) -> str:

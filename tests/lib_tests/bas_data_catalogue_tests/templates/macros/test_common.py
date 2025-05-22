@@ -13,7 +13,14 @@ from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import ItemSummaryCatalogue
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Date, HierarchyLevelCode, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Constraint, Constraints
+from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
+    ConstraintRestrictionCode,
+    ConstraintTypeCode,
+    HierarchyLevelCode,
+)
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestPageHeader:
@@ -54,16 +61,18 @@ class TestPageHeader:
         assert html.select_one("#z") is not None
 
 
-class TestItemSummaryMacro:
+class TestItemSummary:
     """Test item summary common macro."""
 
+    date_ = Date(date=date(2023, 10, 31))
     summary_base = ItemSummaryCatalogue(
         record_summary=RecordSummary(
             file_identifier="x",
             hierarchy_level=HierarchyLevelCode.PRODUCT,
+            date_stamp=date_.date,
             title="y",
-            abstract="z",
-            creation=Date(date=date(2023, 10, 31)),
+            purpose="z",
+            creation=date_,
         )
     )
 
@@ -124,3 +133,88 @@ class TestItemSummaryMacro:
         if expected:
             assert html.select_one("time").text.strip() == expected.value
             assert html.select_one("time")["datetime"] == expected.datetime
+
+    @pytest.mark.parametrize("value", [0, 1, 2])
+    def test_items(self, value: int | None):
+        """Can get optional child item count with expected value from summary."""
+        summary = deepcopy(self.summary_base)
+        summary._record_summary.child_aggregations_count = value
+        expected = summary.fragments.children
+        html = BeautifulSoup(self._render(summary), parser="html.parser", features="lxml")
+
+        if expected:
+            assert html.find(name="span", string=expected) is not None
+        else:
+            assert html.find(name="span", string="0 items") is None
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
+                    statement="Open Access",
+                ),
+                False,
+            ),
+            (
+                Constraint(
+                    type=ConstraintTypeCode.ACCESS,
+                    restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                    statement="Closed Access",
+                ),
+                True,
+            ),
+        ],
+    )
+    def test_access(self, value: Constraint, expected: bool):
+        """
+        Can get access type with expected value from summary.
+
+        Only shown if restricted.
+        """
+        summary = deepcopy(self.summary_base)
+        summary._record_summary.constraints = Constraints([value])
+        html = BeautifulSoup(self._render(summary), parser="html.parser", features="lxml")
+
+        result = html.find(lambda tag: tag.name == "span" and "Restricted" in tag.get_text())
+        if expected:
+            assert result is not None
+        else:
+            assert result is None
+
+
+class TestDlItem:
+    """Test DL item common macro."""
+
+    @staticmethod
+    def _render(config: dict, value: str) -> str:
+        _loader = PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates")
+        jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
+        template = (
+            """{% import '_macros/common.html.j2' as com %}{% call com.dl_item(**config) %}{{ value }}{% endcall %}"""
+        )
+        return jinja.from_string(template).render(config=config, value=value)
+
+    def test_main(self):
+        """Can render a minimal DL item with minimal properties only."""
+        config = {"title": "x", "id": "x"}
+        value = "x"
+        html = BeautifulSoup(
+            self._render(config={"title": config["title"], "id": config["id"]}, value=value),
+            parser="html.parser",
+            features="lxml",
+        )
+        assert html.select_one("dt").text.strip() == config["title"]
+        assert html.select_one("dd", id=config["id"]) is not None
+
+    def test_dd_class(self):
+        """Can render a DL item classes on the DD element."""
+        dd_class = "x"
+        html = BeautifulSoup(
+            self._render(config={"title": "x", "id": "x", "dd_class": dd_class}, value="x"),
+            parser="html.parser",
+            features="lxml",
+        )
+        assert html.select_one(f"dd.{dd_class}") is not None

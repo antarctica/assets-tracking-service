@@ -4,17 +4,19 @@ import pytest
 from bs4 import BeautifulSoup
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue, Tab
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Date
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Identifier
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
     Aggregations,
+    Constraint,
     GraphicOverview,
     GraphicOverviews,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
     AggregationInitiativeCode,
+    ConstraintRestrictionCode,
+    ConstraintTypeCode,
 )
 from tests.conftest import _lib_item_catalogue_min
 
@@ -98,6 +100,31 @@ class TestMacrosItem:
         else:
             assert html.select_one("#summary-published").text.strip() == expected.value
             assert html.select_one("#summary-published")["datetime"] == expected.datetime
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Constraint(
+                type=ConstraintTypeCode.ACCESS,
+                restriction_code=ConstraintRestrictionCode.UNRESTRICTED,
+                statement="Open Access",
+            ),
+            Constraint(
+                type=ConstraintTypeCode.ACCESS,
+                restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                statement="Closed Access",
+            ),
+        ],
+    )
+    def test_access(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Constraint):
+        """Can get item access with expected value from item."""
+        fx_lib_item_catalogue_min._record.identification.constraints.append(value)
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        if value.restriction_code == ConstraintRestrictionCode.UNRESTRICTED:
+            assert html.select_one("#summary-access") is None
+        else:
+            assert html.select_one("#summary-access").text.strip() == "Restricted"
 
     @pytest.mark.parametrize("value", [None, "x"])
     def test_citation(self, fx_lib_item_catalogue_min: ItemCatalogue, value: str | None):

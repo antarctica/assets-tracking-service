@@ -157,9 +157,9 @@ record.distribution = [
         transfer_option=TransferOption(
             online_resource=OnlineResource(
                 href="https://www.bas.ac.uk/data/our-data/maps/how-to-order-a-map/",
-                function=OnlineResourceFunctionCode.DOWNLOAD,
-                title="GeoJSON",
-                description="Access information as a GeoJSON file.",
+                function=OnlineResourceFunctionCode.ORDER,
+                title="Map ordering information - BAS public website",
+                description="Access information on how to order item.",
             ),
         ),
     )

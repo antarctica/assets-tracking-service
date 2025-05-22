@@ -167,7 +167,7 @@
     {% if content == 'restrictions' %}
       {% call clauses(alert_variant='red', label='Important notes:') %}
         {% call clause(i_classes='far fa-ban') %}
-          <strong>All rights reserved</strong> — any use of this item requires permission
+          <strong>All rights reserved</strong> — any use of this item requires permission by <a class="{{ com.link_classes() }}" href="#tab-contact">contacting us</a>
         {% endcall %}
         {% call clause(i_classes='far fa-question-circle') %}
           <strong>Inaccuracies and mistakes</strong> — may be included unintentionally due to limited data availability or quality

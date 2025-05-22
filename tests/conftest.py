@@ -51,7 +51,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Identifiers as ItemCatIdentifiers,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record as LibRecord
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Date,
     Dates,
@@ -59,6 +58,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Identifiers,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import HierarchyLevelCode
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
 from assets_tracking_service.models.asset import Asset, AssetNew, AssetsClient
@@ -82,6 +82,7 @@ from tests.pytest_pg_factories import (  # noqa: F401
 from tests.resources.examples.example_exporter import ExampleExporter
 from tests.resources.examples.example_provider import ExampleProvider
 from tests.resources.lib.data_catalogue.records.item_cat_collection_all import record as collection_all_supported
+from tests.resources.lib.data_catalogue.records.item_cat_collection_min import record as collection_min_supported
 from tests.resources.lib.data_catalogue.records.item_cat_data import record as data_all_supported
 from tests.resources.lib.data_catalogue.records.item_cat_formatting import record as formatting_supported
 from tests.resources.lib.data_catalogue.records.item_cat_licence import (
@@ -92,6 +93,7 @@ from tests.resources.lib.data_catalogue.records.item_cat_licence import (
 )
 from tests.resources.lib.data_catalogue.records.item_cat_product_all import record as product_all_supported
 from tests.resources.lib.data_catalogue.records.item_cat_product_min import record as product_min_supported
+from tests.resources.lib.data_catalogue.records.item_cat_product_restricted import record as product_restricted
 from tests.resources.lib.data_catalogue.records.item_cat_pub_map import record as product_published_map
 
 # override `postgresql` fixture with either a local (proc) or remote (noproc) fixture depending on if in CI.
@@ -928,12 +930,13 @@ def _lib_get_record_summary(identifier: str) -> RecordSummary:
 
     Standalone method to allow use outside of fixtures.
     """
+    date_ = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
     return RecordSummary(
         file_identifier=identifier,
         hierarchy_level=HierarchyLevelCode.PRODUCT,
+        date_stamp=date_.date,
         title="x",
-        abstract="x",
-        creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
+        creation=date_,
     )
 
 
@@ -965,24 +968,22 @@ def _lib_item_catalogue_min() -> ItemCatalogue:
     Standalone method to allow use outside of fixtures in test parametrisation.
     """
     return ItemCatalogue(
+        config=Config(),
         record=LibRecord.loads(
             _lib_record_config_minimal_item_catalogue(_lib_record_config_minimal_item(_lib_record_config_minimal_iso()))
         ),
-        embedded_maps_endpoint="x",
-        item_contact_endpoint="x",
         get_record_summary=_lib_get_record_summary,
     )
 
 
 @pytest.fixture()
 def fx_lib_item_catalogue_min(
-    fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
+    fx_config: Config, fx_lib_record_minimal_item_catalogue: Record, fx_lib_get_record_summary: callable
 ) -> ItemCatalogue:
     """ItemCatalogue based on minimal catalogue record."""
     return ItemCatalogue(
+        config=fx_config,
         record=fx_lib_record_minimal_item_catalogue,
-        embedded_maps_endpoint="x",
-        item_contact_endpoint="x",
         get_record_summary=fx_lib_get_record_summary,
     )
 
@@ -1054,7 +1055,6 @@ def fx_lib_exporter_iso_xml_html(
     with TemporaryDirectory() as tmp_path:
         base_path = Path(tmp_path)
         exports_path = base_path.joinpath("exports")
-        stylesheets_path = base_path.joinpath("static")
     mock_config = mocker.Mock()
     type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=base_path)
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
@@ -1064,7 +1064,6 @@ def fx_lib_exporter_iso_xml_html(
         s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=exports_path,
-        stylesheets_base=stylesheets_path,
     )
 
 
@@ -1205,8 +1204,10 @@ def fx_lib_exporter_site(
 def lib_exporter_static_site_records() -> list[LibRecord]:
     """Records for populating static site exporter."""  # noqa: D401
     return [
+        collection_min_supported,
         collection_all_supported,
         product_min_supported,
+        product_restricted,
         product_all_supported,
         formatting_supported,
         data_all_supported,

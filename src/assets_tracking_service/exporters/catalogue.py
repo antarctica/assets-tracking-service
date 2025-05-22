@@ -9,7 +9,7 @@ from assets_tracking_service.exporters.base_exporter import Exporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter, HtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlExporter, IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.json_exporter import JsonExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Contacts,
     Date,
@@ -45,6 +45,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.contac
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.distribution import make_esri_feature_layer
 from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projections import EPSG_4326
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.models.layer import LayersClient
 from assets_tracking_service.models.record import RecordsClient
 
@@ -271,11 +272,8 @@ class DataCatalogueExporter(Exporter):
     def _export_iso_xml_html(self, record: Record) -> None:
         """Export record as ISO XML with HTML stylesheet."""
         self._logger.debug("Exporting record '%s' as ISO XML with HTML stylesheet...", record.file_identifier)
-        stylesheets_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("static/xsl/iso-html")
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        exporter = IsoXmlHtmlExporter(
-            config=self._config, s3=self._s3, record=record, export_base=output_path, stylesheets_base=stylesheets_path
-        )
+        exporter = IsoXmlHtmlExporter(config=self._config, s3=self._s3, record=record, export_base=output_path)
         exporter.export()
         exporter.publish()
         self._logger.debug("Exported record '%s' as ISO XML with HTML stylesheet", record.file_identifier)

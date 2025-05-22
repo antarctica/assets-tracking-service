@@ -3,9 +3,10 @@ from datetime import UTC, datetime
 
 import pytest
 
+from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue, ItemInvalidError
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
-    Summary,
+    PageSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
     AdditionalInfoTab,
@@ -37,12 +38,11 @@ from tests.conftest import _lib_get_record_summary
 class TestItemCatalogue:
     """Test catalogue item."""
 
-    def test_init(self, fx_lib_record_minimal_item_catalogue: Record):
+    def test_init(self, fx_config: Config, fx_lib_record_minimal_item_catalogue: Record):
         """Can create an ItemCatalogue."""
         item = ItemCatalogue(
+            config=fx_config,
             record=fx_lib_record_minimal_item_catalogue,
-            embedded_maps_endpoint="x",
-            item_contact_endpoint="x",
             get_record_summary=_lib_get_record_summary,
         )
 
@@ -59,7 +59,13 @@ class TestItemCatalogue:
             ("point_of_contact", ItemInvalidError),
         ],
     )
-    def test_invalid(self, fx_lib_record_minimal_item_catalogue: Record, element: str, exception_cls: type[Exception]):
+    def test_invalid(
+        self,
+        fx_config: Config,
+        fx_lib_record_minimal_item_catalogue: Record,
+        element: str,
+        exception_cls: type[Exception],
+    ):
         """Cannot create a catalogue item from an invalid record."""
         if element == "file_identifier":
             fx_lib_record_minimal_item_catalogue.file_identifier = None
@@ -74,9 +80,8 @@ class TestItemCatalogue:
 
         with pytest.raises(exception_cls):
             _ = ItemCatalogue(
-                fx_lib_record_minimal_item_catalogue,
-                embedded_maps_endpoint="x",
-                item_contact_endpoint="x",
+                config=fx_config,
+                record=fx_lib_record_minimal_item_catalogue,
                 get_record_summary=_lib_get_record_summary,
             )
 
@@ -229,7 +234,7 @@ class TestItemCatalogue:
 
         Summary element is checked in more detail in catalogue element tests.
         """
-        assert isinstance(fx_lib_item_catalogue_min.summary, Summary)
+        assert isinstance(fx_lib_item_catalogue_min.summary, PageSummary)
 
     def test_tabs(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get list of tabs."""

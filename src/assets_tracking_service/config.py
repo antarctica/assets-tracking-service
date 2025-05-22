@@ -221,6 +221,8 @@ class Config:
         EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET: str
         EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID: str
         EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET: str
+        EXPORTER_DATA_CATALOGUE_SENTRY_SRC: str
+        EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN: str
 
     def dumps_safe(self) -> ConfigDumpSafe:
         """Dump config for output to the user with sensitive data redacted."""
@@ -260,6 +262,8 @@ class Config:
             "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": self.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
             "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
             "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET_SAFE,
+            "EXPORTER_DATA_CATALOGUE_SENTRY_SRC": self.EXPORTER_DATA_CATALOGUE_SENTRY_SRC,
+            "EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN": self.EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN,
         }
 
     @property
@@ -573,3 +577,15 @@ class Config:
     def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET_SAFE(self) -> str:
         """EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET with value redacted."""
         return self._safe_value
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_SENTRY_SRC(self) -> str:
+        """Sentry dynamic CDN script."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env("SENTRY_SRC")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN(self) -> str:
+        """Plausible site/domain name."""
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
+            return self.env("PLAUSIBLE_DOMAIN")

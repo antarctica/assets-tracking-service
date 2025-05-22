@@ -32,6 +32,7 @@ collection_members = [
     "c993ea2b-d44e-4ca0-9007-9a972f7dd117",
     "53ed9f6a-2d68-46c2-b5c5-f15422aaf5b2",
     "3c77ffae-6aa0-4c26-bc34-5521dbf4bf23",
+    "57327327-4623-4247-af86-77fb43b7f45b",
 ]
 
 abstract = """
@@ -148,3 +149,15 @@ for collection_member in collection_members:
             initiative_type=AggregationInitiativeCode.COLLECTION,
         ),
     )
+# add a related collection
+record.identification.aggregations.append(
+    Aggregation(
+        identifier=Identifier(
+            identifier="8fd6a7cc-e696-4a82-b5f6-fb04dfa4cbea",
+            href="https://data.bas.ac.uk/items/8fd6a7cc-e696-4a82-b5f6-fb04dfa4cbea",
+            namespace="data.bas.ac.uk",
+        ),
+        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+        initiative_type=AggregationInitiativeCode.COLLECTION,
+    )
+)

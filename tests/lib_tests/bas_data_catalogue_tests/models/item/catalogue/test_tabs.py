@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Contact, Contacts, Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
@@ -116,7 +117,7 @@ class TestDataTab:
             )
         ]
 
-        tab = DataTab(distributions=distributions)
+        tab = DataTab(access_type=AccessType.PUBLIC, distributions=distributions)
 
         assert tab.enabled is False
         # cov
@@ -147,11 +148,12 @@ class TestDataTab:
                 ),
             ),
         ]
-        tab = DataTab(distributions=distributions)
+        tab = DataTab(access_type=AccessType.PUBLIC, distributions=distributions)
         assert tab.enabled is True
 
     def test_items(self):
         """Can get processed distribution options."""
+        access_type = AccessType.PUBLIC
         distributions = [
             RecordDistribution(
                 distributor=RecordContact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.DISTRIBUTOR]),
@@ -174,11 +176,17 @@ class TestDataTab:
                 ),
             ),
         ]
-        expected = ArcGisFeatureLayer(distributions[0], [distributions[1]])
-        tab = DataTab(distributions=distributions)
+        expected = ArcGisFeatureLayer(distributions[0], [distributions[1]], access_type=access_type)
+        tab = DataTab(access_type=access_type, distributions=distributions)
 
         assert tab.items[0].format_type == expected.format_type
         assert tab.items[0].action.href == expected.action.href
+
+    def test_access(self):
+        """Can get item access type."""
+        expected = AccessType.PUBLIC
+        tab = DataTab(access_type=expected, distributions=[])
+        assert tab.access == expected
 
 
 class TestExtentTab:
@@ -340,11 +348,62 @@ class TestRelatedTab:
         tab = RelatedTab(aggregations=aggregations, item_type=HierarchyLevelCode.PRODUCT)
 
         assert tab.enabled is True
-        assert len(tab.collections) > 0
-        assert all(isinstance(collection, ItemSummaryCatalogue) for collection in tab.collections)
+        assert len(tab.parent_collections) > 0
+        assert all(isinstance(collection, ItemSummaryCatalogue) for collection in tab.parent_collections)
         # cov
         assert tab.title != ""
         assert tab.icon != ""
+
+    @pytest.mark.parametrize(
+        ("level", "value", "expected"),
+        [
+            (HierarchyLevelCode.DATASET, RecordAggregations([]), False),
+            (
+                HierarchyLevelCode.DATASET,
+                RecordAggregations(
+                    [
+                        Aggregation(
+                            identifier=Identifier(identifier="x", href="x", namespace="x"),
+                            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                            initiative_type=AggregationInitiativeCode.COLLECTION,
+                        )
+                    ]
+                ),
+                True,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                RecordAggregations(
+                    [
+                        Aggregation(
+                            identifier=Identifier(identifier="x", href="x", namespace="x"),
+                            association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                            initiative_type=AggregationInitiativeCode.COLLECTION,
+                        )
+                    ]
+                ),
+                False,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                RecordAggregations(
+                    [
+                        Aggregation(
+                            identifier=Identifier(identifier="x", href="x", namespace="x"),
+                            association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                            initiative_type=AggregationInitiativeCode.COLLECTION,
+                        )
+                    ]
+                ),
+                True,
+            ),
+        ],
+    )
+    def test_enabled(self, level: HierarchyLevelCode, value: RecordAggregations, expected: bool):
+        """Can disable related tab if not applicable."""
+        aggregations = Aggregations(aggregations=value, get_summary=_lib_get_record_summary)
+        tab = RelatedTab(aggregations=aggregations, item_type=level)
+        assert tab.enabled is expected
 
 
 class TestAdditionalInfoTab:
@@ -617,8 +676,8 @@ class TestContactTab:
     @pytest.mark.parametrize(
         ("endpoint", "action", "params"),
         [
-            ("x", "://x", {"item-id": "x"}),
-            ("https://example.com?x=x", "https://example.com", {"item-id": "x", "x": "x"}),
+            ("x", "://x", {"item-id": "x", "item-poc": "x"}),
+            ("https://example.com?x=x", "https://example.com", {"item-id": "x", "item-poc": "x", "x": "x"}),
         ],
     )
     def test_form(self, endpoint: str, action: str, params: dict[str, str]) -> None:

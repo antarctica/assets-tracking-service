@@ -19,7 +19,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums impor
 from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     DataQuality,
     Record,
-    RecordSummary,
     ReferenceSystemInfo,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contact as RecordContact
@@ -63,22 +62,32 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     OnlineResourceFunctionCode,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projections import EPSG_4326
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestMdAsHtml:
     """Test _md_as_html util function."""
 
-    def test_md_as_html(self):
-        """Can convert Markdown to HTML."""
-        assert md_as_html("_x_") == "<p><em>x</em></p>"
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("_x_", "<p><em>x</em></p>"),
+            ("https://example.com", '<p><a href="https://example.com" rel="nofollow">https://example.com</a></p>'),
+            ("x\n* x", "<p>x</p>\n<ul>\n<li>x</li>\n</ul>"),
+        ],
+    )
+    def test_md_as_html(self, value: str, expected: str):
+        """Can convert Markdown to HTML with extensions."""
+        assert md_as_html(value) == expected
 
 
 class TestMdAsPlain:
     """Test _md_as_plain util function."""
 
-    def test_md_as_plain(self):
+    @pytest.mark.parametrize(("value", "expected"), [("_x_", "x"), (None, "")])
+    def test_md_as_plain(self, value: str | None, expected: str):
         """Can convert Markdown to plain text."""
-        assert md_as_plain("_x_") == "x"
+        assert md_as_plain(value) == expected
 
 
 class TestItemBase:
@@ -113,10 +122,105 @@ class TestItemBase:
             ),
         ],
     )
-    def test_parse_permissions(self, fx_lib_record_minimal_item: Record, value: str, expected: list[AccessType]):
+    def test_parse_permissions(self, value: str, expected: list[AccessType]):
         """Can parse permissions string."""
-        item = ItemBase(fx_lib_record_minimal_item)
-        result = item._parse_permissions(value)
+        result = ItemBase._parse_permissions(value)
+        assert result == expected
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (Constraints([]), AccessType.NONE),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        )
+                    ]
+                ),
+                AccessType.PUBLIC,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.NONE,
+            ),
+            (
+                Constraints(
+                    [Constraint(type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED)]
+                ),
+                AccessType.BAS_SOME,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.NONE,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.NONE,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS,
+                            restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                            href=f"#{json.dumps([{'scheme': 'ms_graph', 'schemeVersion': '1', 'directoryId': 'b311db95-32ad-438f-a101-7ba061712a4e', 'objectId': '6fa3b48c-393c-455f-b787-c006f839b51f'}])}",
+                        ),
+                    ]
+                ),
+                AccessType.BAS_ALL,
+            ),
+            (
+                Constraints(
+                    [
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS,
+                            restriction_code=ConstraintRestrictionCode.RESTRICTED,
+                            href=f"#{json.dumps([{'scheme': 'ms_graph', 'schemeVersion': '1', 'directoryId': 'b311db95-32ad-438f-a101-7ba061712a4e', 'objectId': '6fa3b48c-393c-455f-b787-c006f839b51f'}])}",
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED
+                        ),
+                        Constraint(
+                            type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.RESTRICTED
+                        ),
+                    ]
+                ),
+                AccessType.BAS_ALL,
+            ),
+        ],
+    )
+    def test_parse_access(self, value: Constraints, expected: AccessType):
+        """Can resolve access type from constraints."""
+        result = ItemBase._parse_access(value)
         assert result == expected
 
     def test_abstract_raw(self, fx_lib_record_minimal_item: Record):
@@ -147,18 +251,9 @@ class TestItemBase:
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
-            (Constraint(type=ConstraintTypeCode.ACCESS), AccessType.NONE),
             (
                 Constraint(type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED),
                 AccessType.PUBLIC,
-            ),
-            (
-                Constraint(
-                    type=ConstraintTypeCode.ACCESS,
-                    restriction_code=ConstraintRestrictionCode.RESTRICTED,
-                    href='%5B{"scheme"%3A"ms_graph"%2C"schemeVersion"%3A"1"%2C"directoryId"%3A"b311db95-32ad-438f-a101-7ba061712a4e"%2C"objectId"%3A"6fa3b48c-393c-455f-b787-c006f839b51f"}%5D',
-                ),
-                AccessType.BAS_ALL,
             ),
             (None, AccessType.NONE),
         ],
@@ -169,7 +264,7 @@ class TestItemBase:
             fx_lib_record_minimal_item.identification.constraints = Constraints([value])
         item = ItemBase(fx_lib_record_minimal_item)
 
-        assert item.access == expected
+        assert item.access_type == expected
 
     def test_aggregations(self, fx_lib_record_minimal_item: Record):
         """Can get aggregations from record."""
@@ -522,6 +617,26 @@ class TestItemSummaryBase:
         with pytest.raises(ValueError, match="Item Summaries require a file_identifier."):
             ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (
+                Constraint(type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED),
+                AccessType.PUBLIC,
+            ),
+            (None, AccessType.NONE),
+        ],
+    )
+    def test_access(
+        self, fx_lib_record_summary_minimal_item: RecordSummary, value: Constraint | None, expected: AccessType
+    ):
+        """Can get optional access constraint and any associated permissions."""
+        if value is not None:
+            fx_lib_record_summary_minimal_item.constraints = Constraints([value])
+        item = ItemSummaryBase(fx_lib_record_summary_minimal_item)
+
+        assert item.access == expected
+
     @pytest.mark.parametrize("has_pub", [True, False])
     def test_date(self, fx_lib_record_summary_minimal_item: RecordSummary, has_pub: bool):
         """Can get publication date if set."""
@@ -547,10 +662,19 @@ class TestItemSummaryBase:
 
         assert summary.href == expected
 
-    @pytest.mark.parametrize("expected", ["x", None])
-    def test_href_graphic(self, fx_lib_record_summary_minimal_item: RecordSummary, expected: str | None):
-        """Can get href to graphic overview if defined."""
-        fx_lib_record_summary_minimal_item.graphic_overview_href = expected
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (GraphicOverviews([]), None),
+            (GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")]), None),
+            (GraphicOverviews([GraphicOverview(identifier="overview", href="x", mime_type="x")]), "x"),
+        ],
+    )
+    def test_href_graphic(
+        self, fx_lib_record_summary_minimal_item: RecordSummary, value: GraphicOverviews, expected: str | None
+    ):
+        """Can get href to overview graphic if defined."""
+        fx_lib_record_summary_minimal_item.graphic_overviews = value
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.href_graphic == expected
@@ -565,43 +689,37 @@ class TestItemSummaryBase:
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
         assert summary.resource_type == fx_lib_record_summary_minimal_item.hierarchy_level
 
-    @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, "y")])
+    @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, None)])
     def test_summary_raw(self, fx_lib_record_summary_minimal_item: RecordSummary, value: str | None, expected: str):
         """Can get summary as either purpose or if not set, abstract."""
         fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "y"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_raw == expected
 
-    @pytest.mark.parametrize(("value", "expected"), [("_x_", "_x_"), (None, "_y_")])
+    @pytest.mark.parametrize(("value", "expected"), [("_x_", "_x_"), (None, None)])
     def test_summary_md(self, fx_lib_record_summary_minimal_item: RecordSummary, value: str | None, expected: str):
         """Can get optional summary (purpose) with Markdown formatting."""
         fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "_y_"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_md == expected
 
-    @pytest.mark.parametrize(
-        ("value", "expected"), [("x", "<p>x</p>"), ("_x_", "<p><em>x</em></p>"), (None, "<p>y</p>")]
-    )
+    @pytest.mark.parametrize(("value", "expected"), [("x", "<p>x</p>"), ("_x_", "<p><em>x</em></p>"), (None, None)])
     def test_summary_html(
         self, fx_lib_record_summary_minimal_item: RecordSummary, value: str | None, expected: str | None
     ):
         """Can get summary (purpose) with Markdown formatting, if present, encoded as HTML."""
         if expected is not None:
             fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "y"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_html == expected
 
-    @pytest.mark.parametrize(("value", "expected"), [("_x_", "x"), (None, "y")])
+    @pytest.mark.parametrize(("value", "expected"), [("_x_", "x"), (None, None)])
     def test_summary_plain(self, fx_lib_record_summary_minimal_item: RecordSummary, value: str, expected: str):
         """Can get optional summary (purpose) without Markdown formatting."""
         fx_lib_record_summary_minimal_item.purpose = value
-        fx_lib_record_summary_minimal_item.abstract = "_y_"
         summary = ItemSummaryBase(fx_lib_record_summary_minimal_item)
 
         assert summary.summary_plain == expected

@@ -6,7 +6,8 @@ from mypy_boto3_s3 import S3Client
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record, RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class HtmlExporter(Exporter):
@@ -44,9 +45,8 @@ class HtmlExporter(Exporter):
     def dumps(self) -> str:
         """Encode record as data catalogue item in HTML."""
         return ItemCatalogue(
+            config=self._config,
             record=self._record,
-            embedded_maps_endpoint=self._config.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
-            item_contact_endpoint=self._config.EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT,
             get_record_summary=self._get_summary,
         ).render()
 

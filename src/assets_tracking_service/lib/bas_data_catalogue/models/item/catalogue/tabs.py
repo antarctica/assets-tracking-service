@@ -5,11 +5,13 @@ from urllib.parse import parse_qs, urlparse
 
 from jinja2 import Environment
 
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Contact, Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distributions import (
     ArcGisFeatureLayer,
     ArcGisOgcApiFeatures,
+    ArcGisVectorTileLayer,
     BasPublishedMap,
     Distribution,
     GeoJson,
@@ -73,7 +75,7 @@ class ItemsTab(Tab):
 
     def __init__(self, aggregations: Aggregations) -> None:
         self._aggregations = aggregations
-        self._items = self._aggregations.items
+        self._items = self._aggregations.child_items
 
     @property
     def enabled(self) -> bool:
@@ -104,11 +106,13 @@ class ItemsTab(Tab):
 class DataTab(Tab):
     """Data tab."""
 
-    def __init__(self, distributions: list[RecordDistribution]) -> None:
+    def __init__(self, access_type: AccessType, distributions: list[RecordDistribution]) -> None:
+        self._access = access_type
         self._resource_distributions = distributions
         self._supported_distributions = [
             ArcGisFeatureLayer,
             ArcGisOgcApiFeatures,
+            ArcGisVectorTileLayer,
             BasPublishedMap,
             GeoPackage,
             GeoJson,
@@ -129,7 +133,11 @@ class DataTab(Tab):
         for dist_option in self._resource_distributions:
             for dist_type in self._supported_distributions:
                 if dist_type.matches(option=dist_option, other_options=self._resource_distributions):
-                    processed.append(dist_type(option=dist_option, other_options=self._resource_distributions))
+                    processed.append(
+                        dist_type(
+                            option=dist_option, other_options=self._resource_distributions, access_type=self._access
+                        )
+                    )
         return processed
 
     @property
@@ -151,6 +159,11 @@ class DataTab(Tab):
     def icon(self) -> str:
         """Tab icon class."""
         return "far fa-cube"
+
+    @property
+    def access(self) -> AccessType:
+        """Access restrictions for item."""
+        return self._access
 
     @property
     def items(self) -> list[Distribution]:
@@ -305,7 +318,7 @@ class RelatedTab(Tab):
         self._aggregations = aggregations
 
     def __getattribute__(self, name: str) -> str | int | None:
-        """Proxy calls to self._aggregations and convert ItemSummaries to Links, if applicable."""
+        """Proxy calls to self._aggregations if applicable."""
         aggregation = object.__getattribute__(self, "_aggregations")
         if hasattr(aggregation, name):
             return getattr(aggregation, name)
@@ -319,7 +332,7 @@ class RelatedTab(Tab):
         all_agg = len(self._aggregations)
         if self._item_type == HierarchyLevelCode.COLLECTION:
             # if all aggregations are a collections items, disable tab as these are shown in item tab
-            return len(self._aggregations.items) != all_agg
+            return len(self.child_items) != all_agg
         return all_agg > 0
 
     @property
@@ -592,7 +605,7 @@ class ContactTab(Tab):
     @property
     def form_params(self) -> dict[str, str]:
         """Contact form required parameters."""
-        return {"item-id": self._id, **self._form_required_params}
+        return {"item-id": self._id, "item-poc": self._contact.email, **self._form_required_params}
 
     @property
     def subject_default(self) -> str:

@@ -32,7 +32,7 @@
   <link rel="shortcut icon" href="/static/img/favicon.ico" />
   <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png" sizes="180x180" />
-  <link rel='manifest' href="/static/txt/site.webmanifest" />
+  <link rel='manifest' href="/static/txt/manifest.webmanifest" />
 {% endmacro %}
 
 {% macro head_styles() %}
@@ -41,7 +41,8 @@
 {% endmacro %}
 
 {% macro head_scripts(data) %}
-  {{ script_sentry() }}
+  {{ script_sentry(data.sentry_src) }}
+  {{ script_plausible(data.plausible_domain) }}
   {{ script_sticky_tabs() }}
   {{ script_collapsible() }}
   {% if data.html_schema_org %}
@@ -49,7 +50,7 @@
   {% endif %}
 {% endmacro %}
 
-{% macro script_sentry() %}
+{% macro script_sentry(value) %}
   <script>
     window.sentryOnLoad = function() {
       Sentry.init({
@@ -80,7 +81,11 @@
       );
     };
   </script>
-  <script src="https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js" crossorigin="anonymous"></script>
+  <script src="{{ value }}" crossorigin="anonymous"></script>
+{% endmacro %}
+
+{% macro script_plausible(value) %}
+    <script defer data-domain="{{ value }}" src="https://plausible.io/js/script.hash.outbound-links.js"></script>
 {% endmacro %}
 
 {% macro script_sticky_tabs() %}

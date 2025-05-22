@@ -7,7 +7,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     Record,
     RecordInvalidError,
     RecordSchema,
-    RecordSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Address,
@@ -33,8 +32,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.ident
     Extent,
     ExtentGeographic,
     Extents,
-    GraphicOverview,
-    GraphicOverviews,
     Identification,
     Maintenance,
 )
@@ -902,157 +899,3 @@ class TestRecord:
             expected = Record._normalise_static_config_values(expected)
 
         assert result == expected
-
-
-class TestRecordSummary:
-    """Test root RecordSummary element."""
-
-    def test_init(self):
-        """Can create a minimal RecordSummary element from directly assigned properties."""
-        expected = "x"
-        expected_hierarchy_level = HierarchyLevelCode.DATASET
-        expected_date = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
-
-        record_summary = RecordSummary(
-            hierarchy_level=expected_hierarchy_level,
-            title=expected,
-            abstract=expected,
-            creation=expected_date,
-        )
-
-        assert record_summary.hierarchy_level == expected_hierarchy_level
-        assert record_summary.title == expected
-        assert record_summary.abstract == expected
-        assert record_summary.creation == expected_date
-
-        assert record_summary.edition is None
-        assert record_summary.purpose is None
-        assert record_summary.publication is None
-        assert record_summary.revision is None
-        assert record_summary.graphic_overview_href is None
-
-    def test_complete(self):
-        """Can create a RecordSummary element with all optional properties directly assigned."""
-        expected = "x"
-        expected_hierarchy_level = HierarchyLevelCode.DATASET
-        expected_date = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
-
-        record_summary = RecordSummary(
-            hierarchy_level=expected_hierarchy_level,
-            title=expected,
-            abstract=expected,
-            creation=expected_date,
-            edition=expected,
-            purpose=expected,
-            publication=expected_date,
-            revision=expected_date,
-            graphic_overview_href=expected,
-        )
-
-        assert record_summary.edition is expected
-        assert record_summary.purpose is expected
-        assert record_summary.publication is expected_date
-        assert record_summary.revision is expected_date
-        assert record_summary.graphic_overview_href is expected
-
-    def test_loads(self):
-        """Can create a RecordSummary from a Record."""
-        expected = "x"
-        expected_hierarchy_level = HierarchyLevelCode.DATASET
-        expected_time = datetime(2014, 6, 30, 14, 30, 45, tzinfo=UTC)
-        record = Record(
-            hierarchy_level=expected_hierarchy_level,
-            metadata=Metadata(
-                contacts=Contacts(
-                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
-                ),
-                date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
-            ),
-            identification=Identification(
-                title=expected,
-                abstract=expected,
-                dates=Dates(
-                    creation=Date(date=expected_time.date()),
-                    revision=Date(date=expected_time),
-                    publication=Date(date=expected_time),
-                ),
-                edition=expected,
-                purpose=expected,
-                graphic_overviews=GraphicOverviews([]),
-            ),
-        )
-
-        record_summary = RecordSummary.loads(record)
-
-        assert isinstance(record_summary, RecordSummary)
-        assert record_summary.hierarchy_level == expected_hierarchy_level
-        assert record_summary.title == expected
-        assert record_summary.abstract == expected
-        assert record_summary.creation == Date(date=expected_time.date())
-        assert record_summary.edition == expected
-        assert record_summary.purpose == expected
-        assert record_summary.publication == Date(date=expected_time)
-        assert record_summary.revision == Date(date=expected_time)
-        assert record_summary.graphic_overview_href is None
-
-    @pytest.mark.parametrize(
-        ("graphics", "expected"),
-        [
-            (GraphicOverviews([]), None),
-            (GraphicOverviews([GraphicOverview(identifier="x", href="x", mime_type="x")]), None),
-            (GraphicOverviews([GraphicOverview(identifier="overview", href="x", mime_type="x")]), "x"),
-        ],
-    )
-    def test_loads_graphics(self, graphics: GraphicOverviews, expected: str | None):
-        """Can get graphic overview if a graphic with suitable identifier is in record."""
-        record = Record(
-            hierarchy_level=HierarchyLevelCode.DATASET,
-            metadata=Metadata(
-                contacts=Contacts(
-                    [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])]
-                ),
-                date_stamp=datetime(2014, 6, 30, tzinfo=UTC).date(),
-            ),
-            identification=Identification(
-                title="x",
-                abstract="x",
-                dates=Dates(creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())),
-                graphic_overviews=graphics,
-            ),
-        )
-
-        record_summary = RecordSummary.loads(record)
-        assert record_summary.graphic_overview_href == expected
-
-    @pytest.mark.parametrize(("purpose", "expected"), [("x", "x"), (None, "y")])
-    def test_purpose_abstract(self, purpose: str | None, expected: str):
-        """Can get either purpose or abstract depending on which values are set."""
-        abstract = "y"
-
-        record_summary = RecordSummary(
-            hierarchy_level=HierarchyLevelCode.DATASET,
-            title="x",
-            abstract=abstract,
-            creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
-            purpose=purpose,
-        )
-
-        assert record_summary.purpose_abstract == expected
-
-    revision_date = Date(date=datetime(2015, 7, 20, tzinfo=UTC).date())
-
-    @pytest.mark.parametrize(
-        ("revision", "expected"),
-        [(revision_date, revision_date), (None, Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()))],
-    )
-    def test_revision_creation(self, revision: Date | None, expected: Date):
-        """Can get either revision or creation date depending on which values are set."""
-        record_summary = RecordSummary(
-            hierarchy_level=HierarchyLevelCode.DATASET,
-            title="x",
-            abstract="x",
-            creation=Date(date=datetime(2014, 6, 30, tzinfo=UTC).date()),
-            revision=revision,
-        )
-
-        assert record_summary.revision_creation == expected

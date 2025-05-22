@@ -7,8 +7,8 @@ from typing import TypeVar
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemSummaryBase, md_as_html
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link, unpack
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -29,6 +29,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     MaintenanceFrequencyCode,
     ProgressCode,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 TFormattedDate = TypeVar("TFormattedDate", bound="FormattedDate")
 
@@ -79,10 +80,12 @@ class FormattedDate:
 class ItemSummaryFragments:
     """Properties shown as part of an ItemSummaryCatalogue."""
 
+    access: AccessType
     item_type: str
     item_type_icon: str
     edition: str | None
     published: FormattedDate | None
+    children: str | None
 
 
 class ItemSummaryCatalogue(ItemSummaryBase):
@@ -119,14 +122,30 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return f"v{self.edition}"
 
     @property
+    def _children(self) -> str | None:
+        """
+        Count of items contained within item.
+
+        E.g. For collections, the number of items it contains.
+        """
+        count = len(self._record_summary.aggregations.filter(associations=AggregationAssociationCode.IS_COMPOSED_OF))
+        if count == 1:
+            return "1 item"
+        if count > 1:
+            return f"{count} items"
+        return None
+
+    @property
     def fragments(self) -> ItemSummaryFragments:
         """UI fragments (icons and labels) for item summary."""
         published = self._date if self.resource_type != HierarchyLevelCode.COLLECTION else None
         return ItemSummaryFragments(
+            access=self.access,
             item_type=self.resource_type.value.capitalize(),
             item_type_icon=self._resource_type_icon,
             edition=self._edition,
             published=published,
+            children=self._children,
         )
 
     @property
@@ -199,11 +218,6 @@ class Aggregations:
         """Count."""
         return len(self._aggregations)
 
-    @staticmethod
-    def as_links(summaries: list[ItemSummaryCatalogue]) -> list[Link]:
-        """Structure item summaries as generic links."""
-        return [Link(value=summary.title_html, href=summary.href) for summary in summaries]
-
     def _filter(
         self,
         namespace: str | None = None,
@@ -219,16 +233,24 @@ class Aggregations:
         return [self._summaries[aggregation.identifier.identifier] for aggregation in results]
 
     @property
-    def collections(self) -> list[ItemSummaryCatalogue]:
-        """Collection aggregations."""
+    def peer_collections(self) -> list[ItemSummaryCatalogue]:
+        """Collections item is related with."""
+        return self._filter(
+            associations=AggregationAssociationCode.CROSS_REFERENCE,
+            initiatives=AggregationInitiativeCode.COLLECTION,
+        )
+
+    @property
+    def parent_collections(self) -> list[ItemSummaryCatalogue]:
+        """Collections item is contained within."""
         return self._filter(
             associations=AggregationAssociationCode.LARGER_WORK_CITATION,
             initiatives=AggregationInitiativeCode.COLLECTION,
         )
 
     @property
-    def items(self) -> list[ItemSummaryCatalogue]:
-        """Item aggregations."""
+    def child_items(self) -> list[ItemSummaryCatalogue]:
+        """Items contained within item."""
         return self._filter(
             associations=AggregationAssociationCode.IS_COMPOSED_OF,
             initiatives=AggregationInitiativeCode.COLLECTION,
@@ -429,7 +451,7 @@ class PageHeader:
         return self._item_type.value, ResourceTypeIcon[self._item_type.name].value
 
 
-class Summary:
+class PageSummary:
     """Item summary information."""
 
     def __init__(
@@ -439,6 +461,7 @@ class Summary:
         published_date: FormattedDate | None,
         revision_date: FormattedDate | None,
         aggregations: Aggregations,
+        access_type: AccessType,
         citation: str | None,
         abstract: str,
     ) -> None:
@@ -447,6 +470,7 @@ class Summary:
         self._published_date = published_date
         self._revision_date = revision_date
         self._aggregations = aggregations
+        self._access_type = access_type
         self._citation = citation
         self._abstract = abstract
 
@@ -455,8 +479,10 @@ class Summary:
         """
         Whether to show summary grid section in UI.
 
-        The grid consists of all properties except the abstract/purpose and citation.
+        Contains all properties except abstract and citation.
         """
+        if self.access != AccessType.PUBLIC:
+            return True
         if self._item_type == HierarchyLevelCode.COLLECTION:
             return False
         return (
@@ -487,12 +513,17 @@ class Summary:
     @property
     def collections(self) -> list[Link]:
         """Collections item is part of."""
-        return self._aggregations.as_links(self._aggregations.collections)
+        return [Link(value=summary.title_html, href=summary.href) for summary in self._aggregations.parent_collections]
 
     @property
     def items_count(self) -> int:
         """Number of items that form item."""
-        return len(self._aggregations.items)
+        return len(self._aggregations.child_items)
+
+    @property
+    def access(self) -> AccessType:
+        """Access restrictions."""
+        return self._access_type
 
     @property
     def citation(self) -> str | None:

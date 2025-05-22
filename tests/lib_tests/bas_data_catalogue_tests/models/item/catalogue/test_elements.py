@@ -2,6 +2,7 @@ from datetime import UTC, date, datetime
 
 import pytest
 
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import (
@@ -9,7 +10,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import
     Dates,
     Extent,
     PageHeader,
-    Summary,
+    PageSummary,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     FormattedDate,
@@ -18,7 +19,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     Maintenance,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -29,6 +29,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.ident
     BoundingBox,
     ExtentGeographic,
     ExtentTemporal,
+    GraphicOverview,
     TemporalPeriod,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
@@ -47,6 +48,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     MaintenanceFrequencyCode,
     ProgressCode,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from tests.conftest import _lib_get_record_summary
 
 
@@ -110,21 +112,19 @@ class TestAggregations:
         assert aggregations._aggregations[0] == expected_aggregation
         assert aggregations._summaries["x"]._record_summary == expected_summary
 
-    def test_as_links(self):
-        """Can get any item summaries as generic links."""
+    def test_peer_collections(self):
+        """Can get any collection aggregations (item is part of)."""
         expected = Aggregation(
             identifier=Identifier(identifier="x", href="x", namespace="x"),
-            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+            association_type=AggregationAssociationCode.CROSS_REFERENCE,
             initiative_type=AggregationInitiativeCode.COLLECTION,
         )
         record_aggregations = RecordAggregations([expected])
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
-        links = aggregations.as_links(aggregations.collections)
+        assert len(aggregations.peer_collections) > 0
 
-        assert all(isinstance(link, Link) for link in links)
-
-    def test_collections(self):
+    def test_parent_collections(self):
         """Can get any collection aggregations (item is part of)."""
         expected = Aggregation(
             identifier=Identifier(identifier="x", href="x", namespace="x"),
@@ -134,9 +134,9 @@ class TestAggregations:
         record_aggregations = RecordAggregations([expected])
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
-        assert len(aggregations.collections) > 0
+        assert len(aggregations.parent_collections) > 0
 
-    def test_items(self):
+    def test_child_items(self):
         """Can get any item aggregations (item is made up of)."""
         expected = Aggregation(
             identifier=Identifier(identifier="x", href="x", namespace="x"),
@@ -146,7 +146,7 @@ class TestAggregations:
         record_aggregations = RecordAggregations([expected])
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
-        assert len(aggregations.items) > 0
+        assert len(aggregations.child_items) > 0
 
 
 class TestDates:
@@ -288,13 +288,16 @@ class TestItemSummaryCatalogue:
             assert summary._date is None
 
     @pytest.mark.parametrize(
-        ("resource_type", "edition", "exp_edition", "has_pub", "exp_published"),
+        ("resource_type", "edition", "exp_edition", "has_pub", "exp_published", "child_count", "exp_child_count"),
         [
-            (HierarchyLevelCode.PRODUCT, "x", "vx", True, "30 June 2014"),
-            (HierarchyLevelCode.PRODUCT, "x", "vx", False, None),
-            (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014"),
-            (HierarchyLevelCode.COLLECTION, "x", None, True, None),
-            (HierarchyLevelCode.COLLECTION, "x", None, False, None),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.PRODUCT, "x", "vx", False, None, 0, None),
+            (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.COLLECTION, "x", None, True, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, "x", None, False, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 1, "1 item"),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 2, "2 items"),
         ],
     )
     def test_fragments(
@@ -305,12 +308,22 @@ class TestItemSummaryCatalogue:
         exp_edition: str | None,
         has_pub: bool,
         exp_published: FormattedDate | None,
+        child_count: int,
+        exp_child_count: str | None,
     ):
         """Can get fragments to use as part of item summary UI."""
         fx_lib_record_summary_minimal_item.hierarchy_level = resource_type
         fx_lib_record_summary_minimal_item.edition = edition
         if has_pub:
             fx_lib_record_summary_minimal_item.publication = Date(date=datetime(2014, 6, 30, tzinfo=UTC).date())
+        for _ in range(child_count):
+            fx_lib_record_summary_minimal_item.aggregations.append(
+                Aggregation(
+                    identifier=Identifier(identifier="x", namespace="x"),
+                    association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                )
+            )
+        fx_lib_record_summary_minimal_item.child_aggregations_count = child_count
         summary = ItemSummaryCatalogue(fx_lib_record_summary_minimal_item)
 
         result = summary.fragments
@@ -321,6 +334,7 @@ class TestItemSummaryCatalogue:
             assert result.published.value == exp_published
         else:
             assert result.published is None
+        assert result.children == exp_child_count
 
     @pytest.mark.parametrize(
         ("href", "expected"),
@@ -334,8 +348,13 @@ class TestItemSummaryCatalogue:
     )
     def test_href_graphic(self, fx_lib_record_summary_minimal_item: RecordSummary, href: str | None, expected: str):
         """Can get href graphic."""
-        fx_lib_record_summary_minimal_item.graphic_overview_href = href
+        if href is not None:
+            fx_lib_record_summary_minimal_item.graphic_overviews.append(
+                GraphicOverview(identifier="overview", href=href, mime_type="x")
+            )
+
         summary = ItemSummaryCatalogue(fx_lib_record_summary_minimal_item)
+
         if href is not None:
             assert summary.href_graphic == expected
         else:
@@ -465,11 +484,11 @@ class TestPageHeader:
         assert header.subtitle == (expected_type, expected_icon)
 
 
-class TestSummary:
+class TestPageSummary:
     """Test Catalogue Item summary panel."""
 
     @pytest.mark.parametrize(
-        ("item_type", "edition", "published", "aggregations", "citation"),
+        ("item_type", "edition", "published", "aggregations", "access", "citation"),
         [
             (
                 HierarchyLevelCode.PRODUCT,
@@ -487,6 +506,7 @@ class TestSummary:
                     ),
                     get_summary=_lib_get_record_summary,
                 ),
+                AccessType.PUBLIC,
                 "x",
             ),
             (
@@ -494,6 +514,7 @@ class TestSummary:
                 None,
                 None,
                 Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                AccessType.BAS_SOME,
                 None,
             ),
             (
@@ -512,6 +533,7 @@ class TestSummary:
                     ),
                     get_summary=_lib_get_record_summary,
                 ),
+                AccessType.PUBLIC,
                 "x",
             ),
         ],
@@ -522,18 +544,20 @@ class TestSummary:
         edition: str | None,
         published: str | None,
         aggregations: Aggregations,
+        access: AccessType,
         citation: str | None,
     ):
         """Can create class for summary panel."""
-        collections = aggregations.as_links(aggregations.collections)
-        items_count = len(aggregations.items)
+        collections = [Link(value=summary.title_html, href=summary.href) for summary in aggregations.parent_collections]
+        items_count = len(aggregations.child_items)
 
-        summary = Summary(
+        summary = PageSummary(
             item_type=item_type,
             edition=edition,
             published_date=published,
             revision_date=None,
             aggregations=aggregations,
+            access_type=access,
             citation=citation,
             abstract="x",
         )
@@ -541,6 +565,7 @@ class TestSummary:
         assert summary.abstract == "x"
         assert summary.collections == collections
         assert summary.items_count == items_count
+        assert summary.access == access
 
         if item_type != HierarchyLevelCode.COLLECTION:
             assert summary.edition == edition
@@ -552,13 +577,13 @@ class TestSummary:
             assert summary.citation is None
 
     @pytest.mark.parametrize(
-        ("item_type", "edition", "published", "aggregations", "expected"),
+        ("item_type", "edition", "published", "access", "aggregations", "expected"),
         [
             (
                 HierarchyLevelCode.PRODUCT,
                 "1",
                 "x",
-                # add collection and item aggregations
+                AccessType.PUBLIC,
                 Aggregations(
                     aggregations=RecordAggregations(
                         [
@@ -582,7 +607,7 @@ class TestSummary:
                 HierarchyLevelCode.PRODUCT,
                 "1",
                 None,
-                # add collection aggregation
+                AccessType.PUBLIC,
                 Aggregations(
                     aggregations=RecordAggregations(
                         [
@@ -601,7 +626,7 @@ class TestSummary:
                 HierarchyLevelCode.PRODUCT,
                 None,
                 "x",
-                # add item aggregation
+                AccessType.PUBLIC,
                 Aggregations(
                     aggregations=RecordAggregations(
                         [
@@ -620,6 +645,7 @@ class TestSummary:
                 HierarchyLevelCode.PRODUCT,
                 None,
                 None,
+                AccessType.PUBLIC,
                 Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
                 False,
             ),
@@ -627,8 +653,17 @@ class TestSummary:
                 HierarchyLevelCode.COLLECTION,
                 "1",
                 "x",
+                AccessType.PUBLIC,
                 Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
                 False,
+            ),
+            (
+                HierarchyLevelCode.COLLECTION,
+                "1",
+                "x",
+                AccessType.BAS_SOME,
+                Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
+                True,
             ),
         ],
     )
@@ -637,15 +672,17 @@ class TestSummary:
         item_type: HierarchyLevelCode,
         edition: str | None,
         published: str | None,
+        access: AccessType,
         aggregations: Aggregations,
         expected: bool,
     ):
         """Can show combination of publication and revision date if relevant."""
-        summary = Summary(
+        summary = PageSummary(
             item_type=item_type,
             edition=edition,
             published_date=published,
             revision_date=None,
+            access_type=access,
             aggregations=aggregations,
             citation=None,
             abstract="x",
@@ -692,11 +729,12 @@ class TestSummary:
         expected: str,
     ):
         """Can show combination of publication and revision date if relevant."""
-        summary = Summary(
+        summary = PageSummary(
             item_type=item_type,
             edition=None,
             published_date=published,
             revision_date=revision,
+            access_type=AccessType.PUBLIC,
             aggregations=Aggregations(aggregations=RecordAggregations([]), get_summary=_lib_get_record_summary),
             citation=None,
             abstract="x",

@@ -13,6 +13,7 @@ dependencies = [
     "assets-tracking-service-aircraft-provider>=0.3.2",
     "bas-metadata-library>=0.15.1", # via lib/data_catalogue
     "beautifulsoup4>=4.13.3", # via lib/data_catalogue
+    "bleach>=6.2.0",  # via lib/markdown
     "boto3>=1.37.30", # via lib/data_catalogue
     "boto3-stubs[s3]>=1.37.31", # via lib/data_catalogue
     "cattrs>=24.1.2", # via lib/data_catalogue
@@ -130,6 +131,7 @@ max_line_length = 120
 exclude_rules = "ST06, ST10"  # see docs/dev for more info
 
 [tool.pytest_env]
+# `ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_SENTRY_SRC` needs to be real to load the Sentry feedback widget
 ASSETS_TRACKING_SERVICE_LOG_LEVEL = "INFO"
 ASSETS_TRACKING_SERVICE_ENABLE_FEATURE_SENTRY = "false"
 ASSETS_TRACKING_SERVICE_ENABLE_PROVIDER_GEOTAB="true"
@@ -155,6 +157,8 @@ ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID="x"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET="x"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET="x"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT="https://example.com/contact"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_SENTRY_SRC="https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN="x"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers --random-order -x --ff"

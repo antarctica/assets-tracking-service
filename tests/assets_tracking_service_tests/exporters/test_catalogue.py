@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
 from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
-from assets_tracking_service.lib.bas_data_catalogue.models.record import RecordSummary
+from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
 class TestCollectionRecord:
@@ -120,13 +120,6 @@ class TestExporterDataCatalogue:
             f"items/{fx_exporter_layer_record.file_identifier}/index.html",
             f"items/{fx_exporter_collection_record.file_identifier}/index.html",
             "collections/assets-tracking-service/index.html",
-            "static/xsl/iso-html/printFormatted.xsl",
-            "static/xsl/iso-html/elements-ISO.xml",
-            "static/xsl/iso-html/xml-to-html-ISO.xsl",
-            "static/xsl/iso-html/xml-to-text-ISO.xsl",
-            "static/xsl/iso-html/headers-ISO.xml",
-            "static/xsl/iso-html/printTextLines.xsl",
-            "static/xsl/iso-html/displayElement.xsl",
         ]
         assert output_path.exists()
         _debug = [path.relative_to(output_path) for path in output_path.glob("**/*.*")]

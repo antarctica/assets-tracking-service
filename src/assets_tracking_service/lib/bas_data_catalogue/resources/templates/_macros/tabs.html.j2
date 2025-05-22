@@ -14,8 +14,8 @@
 {% endmacro %}
 
 {% macro data(data) %}
-  <section id="tab-content-data">
-    <div class="lg:w-2/3">
+  <section id="tab-content-data" class="flex flex-col lg:flex-row lg:gap-x-4">
+    <div class="w-full lg:w-2/3">
       <div class="grid grid-cols-3 gap-4">
         <div class="font-bold text-left">Format</div>
         <div class="font-bold text-center">Size</div>
@@ -26,6 +26,23 @@
         {% endfor %}
       </div>
     </div>
+    {% if data.access.name != 'PUBLIC' %}
+      <aside id="data-restricted-info" class="w-full lg:w-1/3">
+        {% call com.alert(variant='yellow', classes="border-5 border-yellow-500 space-y-2") %}
+          <p><strong>This item requires permission to access.</strong></p>
+          <p>This may be because the item:</p>
+          <ul class="list-disc pl-4">
+            <li>contains sensitive and/or personal data</li>
+            <li>contains commercially licenced data</li>
+            <li>is under embargo and not yet released</li>
+            <li>includes data from other restricted items</li>
+          </ul>
+          <p>
+            Permission may be granted automatically based on your BAS user account, or require justification.</p>
+          <p>Please <a class="{{ com.link_classes() }}" href="#tab-contact">contact us</a> for more information.</p>
+        {% endcall %}
+      </aside>
+    {% endif %}
   </section>
 {% endmacro %}
 
@@ -79,20 +96,23 @@
   </section>
 {% endmacro %}
 
+{% macro related_section(data) %}
+  {% if data.related %}
+    <section id="related-{{ data.id }}" class="space-y-8">
+      {% call com.item_title() %}{{ data.title }}{% endcall %}
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
+        {% for item in data.related %}
+          {{ com.item_summary(item) }}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+{% endmacro %}
+
 {% macro related(data) %}
-  <section id="tab-content-related">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
-      {% if data.collections %}
-        <div id="related-collections" class="p-2 col-span-1 space-y-8">
-          {% call com.item_title() %}Collections this Item is part of{% endcall %}
-          <div class="space-y-4">
-            {% for item in data.collections %}
-              {{ com.item_summary(item) }}
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-    </div>
+  <section id="tab-content-related" class="space-y-8">
+    {{ related_section({'id': 'parent-collections', 'title': 'Collections this Item is a part of', 'related': data.parent_collections}) }}
+    {{ related_section({'id': 'peer-collections', 'title': 'Related Collections', 'related': data.peer_collections}) }}
   </section>
 {% endmacro %}
 

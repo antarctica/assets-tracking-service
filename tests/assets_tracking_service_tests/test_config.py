@@ -120,7 +120,11 @@ class TestConfig:
         assert version("assets-tracking-service") == config.VERSION
 
     def test_dumps_safe(self, fx_package_version: str, fx_config: Config):
-        """Config can be exported to a dict with sensitive values redacted."""
+        """
+        Config can be exported to a dict with sensitive values redacted.
+
+        `EXPORTER_DATA_CATALOGUE_SENTRY_SRC` uses a real value for e2e tests.
+        """
         redacted_value = "[**REDACTED**]"
         expected: fx_config.ConfigDumpSafe = {
             "VERSION": fx_package_version,
@@ -162,7 +166,9 @@ class TestConfig:
             "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": redacted_value,
             "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
             "EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT": fx_config.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
-            "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
+            "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "https://example.com/contact",
+            "EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN": "x",
+            "EXPORTER_DATA_CATALOGUE_SENTRY_SRC": "https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js",
         }
 
         output = fx_config.dumps_safe()
@@ -409,7 +415,13 @@ class TestConfig:
                 "https://embedded-maps-testing.data.bas.ac.uk/v1",
                 False,
             ),
-            ("EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT", "x", False),
+            ("EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT", "https://example.com/contact", False),
+            ("EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN", "x", False),
+            (
+                "EXPORTER_DATA_CATALOGUE_SENTRY_SRC",
+                "https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js",
+                False,
+            ),
         ],
     )
     def test_configurable_property(self, property_name: str, expected: Any, sensitive: bool):
