@@ -1092,14 +1092,10 @@ def fx_lib_exporter_html_alias(
 
 @pytest.fixture()
 def fx_lib_exporter_records(
-    mocker: MockerFixture,
-    fx_logger: logging.Logger,
-    fx_s3_bucket_name: str,
-    fx_s3_client: S3Client,
-    fx_lib_record_minimal_item_catalogue: Record,
+    mocker: MockerFixture, fx_logger: logging.Logger, fx_s3_bucket_name: str, fx_s3_client: S3Client
 ) -> RecordsExporter:
     """
-    Site records exporter.
+    Site records exporter (empty).
 
     With:
     - a mocked config and S3 client
@@ -1113,9 +1109,17 @@ def fx_lib_exporter_records(
     type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
     type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
 
-    records = [fx_lib_record_minimal_item_catalogue]
-    summaries = [RecordSummary.loads(record) for record in records]
-    return RecordsExporter(config=mock_config, logger=fx_logger, s3=fx_s3_client, records=records, summaries=summaries)
+    return RecordsExporter(config=mock_config, logger=fx_logger, s3=fx_s3_client)
+
+
+@pytest.fixture()
+def fx_lib_exporter_records_pop(
+    fx_lib_exporter_records: RecordsExporter, fx_lib_record_minimal_item_catalogue: LibRecord
+) -> RecordsExporter:
+    """Site records exporter populated with a single record."""
+    summary = RecordSummary.loads(fx_lib_record_minimal_item_catalogue)
+    fx_lib_exporter_records.loads(summaries=[summary], records=[fx_lib_record_minimal_item_catalogue])
+    return fx_lib_exporter_records
 
 
 @pytest.fixture()
@@ -1141,7 +1145,7 @@ def fx_lib_exporter_site_index(
     fx_lib_record_minimal_item_catalogue: Record,
 ) -> SiteIndexExporter:
     """
-    Site index exporter.
+    Site index exporter (empty).
 
     With:
     - a mocked config and S3 client
@@ -1153,8 +1157,17 @@ def fx_lib_exporter_site_index(
     type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
+    return SiteIndexExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger)
+
+
+@pytest.fixture()
+def fx_lib_exporter_site_index_pop(
+    fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: Record
+) -> SiteIndexExporter:
+    """Site index exporter populated with a single record summary."""
     summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
-    return SiteIndexExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, summaries=summaries)
+    fx_lib_exporter_site_index.loads(summaries)
+    return fx_lib_exporter_site_index
 
 
 @pytest.fixture()
@@ -1180,10 +1193,9 @@ def fx_lib_exporter_site(
     fx_s3_bucket_name: str,
     fx_logger: logging.Logger,
     fx_s3_client: S3Client,
-    fx_lib_record_minimal_item_catalogue: Record,
 ) -> SiteExporter:
     """
-    Site exporter.
+    Site exporter (empty records).
 
     With:
     - a mocked config and S3 client
@@ -1197,8 +1209,7 @@ def fx_lib_exporter_site(
     type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
     type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
 
-    records = [fx_lib_record_minimal_item_catalogue]
-    return SiteExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger, records=records)
+    return SiteExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger)
 
 
 def lib_exporter_static_site_records() -> list[LibRecord]:
@@ -1261,7 +1272,9 @@ def fx_lib_exporter_static_site(
             region_name="eu-west-1",
         )
 
-    exporter = SiteExporter(config=config, s3=s3_client, logger=logger, records=fx_lib_exporter_static_site_records)
+    summaries = [RecordSummary.loads(record) for record in fx_lib_exporter_static_site_records]
+    exporter = SiteExporter(config=config, s3=s3_client, logger=logger)
+    exporter.loads(summaries=summaries, records=fx_lib_exporter_static_site_records)
     exporter.export()
 
     if not Path(site_dir.name).joinpath("favicon.ico").exists():

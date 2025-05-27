@@ -19,7 +19,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import
 class TestSiteIndexExporter:
     """Test site index exporter."""
 
-    def test_init(self, mocker: MockerFixture, fx_logger: logging.Logger, fx_lib_record_minimal_item_catalogue: Record):
+    def test_init(self, mocker: MockerFixture, fx_logger: logging.Logger):
         """Can create an Exporter."""
         with TemporaryDirectory() as tmp_path:
             output_path = Path(tmp_path)
@@ -27,39 +27,43 @@ class TestSiteIndexExporter:
         mock_config = mocker.Mock()
         type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
 
-        summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
-        exporter = SiteIndexExporter(config=mock_config, s3=s3_client, logger=fx_logger, summaries=summaries)
+        exporter = SiteIndexExporter(config=mock_config, s3=s3_client, logger=fx_logger)
 
         assert isinstance(exporter, SiteIndexExporter)
         assert exporter.name == "Site Index"
+        assert len(exporter._summaries) == 0
 
-    def test_dumps(self, fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: Record):
+    def test_loads(self, fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: Record):
+        """Can load summaries."""
+        summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
+        fx_lib_exporter_site_index.loads(summaries)
+        assert len(fx_lib_exporter_site_index._summaries) == len(summaries)
+
+    def test_dumps(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
         """Can dump site index."""
-        result = fx_lib_exporter_site_index._dumps()
-        assert (
-            '<html><body><h1>Proto Items Index</h1><ul><li><a href="/items/x/index.html">[DATASET] x - x (None)</a></li></ul></body></html>'
-            in result
-        )
+        result = fx_lib_exporter_site_index_pop._dumps()
+        assert "<h1>Proto Items Index</h1>" in result
+        assert '<ul><li><a href="/items/x/index.html">[DATASET] x - x (None)</a></li></ul>' in result
 
-    def test_export(self, fx_lib_exporter_site_index: SiteIndexExporter):
+    def test_export(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
         """Can export site index to a local file."""
-        site_path = fx_lib_exporter_site_index._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+        site_path = fx_lib_exporter_site_index_pop._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
         expected = site_path.joinpath("-", "index", "index.html")
 
-        fx_lib_exporter_site_index.export()
+        fx_lib_exporter_site_index_pop.export()
 
-        result = list(fx_lib_exporter_site_index._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.glob("**/*.*"))
+        result = list(fx_lib_exporter_site_index_pop._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.glob("**/*.*"))
         assert expected in result
 
-    def test_publish(self, fx_lib_exporter_site_index: SiteIndexExporter, fx_s3_bucket_name: str):
+    def test_publish(self, fx_lib_exporter_site_index_pop: SiteIndexExporter, fx_s3_bucket_name: str):
         """Can publish site index to S3."""
-        site_path = fx_lib_exporter_site_index._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+        site_path = fx_lib_exporter_site_index_pop._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
 
-        fx_lib_exporter_site_index.publish()
+        fx_lib_exporter_site_index_pop.publish()
 
-        output = fx_lib_exporter_site_index._s3_utils._s3.get_object(
+        output = fx_lib_exporter_site_index_pop._s3_utils._s3.get_object(
             Bucket=fx_s3_bucket_name,
-            Key=fx_lib_exporter_site_index._s3_utils.calc_key(site_path.joinpath("-", "index", "index.html")),
+            Key=fx_lib_exporter_site_index_pop._s3_utils.calc_key(site_path.joinpath("-", "index", "index.html")),
         )
         assert output["ResponseMetadata"]["HTTPStatusCode"] == 200
 
@@ -143,7 +147,7 @@ class TestSitePageExporter:
 class TestSiteResourcesExporter:
     """Test site exporter."""
 
-    def test_init(self, mocker: MockerFixture):
+    def test_init(self, mocker: MockerFixture, fx_logger: logging.Logger):
         """Can create an Exporter."""
         with TemporaryDirectory() as tmp_path:
             output_path = Path(tmp_path)
@@ -151,7 +155,7 @@ class TestSiteResourcesExporter:
         mock_config = mocker.Mock()
         type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
 
-        exporter = SiteResourcesExporter(config=mock_config, s3=s3_client)
+        exporter = SiteResourcesExporter(config=mock_config, logger=fx_logger, s3=s3_client)
 
         assert isinstance(exporter, SiteResourcesExporter)
         assert exporter.name == "Site Resources"
@@ -293,7 +297,7 @@ class TestSiteResourcesExporter:
 class TestSiteExporter:
     """Test site index exporter."""
 
-    def test_init(self, mocker: MockerFixture, fx_logger: logging.Logger, fx_lib_record_minimal_item_catalogue: Record):
+    def test_init(self, mocker: MockerFixture, fx_logger: logging.Logger):
         """Can create an Exporter."""
         with TemporaryDirectory() as tmp_path:
             output_path = Path(tmp_path)
@@ -301,16 +305,27 @@ class TestSiteExporter:
         mock_config = mocker.Mock()
         type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
 
-        records = [fx_lib_record_minimal_item_catalogue]
-        exporter = SiteExporter(config=mock_config, s3=s3_client, logger=fx_logger, records=records)
+        exporter = SiteExporter(config=mock_config, s3=s3_client, logger=fx_logger)
 
         assert isinstance(exporter, SiteExporter)
         assert exporter.name == "Site"
+        assert len(exporter._index_exporter._summaries) == 0
+        assert len(exporter._records_exporter._records) == 0
+
+    def test_loads(self, fx_lib_exporter_site: SiteExporter, fx_lib_record_minimal_item_catalogue: Record):
+        """Can load summaries and records."""
+        records = [fx_lib_record_minimal_item_catalogue]
+        summaries = [RecordSummary.loads(record) for record in records]
+        fx_lib_exporter_site.loads(summaries, records)
+
+        assert len(fx_lib_exporter_site._index_exporter._summaries) == len(summaries)
+        assert len(fx_lib_exporter_site._records_exporter._records) == len(records)
 
     def test_export(self, fx_lib_exporter_site: SiteExporter, fx_lib_record_minimal_item_catalogue: Record):
         """Can export all site components to local files."""
         record = fx_lib_record_minimal_item_catalogue
         site_path = fx_lib_exporter_site._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
+        fx_lib_exporter_site.loads([RecordSummary.loads(record)], [record])
         expected = [
             site_path.joinpath("favicon.ico"),
             site_path.joinpath("404.html"),
@@ -333,6 +348,7 @@ class TestSiteExporter:
         """Can publish site index to S3."""
         s3 = fx_lib_exporter_site._index_exporter._s3_utils._s3
         record = fx_lib_record_minimal_item_catalogue
+        fx_lib_exporter_site.loads([RecordSummary.loads(record)], [record])
         expected = [
             "favicon.ico",
             "404.html",
