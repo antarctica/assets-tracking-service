@@ -75,6 +75,16 @@ class TestS3Utils:
         repeat = fx_lib_s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key=key)
         assert initial["LastModified"] == repeat["LastModified"]
 
+    def test_empty_bucket(self, caplog: pytest.LogCaptureFixture, fx_s3_bucket_name: str, fx_lib_s3_utils: S3Utils):
+        """Can empty all objects in bucket."""
+        fx_lib_s3_utils.upload_content(key="x", content_type="text/plain", body="x")
+        result = fx_lib_s3_utils._s3.list_objects_v2(Bucket=fx_s3_bucket_name)
+        assert len(result["Contents"]) == 1
+
+        fx_lib_s3_utils.empty_bucket()
+        result = fx_lib_s3_utils._s3.list_objects_v2(Bucket=fx_s3_bucket_name)
+        assert "contents" not in result
+
 
 class TestBaseExporter:
     """Test base exporter."""

@@ -58,6 +58,15 @@ class S3Utils:
                 relative_path = path.relative_to(resources_path)
                 self._s3.upload_file(Filename=path, Bucket=self._bucket, Key=f"{base_key}/{relative_path}")
 
+    def empty_bucket(self) -> None:
+        """Delete all keys from the S3 bucket."""
+        for page in self._s3.get_paginator("list_objects_v2").paginate(Bucket=self._bucket):
+            keys = [{"Key": obj["Key"]} for obj in page.get("Contents", [])]
+            if not keys:
+                continue
+            # noinspection PyTypeChecker
+            self._s3.delete_objects(Bucket=self._bucket, Delete={"Objects": keys})
+
 
 class Exporter:
     """
