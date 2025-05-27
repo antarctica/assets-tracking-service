@@ -133,6 +133,7 @@ class DataTab(Tab):
         for dist_option in self._resource_distributions:
             for dist_type in self._supported_distributions:
                 if dist_type.matches(option=dist_option, other_options=self._resource_distributions):
+                    # noinspection PyTypeChecker
                     processed.append(
                         dist_type(
                             option=dist_option, other_options=self._resource_distributions, access_type=self._access

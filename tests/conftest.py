@@ -1189,10 +1189,7 @@ def fx_lib_exporter_site_pages(
 
 @pytest.fixture()
 def fx_lib_exporter_site(
-    mocker: MockerFixture,
-    fx_s3_bucket_name: str,
-    fx_logger: logging.Logger,
-    fx_s3_client: S3Client,
+    mocker: MockerFixture, fx_s3_bucket_name: str, fx_logger: logging.Logger, fx_s3_client: S3Client
 ) -> SiteExporter:
     """
     Site exporter (empty records).
