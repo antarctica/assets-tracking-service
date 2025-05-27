@@ -48,7 +48,7 @@ class RvdasProvider(Provider):
         return [
             {
                 "_fake_vessel_id": self._fake_vessel_id,
-                "name": "SIR DAVID ATTENBOROUGH",
+                "name": "RRS SIR DAVID ATTENBOROUGH",
                 "imo": "9798222",
             }
         ]
