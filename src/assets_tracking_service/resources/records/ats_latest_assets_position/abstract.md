@@ -10,22 +10,19 @@ A dataset containing the last known position of large assets operated by the Bri
   [Pisten Bully's](https://www.bas.ac.uk/polar-operations/sites-and-facilities/facility/rothera/tractor-train-traverse-system/),
   loaders, etc.)
 
-This dataset is designed to show where assets are on maps and other visualisations. Attributes (defined below) are
+This dataset is designed to show where assets are in maps and other visualisations. Attributes (defined below) are
 available in a multiple formats to suit different audiences (metres and feet for elevation for example).
 
 Positions (including speed and direction), are checked every 5 minutes, however assets may not be updated as frequently
-depending on where they are, or if not in use.
+depending on where they are, or if they are not in use.
 
 Anyone may use this information under the terms of item licence (shown below). It must not be used for safety critical
 purpose. Updates to this dataset may pause during system maintenance or for other operational reasons.
 
 Positions are collected, processed and published to this item by the
-[BAS Assets Tracking Service](https://github.com/antarctica/assets-tracking-service), which is operated by the
+[BAS Assets Tracking Service](https://github.com/antarctica/assets-tracking-service), operated by the
 Mapping and Geographic Information Centre [(MAGIC)](https://data.bas.ac.uk/teams/magic/). Please
-[contact us](mailto:magic@bas.ac.uk) to request access to historic asset positions, or if you have any questions about
-asset tracking.
-
-More detailed information about this dataset is provided below.
+[contact us](mailto:magic@bas.ac.uk) for information about this service, or asset position data.
 
 #### Attributes
 
@@ -148,7 +145,7 @@ More detailed information about this dataset is provided below.
 
 #### Geometry
 
-This dataset uses a point geometry in the WGS 84 coordinate reference system (EPSG:4326).
+Point geometry in WGS 84 (EPSG:4326).
 
 #### Asset Types
 
