@@ -1,4 +1,5 @@
 import logging
+import shutil
 from pathlib import Path
 from shutil import copy
 
@@ -297,6 +298,19 @@ class SiteExporter(Exporter):
     def name(self) -> str:
         """Exporter name."""
         return "Site"
+
+    def purge(self) -> None:
+        """Empty file system export directory and S3 publishing bucket."""
+        if self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.exists():
+            self._logger.info("Purging file system export directory")
+            shutil.rmtree(self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
+        self._logger.info("Purging S3 publishing bucket")
+        self._s3_utils.empty_bucket()
+
+    def loads(self, summaries: list[RecordSummary], records: list[Record]) -> None:
+        """Populate exporter."""
+        self._records_exporter.loads(summaries=summaries, records=records)
+        self._index_exporter.loads(summaries=summaries)
 
     def export(self) -> None:
         """Export site contents to a directory."""

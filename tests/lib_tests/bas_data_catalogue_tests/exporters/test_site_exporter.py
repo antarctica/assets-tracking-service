@@ -312,6 +312,29 @@ class TestSiteExporter:
         assert len(exporter._index_exporter._summaries) == 0
         assert len(exporter._records_exporter._records) == 0
 
+    def test_purge(
+        self,
+        mocker: MockerFixture,
+        fx_lib_exporter_site: SiteExporter,
+        fx_lib_record_minimal_item_catalogue: Record,
+        fx_s3_bucket_name: str,
+    ):
+        """Can empty export directory and publishing bucket."""
+        with TemporaryDirectory() as tmp_path:
+            output_path = Path(tmp_path)
+            mock_config = mocker.Mock()
+            type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+            fx_lib_exporter_site._config = mock_config
+
+            fx_lib_exporter_site._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("x").touch()
+            fx_lib_exporter_site._s3_utils.upload_content(key="x", content_type="text/plain", body="x")
+
+            fx_lib_exporter_site.purge()
+
+            assert fx_lib_exporter_site._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("x").exists() is False
+            result = fx_lib_exporter_site._s3_client.list_objects(Bucket=fx_s3_bucket_name)
+            assert "contents" not in result
+
     def test_loads(self, fx_lib_exporter_site: SiteExporter, fx_lib_record_minimal_item_catalogue: Record):
         """Can load summaries and records."""
         records = [fx_lib_record_minimal_item_catalogue]
