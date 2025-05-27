@@ -218,9 +218,9 @@
                                       "type": "CIMSolidFill",
                                       "enable": true,
                                       "color": [
-                                        245,
+                                        144,
                                         56,
-                                        229,
+                                        245,
                                         255
                                       ]
                                     }
