@@ -143,6 +143,9 @@ Mapping and Geographic Information Centre [(MAGIC)](https://data.bas.ac.uk/teams
 </table>
 </details>
 
+**Note:** A `FAKE_OBJECTID` attribute is additionally included in Arc services for this dataset for technical reasons.
+This attribute must not be used, see the `asset_id` and `position_id` attributes as appropriate instead.
+
 #### Geometry
 
 Point geometry in WGS 84 (EPSG:4326).
