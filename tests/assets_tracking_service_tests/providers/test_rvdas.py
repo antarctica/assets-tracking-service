@@ -32,7 +32,7 @@ class TestRvdasProvider:
 
         assert provider._fetch_vessels()[0] == {
             "_fake_vessel_id": "1",
-            "name": "SIR DAVID ATTENBOROUGH",
+            "name": "RRS SIR DAVID ATTENBOROUGH",
             "imo": "9798222",
         }
 
@@ -222,7 +222,7 @@ class TestRvdasProvider:
             labels=Labels(
                 [
                     Label(rel=LabelRelation.SELF, scheme="rvdas:_fake_vessel_id", value="1"),
-                    Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value="SIR DAVID ATTENBOROUGH"),
+                    Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value="RRS SIR DAVID ATTENBOROUGH"),
                     Label(
                         rel=LabelRelation.SELF,
                         scheme="nvs:L06",
@@ -230,7 +230,7 @@ class TestRvdasProvider:
                         value="31",
                         value_uri="http://vocab.nerc.ac.uk/collection/L06/current/31",
                     ),
-                    Label(rel=LabelRelation.SELF, scheme="rvdas:name", value="SIR DAVID ATTENBOROUGH"),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:name", value="RRS SIR DAVID ATTENBOROUGH"),
                     Label(rel=LabelRelation.SELF, scheme="rvdas:imo", value="9798222"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="rvdas"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-12"),
@@ -256,7 +256,7 @@ class TestRvdasProvider:
             labels=Labels(
                 [
                     Label(rel=LabelRelation.SELF, scheme="rvdas:_fake_vessel_id", value="1"),
-                    Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value="SIR DAVID ATTENBOROUGH"),
+                    Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value="RRS SIR DAVID ATTENBOROUGH"),
                     Label(
                         rel=LabelRelation.SELF,
                         scheme="nvs:L06",
@@ -264,7 +264,7 @@ class TestRvdasProvider:
                         value="31",
                         value_uri="http://vocab.nerc.ac.uk/collection/L06/current/31",
                     ),
-                    Label(rel=LabelRelation.SELF, scheme="rvdas:name", value="SIR DAVID ATTENBOROUGH"),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:name", value="RRS SIR DAVID ATTENBOROUGH"),
                     Label(rel=LabelRelation.SELF, scheme="rvdas:imo", value="9798222"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="rvdas"),
                     Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-12"),
