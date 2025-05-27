@@ -88,7 +88,40 @@ class TestRecordSummary:
         assert record_summary.constraints[0] == expected_constraint
         assert record_summary.aggregations[0] == expected_aggregation
 
-    def test_loads(self, fx_lib_record_minimal_iso: Record):
+    def test_loads_json_config(self):
+        """Can create a RecordSummary from a dict loaded from JSON."""
+        expected = {
+            "file_identifier": "59be7b09-4024-48e2-b7b3-6a0799196400",
+            "hierarchy_level": "dataset",
+            "date_stamp": "2025-05-18",
+            "title": "x",
+            "purpose": "x",
+            "edition": "x",
+            "creation": "2014",
+            "revision": "2014-06-30",
+            "publication": "2014-06-30T14:30:45+00:00",
+            "graphic_overviews": [{"identifier": "x", "href": "x", "mime_type": "x"}],
+            "constraints": [{"type": "access", "restriction_code": "unrestricted"}],
+            "aggregations": [
+                {"identifier": {"identifier": "x", "href": "x", "namespace": "x"}, "association_type": "crossReference"}
+            ],
+        }
+
+        record_summary = RecordSummary.loads(expected)
+
+        assert isinstance(record_summary, RecordSummary)
+        assert record_summary.hierarchy_level.value == expected["hierarchy_level"]
+        assert record_summary.title == "x"
+        assert record_summary.creation.date.year == 2014
+        assert record_summary.edition == "x"
+        assert record_summary.purpose == "x"
+        assert record_summary.publication.date.year == 2014
+        assert record_summary.revision.date.year == 2014
+        assert len(record_summary.graphic_overviews) > 0
+        assert len(record_summary.constraints) > 0
+        assert len(record_summary.aggregations) > 0
+
+    def test_loads_record(self, fx_lib_record_minimal_iso: Record):
         """Can create a RecordSummary from a Record."""
         expected = "x"
         expected_hierarchy_level = HierarchyLevelCode.DATASET

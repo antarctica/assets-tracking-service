@@ -1,6 +1,9 @@
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date
 from typing import TypeVar
+
+import cattrs
 
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
@@ -50,7 +53,32 @@ class RecordSummary:
             self.aggregations = Aggregations()
 
     @classmethod
-    def loads(cls: type[TRecordSummary], record: Record) -> "RecordSummary":
+    def structure(cls: type[TRecordSummary], value: dict) -> "RecordSummary":
+        """
+        Create a RecordSummary instance from plain types.
+
+        Intended to be used as a cattrs structure hook.
+        E.g. `converter.register_structure_hook(RecordSummary, lambda d, t: RecordSummary.structure(d))`
+        """
+        value_ = deepcopy(value)
+
+        converter = cattrs.Converter()
+        converter.register_structure_hook(date, lambda d, t: date.fromisoformat(d))
+        converter.register_structure_hook(Date, lambda d, t: Date.structure(d))
+        converter.register_structure_hook(Aggregations, lambda d, t: Aggregations.structure(d))
+        converter.register_structure_hook(Constraints, lambda d, t: Constraints.structure(d))
+        converter.register_structure_hook(GraphicOverviews, lambda d, t: GraphicOverviews.structure(d))
+        return converter.structure(value_, cls)
+
+    @classmethod
+    def _loads_json_dict(cls: type[TRecordSummary], value: dict) -> "RecordSummary":
+        """Create a RecordSummary from a config dict loaded from JSON."""
+        converter = cattrs.Converter()
+        converter.register_structure_hook(RecordSummary, lambda d, t: RecordSummary.structure(d))
+        return converter.structure(value, cls)
+
+    @classmethod
+    def _loads_record(cls: type[TRecordSummary], record: Record) -> "RecordSummary":
         """Create a RecordSummary from a Record."""
         return cls(
             file_identifier=record.file_identifier,
@@ -66,6 +94,16 @@ class RecordSummary:
             constraints=record.identification.constraints,
             aggregations=record.identification.aggregations,
         )
+
+    @classmethod
+    def loads(cls: type[TRecordSummary], value: Record | dict) -> "RecordSummary":
+        """Create a RecordSummary from a Record."""
+        if isinstance(value, Record):
+            return cls._loads_record(value)
+        if isinstance(value, dict):
+            return cls._loads_json_dict(value)
+        msg = f"Unsupported RecordSummary load type: {type(value)}"
+        raise TypeError(msg) from None
 
     @property
     def revision_creation(self) -> Date:
