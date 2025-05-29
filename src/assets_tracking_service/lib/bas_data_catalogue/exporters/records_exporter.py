@@ -1,6 +1,6 @@
 import logging
 
-from mypy_boto3_s3 import S3Client
+from boto3 import client as S3Client  # noqa: N812
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, ResourceExporter
