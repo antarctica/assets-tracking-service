@@ -4,10 +4,11 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import TypeVar
 
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemSummaryBase, md_as_html
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemSummaryBase
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link, unpack
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base.utils import md_as_html
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates

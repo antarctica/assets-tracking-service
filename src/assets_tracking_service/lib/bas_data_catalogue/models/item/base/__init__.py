@@ -2,8 +2,6 @@ import json
 from json import JSONDecodeError
 from urllib.parse import unquote
 
-from markdown import Markdown, markdown
-
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.const import (
     PERMISSIONS_BAS_GROUP,
     PERMISSIONS_NERC_DIRECTORY,
@@ -15,6 +13,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements im
     Extents,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base.utils import md_as_html, md_as_plain
 from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     Distribution,
     HierarchyLevelCode,
@@ -35,27 +34,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     ConstraintTypeCode,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
-from assets_tracking_service.lib.markdown.extensions.links import LinkifyExtension
-from assets_tracking_service.lib.markdown.extensions.prepend_new_line import PrependNewLineExtension
-from assets_tracking_service.lib.markdown.formats.plaintext import PlainTextExtension
-
-
-def md_as_html(string: str) -> str:
-    """
-    Encode string with possible Markdown as HTML.
-
-    At a minimum the string will be returned as a paragraph.
-    """
-    return markdown(string, output_format="html", extensions=["tables", PrependNewLineExtension(), LinkifyExtension()])
-
-
-def md_as_plain(string: str | None) -> str:
-    """Strip possible Markdown formatting from a string."""
-    if string is None:
-        return ""
-
-    md = Markdown(extensions=[PlainTextExtension()])
-    return md.convert(string)
 
 
 class ItemBase:
