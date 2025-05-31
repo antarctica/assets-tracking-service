@@ -164,15 +164,19 @@ class SiteIndexExporter(Exporter):
         super().__init__(config=config, logger=logger, s3=s3)
         self._index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
         self._summaries: list[RecordSummary] = []
+        self._records: list[Record] = []
+        self._record_ids = set()
 
     @property
     def name(self) -> str:
         """Exporter name."""
         return "Site Index"
 
-    def loads(self, summaries: list[RecordSummary]) -> None:
+    def loads(self, summaries: list[RecordSummary], records: list[Record]) -> None:
         """Populate exporter."""
         self._summaries = summaries
+        self._records = records
+        self._record_ids = {record.file_identifier for record in records}
 
     def _dumps(self) -> str:
         """Build proto/backstage index."""
@@ -182,6 +186,36 @@ class SiteIndexExporter(Exporter):
                 for summary in self._summaries
             ]
         )
+        summary_rows = "\n".join(
+            [
+                f"""
+                <tr>
+                    <td>ItemSummary</td>
+                    <td>{summary.hierarchy_level.name}</td>
+                    <td>{summary.file_identifier}</td>
+                    <td>{summary.title}</td>
+                    <td>{summary.edition}</td>
+                </tr>
+                """
+                for summary in self._summaries
+                if summary.file_identifier not in self._record_ids
+            ]
+        )
+        record_rows = "\n".join(
+            [
+                f"""
+                        <tr>
+                            <td>Item</td>
+                            <td>{record.hierarchy_level.name}</td>
+                            <td><a href="/items/{record.file_identifier}/index.html">{record.file_identifier}</a></td>
+                            <td>{record.identification.title}</td>
+                            <td>{record.identification.edition}</td>
+                        </tr>
+                        """
+                for record in self._records
+            ]
+        )
+
         return f"""
         <html>
             <head>
@@ -190,6 +224,24 @@ class SiteIndexExporter(Exporter):
             </head>
             <body>
                 <h1>Proto Items Index</h1>
+                <section>
+                    <h2>V2</h2>
+                    <table border="1" cellpadding="5" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Kind</th>
+                                <th>Type</th>
+                                <th>File Identifier</th>
+                                <th>Title</th>
+                                <th>Edition</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {summary_rows}
+                            {record_rows}
+                        </tbody>
+                    </table>
+                </section>
                 <section>
                     <h2>V1</h2>
                     <ul>{item_links}</ul>
@@ -310,7 +362,7 @@ class SiteExporter(Exporter):
     def loads(self, summaries: list[RecordSummary], records: list[Record]) -> None:
         """Populate exporter."""
         self._records_exporter.loads(summaries=summaries, records=records)
-        self._index_exporter.loads(summaries=summaries)
+        self._index_exporter.loads(summaries=summaries, records=records)
 
     def export(self) -> None:
         """Export site contents to a directory."""

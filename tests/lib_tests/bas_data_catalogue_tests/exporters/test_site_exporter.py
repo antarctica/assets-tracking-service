@@ -35,15 +35,22 @@ class TestSiteIndexExporter:
 
     def test_loads(self, fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: Record):
         """Can load summaries."""
+        records = [fx_lib_record_minimal_item_catalogue]
         summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
-        fx_lib_exporter_site_index.loads(summaries)
+        fx_lib_exporter_site_index.loads(summaries=summaries, records=records)
         assert len(fx_lib_exporter_site_index._summaries) == len(summaries)
 
     def test_dumps(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
         """Can dump site index."""
-        result = fx_lib_exporter_site_index_pop._dumps()
+        expected_v1 = '<ul><li><a href="/items/x/index.html">[DATASET] x - x (None)</a></li></ul>'
+        expected_v2 = (
+            '<tr><td>Item</td><td>DATASET</td><td><a href="/items/x/index.html">x</a></td><td>x</td><td>None</td></tr>'
+        )
+        html = BeautifulSoup(fx_lib_exporter_site_index_pop._dumps(), parser="html.parser", features="lxml")
+        result = str(html).replace("\n", "")
         assert "<h1>Proto Items Index</h1>" in result
-        assert '<ul><li><a href="/items/x/index.html">[DATASET] x - x (None)</a></li></ul>' in result
+        assert expected_v1 in result
+        assert expected_v2 in result
 
     def test_export(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
         """Can export site index to a local file."""

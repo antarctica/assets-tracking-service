@@ -1165,8 +1165,9 @@ def fx_lib_exporter_site_index_pop(
     fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: Record
 ) -> SiteIndexExporter:
     """Site index exporter populated with a single record summary."""
+    records = [fx_lib_record_minimal_item_catalogue]
     summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
-    fx_lib_exporter_site_index.loads(summaries)
+    fx_lib_exporter_site_index.loads(summaries=summaries, records=records)
     return fx_lib_exporter_site_index
 
 
