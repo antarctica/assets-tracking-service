@@ -1,3 +1,4 @@
+import logging
 from mimetypes import guess_type
 from pathlib import Path
 from shutil import copytree
@@ -13,7 +14,8 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 class S3Utils:
     """Wrapper around Boto S3 client with high-level and/or convenience methods."""
 
-    def __init__(self, s3: S3Client, s3_bucket: str, relative_base: Path) -> None:
+    def __init__(self, logger: logging.Logger, s3: S3Client, s3_bucket: str, relative_base: Path) -> None:
+        self._logger = logger
         self._s3 = s3
         self._bucket = s3_bucket
         self._relative_base = relative_base
@@ -39,6 +41,7 @@ class S3Utils:
             params["Body"] = body.encode("utf-8")
         if redirect is not None:
             params["WebsiteRedirectLocation"] = redirect
+        self._logger.debug(f"Writing key: s3://{self._bucket}/{key}")
         self._s3.put_object(**params)
 
     def upload_package_resources(self, src_ref: str, base_key: str) -> None:
@@ -72,16 +75,13 @@ class Exporter:
     """
     Base class for exporters.
 
-    Defines a required interface all exporters must implement to allow operations to be performed across a set of
-    exporters without knowledge of how each works.
-
     Exporters:
     - produce representations of a Record in a particular format, encoding or other form as string output
     - persist this output as files, stored on a local file system and remote object store (AWS S3)
     - require records to set Record.file_identifier
     """
 
-    def __init__(self, config: Config, s3: S3Client, record: Record, export_base: Path, export_name: str) -> None:
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client) -> None:
         """
         Initialise exporter.
 
@@ -89,34 +89,14 @@ class Exporter:
         `Config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`, so that a base S3 key can be generated from it.
         """
         self._config = config
+        self._logger = logger
         self._s3_client = s3
         self._s3_utils = S3Utils(
+            logger=logger,
             s3=self._s3_client,
             s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
             relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
         )
-
-        self._validate(record, export_base)
-        self._record = record
-        self._export_path = export_base.joinpath(export_name)
-
-    def _validate(self, record: Record, export_base: Path) -> None:
-        """Validate exporter configuration."""
-        if record.file_identifier is None:
-            msg = "File identifier must be set to export record."
-            raise ValueError(msg) from None
-
-        try:
-            _ = export_base.relative_to(self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
-        except ValueError as e:
-            msg = "Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."
-            raise ValueError(msg) from e
-
-    def _dump(self, path: Path) -> None:
-        """Write dumped output to file."""
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w") as record_file:
-            record_file.write(self.dumps())
 
     @staticmethod
     def _dump_package_resources(src_ref: str, dest_path: Path) -> None:
@@ -138,13 +118,52 @@ class Exporter:
         """Exporter name."""
         raise NotImplementedError() from None
 
+    def export(self) -> None:
+        """Save dumped output to local export directory."""
+        raise NotImplementedError() from None
+
+    def publish(self) -> None:
+        """Save dumped output to remote S3 bucket."""
+        raise NotImplementedError() from None
+
+
+class ResourceExporter(Exporter):
+    """
+    Base exporter for resource records or items.
+
+    Base class for exporters related to Record or Item variants created from resources.
+    """
+
+    def __init__(
+        self, config: Config, logger: logging.Logger, s3: S3Client, record: Record, export_base: Path, export_name: str
+    ) -> None:
+        super().__init__(config=config, logger=logger, s3=s3)
+        self._export_path = export_base.joinpath(export_name)
+        self._validate(record, export_base)
+        self._record = record
+
+    def _validate(self, record: Record, export_base: Path) -> None:
+        """Validate exporter configuration."""
+        if record.file_identifier is None:
+            msg = "File identifier must be set to export record."
+            raise ValueError(msg) from None
+
+        try:
+            _ = export_base.relative_to(self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
+        except ValueError as e:
+            msg = "Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."
+            raise ValueError(msg) from e
+
     def dumps(self) -> str:
         """Encode resource as a particular format."""
         raise NotImplementedError() from None
 
     def export(self) -> None:
         """Save dumped output to local export directory."""
-        self._dump(self._export_path)
+        self._export_path.parent.mkdir(parents=True, exist_ok=True)
+        self._logger.debug(f"Writing file: {self._export_path.resolve()}")
+        with self._export_path.open("w") as record_file:
+            record_file.write(self.dumps())
 
     def publish(self) -> None:
         """Save dumped output to remote S3 bucket."""

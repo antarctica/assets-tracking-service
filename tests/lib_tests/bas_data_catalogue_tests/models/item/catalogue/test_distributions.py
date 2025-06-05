@@ -3,6 +3,7 @@ import pytest
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.distributions import (
+    ArcGISDistribution,
     ArcGisFeatureLayer,
     ArcGisOgcApiFeatures,
     ArcGisVectorTileLayer,
@@ -79,6 +80,24 @@ class FakeDistributionType(Distribution):
         return None
 
 
+class FakeArcGISDistributionType(ArcGISDistribution):
+    """For testing non-abstract or common ArcGIS distribution properties."""
+
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution], **kwargs: dict) -> None:
+        service_media_href = "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        super().__init__(option, other_options, service_media_href, **kwargs)
+
+    @classmethod
+    def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
+        """Match."""
+        return False
+
+    @property
+    def format_type(self) -> DistributionType:
+        """Format."""
+        return DistributionType.ARCGIS_FEATURE_LAYER
+
+
 class FakeFileDistributionType(FileDistribution):
     """For testing non-abstract or common file distribution properties."""
 
@@ -112,6 +131,81 @@ class TestDistribution:
         assert dist.action_btn_icon != ""
 
 
+class TestArcGISDistribution:
+    """Test base ArcGIS based Catalogue distribution."""
+
+    def test_get_service_option(self):
+        """Can get distribution option for relevant ArcGIS service."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist._service == service_dist
+
+    def test_get_service_option_missing(self):
+        """Cannot get distribution option for relevant ArcGIS service if missing."""
+        with pytest.raises(
+            ValueError, match="Required corresponding service option not found in resource distributions."
+        ):
+            FakeArcGISDistributionType(option=_make_dist("x"), other_options=[])
+
+    def test_size(self):
+        """Can get non-applicable size."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist.size == "-"
+
+    def test_item_link(self):
+        """Can get link to ArcGIS layer."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist.item_link == Link(value="x", href="x", external=True)
+
+    def test_service_endpoint(self):
+        """Can get endpoint to ArcGIS service."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist.service_endpoint == "x"
+
+    def test_action(self):
+        """Can get action link."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist.action == Link(value="Add to GIS", href=None)
+
+    def test_action_variant(self):
+        """Can get action variant."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist.action_btn_variant == "primary"
+
+    def test_action_btn_icon(self):
+        """Can get action icon."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist.action_btn_icon == "far fa-layer-plus"
+
+    def test_access_target(self):
+        """Can get action target."""
+        service_dist = _make_dist(
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        )
+        dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
+        assert dist.access_target == "#item-data-info-eA"
+
+
 class TestFileDistribution:
     """Test base file based Catalogue distribution."""
 
@@ -121,7 +215,7 @@ class TestFileDistribution:
     )
     def test_size(self, size: Size | None, expected: str):
         """Can format file size."""
-        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[], access_type=AccessType.PUBLIC)
+        dist = FakeFileDistributionType(option=_make_dist("x"), access_type=AccessType.PUBLIC)
         dist._option.transfer_option.size = size
         assert dist.size == expected
 
@@ -130,13 +224,13 @@ class TestFileDistribution:
     )
     def test_action(self, access: AccessType, expected: str):
         """Can get action link."""
-        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[], access_type=access)
+        dist = FakeFileDistributionType(option=_make_dist("x"), access_type=access)
         assert dist.action == Link(value=expected, href="x")
 
     @pytest.mark.parametrize(("access", "expected"), [(AccessType.PUBLIC, "default"), (AccessType.BAS_SOME, "warning")])
     def test_action_btn_variant(self, access: AccessType, expected: str):
         """Can get action variant."""
-        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[], access_type=access)
+        dist = FakeFileDistributionType(option=_make_dist("x"), access_type=access)
         assert dist.action_btn_variant == expected
 
     @pytest.mark.parametrize(
@@ -144,12 +238,12 @@ class TestFileDistribution:
     )
     def test_action_btn_icon(self, access: AccessType, expected: str):
         """Can get action icon."""
-        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[], access_type=access)
+        dist = FakeFileDistributionType(option=_make_dist("x"), access_type=access)
         assert dist.action_btn_icon == expected
 
     def test_access_target(self):
         """Can get null action target."""
-        dist = FakeFileDistributionType(option=_make_dist("x"), other_options=[], access_type=AccessType.PUBLIC)
+        dist = FakeFileDistributionType(option=_make_dist("x"), access_type=AccessType.PUBLIC)
         assert dist.access_target is None
 
 
@@ -161,27 +255,8 @@ class TestDistributionArcGisFeatureLayer:
         main = _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+feature")
         others = [_make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature")]
 
-        dist = ArcGisFeatureLayer(main, others, access_type=AccessType.PUBLIC)
-
-        # cov
+        dist = ArcGisFeatureLayer(main, others)
         assert dist.format_type == DistributionType.ARCGIS_FEATURE_LAYER
-        assert dist.size == "-"
-        assert dist.item_link.href == main.transfer_option.online_resource.href
-        assert dist.service_endpoint == others[0].transfer_option.online_resource.href
-        assert isinstance(dist.action, Link)
-        assert dist.action_btn_variant != ""
-        assert dist.action_btn_icon != ""
-        assert dist.access_target != ""
-
-    def test_init_no_service(self):
-        """Cannot create a distribution without the required additional service distribution."""
-        main = _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+feature")
-        others = [_make_dist("x")]
-
-        with pytest.raises(
-            ValueError, match="Required corresponding service option not found in resource distributions."
-        ):
-            ArcGisFeatureLayer(main, others, access_type=AccessType.PUBLIC)
 
     @pytest.mark.parametrize(
         ("main", "others", "expected"),
@@ -218,27 +293,8 @@ class TestDistributionArcGisOgcApiFeatures:
         main = _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+feature+ogc")
         others = [_make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/ogc+api+feature")]
 
-        dist = ArcGisOgcApiFeatures(main, others, access_type=AccessType.PUBLIC)
-
-        # cov
+        dist = ArcGisOgcApiFeatures(main, others)
         assert dist.format_type == DistributionType.ARCGIS_OGC_FEATURE_LAYER
-        assert dist.size == "-"
-        assert dist.item_link.href == main.transfer_option.online_resource.href
-        assert dist.service_endpoint == others[0].transfer_option.online_resource.href
-        assert isinstance(dist.action, Link)
-        assert dist.action_btn_variant != ""
-        assert dist.action_btn_icon != ""
-        assert dist.access_target != ""
-
-    def test_init_no_service(self):
-        """Cannot create a distribution without the required additional service distribution."""
-        main = _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+feature+ogc")
-        others = [_make_dist("x")]
-
-        with pytest.raises(
-            ValueError, match="Required corresponding service option not found in resource distributions."
-        ):
-            ArcGisOgcApiFeatures(main, others, access_type=AccessType.PUBLIC)
 
     @pytest.mark.parametrize(
         ("main", "others", "expected"),
@@ -277,27 +333,8 @@ class TestDistributionArcGisVectorTileLayer:
             _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector")
         ]
 
-        dist = ArcGisVectorTileLayer(main, others, access_type=AccessType.PUBLIC)
-
-        # cov
+        dist = ArcGisVectorTileLayer(main, others)
         assert dist.format_type == DistributionType.ARCGIS_VECTOR_TILE_LAYER
-        assert dist.size == "-"
-        assert dist.item_link.href == main.transfer_option.online_resource.href
-        assert dist.service_endpoint == others[0].transfer_option.online_resource.href
-        assert isinstance(dist.action, Link)
-        assert dist.action_btn_variant != ""
-        assert dist.action_btn_icon != ""
-        assert dist.access_target != ""
-
-    def test_init_no_service(self):
-        """Cannot create a distribution without the required additional service distribution."""
-        main = _make_dist("https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+layer+tile+vector")
-        others = [_make_dist("x")]
-
-        with pytest.raises(
-            ValueError, match="Required corresponding service option not found in resource distributions."
-        ):
-            ArcGisVectorTileLayer(main, others, access_type=AccessType.PUBLIC)
 
     @pytest.mark.parametrize(
         ("main", "others", "expected"),
@@ -341,7 +378,6 @@ class TestDistributionGeoJson:
         """Can create a distribution."""
         dist = GeoJson(
             option=_make_dist("https://www.iana.org/assignments/media-types/application/geo+json"),
-            other_options=[],
             access_type=AccessType.PUBLIC,
         )
 
@@ -368,7 +404,7 @@ class TestDistributionGeoPackage:
     )
     def test_init(self, href: str, format_type: DistributionType, compressed: bool):
         """Can create a distribution."""
-        dist = GeoPackage(option=_make_dist(format_href=href), other_options=[], access_type=AccessType.PUBLIC)
+        dist = GeoPackage(option=_make_dist(format_href=href), access_type=AccessType.PUBLIC)
 
         assert dist.format_type == format_type
         assert dist._compressed == compressed
@@ -379,7 +415,7 @@ class TestDistributionJpeg:
 
     def test_init(self):
         """Can create a distribution."""
-        dist = Jpeg(option=_make_dist("https://jpeg.org/jpeg/"), other_options=[], access_type=AccessType.PUBLIC)
+        dist = Jpeg(option=_make_dist("https://jpeg.org/jpeg/"), access_type=AccessType.PUBLIC)
         assert dist.format_type == DistributionType.JPEG
 
 
@@ -403,7 +439,7 @@ class TestDistributionPdf:
     )
     def test_init(self, href: str, format_type: DistributionType, georeferenced: bool):
         """Can create a distribution."""
-        dist = Pdf(option=_make_dist(format_href=href), other_options=[], access_type=AccessType.PUBLIC)
+        dist = Pdf(option=_make_dist(format_href=href), access_type=AccessType.PUBLIC)
 
         assert dist.format_type == format_type
         assert dist._georeferenced == georeferenced
@@ -416,7 +452,6 @@ class TestDistributionPng:
         """Can create a distribution."""
         dist = Png(
             option=_make_dist("https://www.iana.org/assignments/media-types/image/png"),
-            other_options=[],
             access_type=AccessType.PUBLIC,
         )
         assert dist.format_type == DistributionType.PNG
@@ -429,7 +464,6 @@ class TestDistributionShapefile:
         """Can create a distribution."""
         dist = Shapefile(
             option=_make_dist("https://metadata-resources.data.bas.ac.uk/media-types/application/vnd.shp+zip"),
-            other_options=[],
             access_type=AccessType.PUBLIC,
         )
         assert dist.format_type == DistributionType.SHAPEFILE_ZIP

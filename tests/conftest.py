@@ -35,8 +35,8 @@ from assets_tracking_service.db import DatabaseClient, DatabaseError
 from assets_tracking_service.exporters.arcgis import ArcGisExporter, ArcGisExporterLayer
 from assets_tracking_service.exporters.catalogue import CollectionRecord, DataCatalogueExporter, LayerRecord
 from assets_tracking_service.exporters.exporters_manager import ExportersManager
-from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, S3Utils
-from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, ResourceExporter, S3Utils
+from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter, HtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.site_exporter import (
@@ -1069,33 +1069,49 @@ def fx_s3_client(mocker: MockerFixture, fx_s3_bucket_name: str) -> S3Client:
 
 
 @pytest.fixture()
-def fx_lib_s3_utils(fx_s3_client: S3Client, fx_s3_bucket_name: str) -> S3Utils:
+def fx_lib_s3_utils(fx_logger: logging.Logger, fx_s3_client: S3Client, fx_s3_bucket_name: str) -> S3Utils:
     """S3Utils with a mocked S3 client."""
     with TemporaryDirectory() as tmp_path:
         base_path = Path(tmp_path)
-    return S3Utils(s3=fx_s3_client, s3_bucket=fx_s3_bucket_name, relative_base=base_path)
+    return S3Utils(logger=fx_logger, s3=fx_s3_client, s3_bucket=fx_s3_bucket_name, relative_base=base_path)
 
 
 @pytest.fixture()
 def fx_lib_exporter_base(
-    mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: LibRecord
+    mocker: MockerFixture, fx_logger: logging.Logger, fx_s3_bucket_name: str, fx_s3_client: S3Client
 ) -> Exporter:
     """Data Catalogue base exporter with a mocked config and S3 client."""  # noqa: D401
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+
+    return Exporter(config=mock_config, logger=fx_logger, s3=fx_s3_client)
+
+
+@pytest.fixture()
+def fx_lib_exporter_resource_base(
+    mocker: MockerFixture,
+    fx_logger: logging.Logger,
+    fx_lib_exporter_base: Exporter,
+    fx_s3_bucket_name: str,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item: LibRecord,
+) -> ResourceExporter:
+    """Data Catalogue resource base exporter with a mocked config and S3 client."""  # noqa: D401
     with TemporaryDirectory() as tmp_path:
         output_path = Path(tmp_path)
     mock_config = mocker.Mock()
-    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    fx_lib_exporter_base._config = mock_config
 
-    exporter = Exporter(
+    return ResourceExporter(
         config=mock_config,
+        logger=fx_logger,
         s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=output_path.joinpath("x"),
         export_name="x.txt",
     )
-    mocker.patch.object(exporter, "dumps", return_value="x")
-    return exporter
 
 
 @pytest.fixture()
@@ -1112,6 +1128,7 @@ def fx_lib_exporter_iso_xml_html(
 
     return IsoXmlHtmlExporter(
         config=mock_config,
+        logger=fx_logger,
         s3=fx_s3_client,
         record=fx_lib_record_minimal_item,
         export_base=exports_path,
@@ -1119,12 +1136,41 @@ def fx_lib_exporter_iso_xml_html(
 
 
 @pytest.fixture()
+def fx_lib_exporter_html(
+    mocker: MockerFixture,
+    fx_logger: logging.Logger,
+    fx_s3_bucket_name: str,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item_catalogue: Record,
+) -> HtmlExporter:
+    """HTML exporter with a mocked config and S3 client."""
+    with TemporaryDirectory() as tmp_path:
+        output_path = Path(tmp_path)
+    mock_config = mocker.Mock()
+    type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
+    type(mock_config).EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT = PropertyMock(return_value="x")
+    type(mock_config).EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT = PropertyMock(return_value="x")
+
+    return HtmlExporter(
+        config=mock_config,
+        logger=fx_logger,
+        s3=fx_s3_client,
+        record=fx_lib_record_minimal_item_catalogue,
+        export_base=output_path,
+        get_record=_lib_get_record,
+        get_record_summary=_lib_get_record_summary,
+    )
+
+
+@pytest.fixture()
 def fx_lib_exporter_html_alias(
     mocker: MockerFixture,
+    fx_logger: logging.Logger,
     fx_s3_bucket_name: str,
     fx_s3_client: S3Client,
     fx_lib_record_minimal_item_catalogue: LibRecord,
-) -> Exporter:
+) -> HtmlAliasesExporter:
     """HTML alias exporter with a mocked config and S3 client."""
     with TemporaryDirectory() as tmp_path:
         output_path = Path(tmp_path)
@@ -1137,7 +1183,11 @@ def fx_lib_exporter_html_alias(
     )
 
     return HtmlAliasesExporter(
-        config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item_catalogue, site_base=output_path
+        config=mock_config,
+        logger=fx_logger,
+        s3=fx_s3_client,
+        record=fx_lib_record_minimal_item_catalogue,
+        site_base=output_path,
     )
 
 
@@ -1175,7 +1225,7 @@ def fx_lib_exporter_records_pop(
 
 @pytest.fixture()
 def fx_lib_exporter_site_resources(
-    mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client
+    mocker: MockerFixture, fx_logger: logging.Logger, fx_s3_bucket_name: str, fx_s3_client: S3Client
 ) -> SiteResourcesExporter:
     """Site resources exporter with a mocked config and S3 client."""
     with TemporaryDirectory() as tmp_path:
@@ -1184,7 +1234,7 @@ def fx_lib_exporter_site_resources(
     type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
-    return SiteResourcesExporter(config=mock_config, s3=fx_s3_client)
+    return SiteResourcesExporter(config=mock_config, logger=fx_logger, s3=fx_s3_client)
 
 
 @pytest.fixture()

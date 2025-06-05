@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import PropertyMock
@@ -15,7 +16,12 @@ class TestIsoXmlExporter:
     """Test ISO 19115 XML exporter."""
 
     def test_init(
-        self, mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: Record
+        self,
+        mocker: MockerFixture,
+        fx_logger: logging.Logger,
+        fx_s3_bucket_name: str,
+        fx_s3_client: S3Client,
+        fx_lib_record_minimal_item: Record,
     ):
         """Can create an ISO XML Exporter."""
         with TemporaryDirectory() as tmp_path:
@@ -26,7 +32,11 @@ class TestIsoXmlExporter:
         expected = output_path.joinpath(f"{fx_lib_record_minimal_item.file_identifier}.xml")
 
         exporter = IsoXmlExporter(
-            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
+            config=mock_config,
+            logger=fx_logger,
+            s3=fx_s3_client,
+            record=fx_lib_record_minimal_item,
+            export_base=output_path,
         )
 
         assert isinstance(exporter, IsoXmlExporter)
@@ -34,7 +44,12 @@ class TestIsoXmlExporter:
         assert exporter._export_path == expected
 
     def test_dumps(
-        self, mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: Record
+        self,
+        mocker: MockerFixture,
+        fx_logger: logging.Logger,
+        fx_s3_bucket_name: str,
+        fx_s3_client: S3Client,
+        fx_lib_record_minimal_item: Record,
     ):
         """Can encode record as ISO 19139 XML string."""
         with TemporaryDirectory() as tmp_path:
@@ -45,7 +60,11 @@ class TestIsoXmlExporter:
         expected = fx_lib_record_minimal_item.dumps()
 
         exporter = IsoXmlExporter(
-            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, export_base=output_path
+            config=mock_config,
+            logger=fx_logger,
+            s3=fx_s3_client,
+            record=fx_lib_record_minimal_item,
+            export_base=output_path,
         )
 
         result = exporter.dumps()
@@ -58,7 +77,12 @@ class TestIsoXmlHtmlExporter:
     """Test ISO 19115 XML as HTML exporter."""
 
     def test_init(
-        self, mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: Record
+        self,
+        mocker: MockerFixture,
+        fx_s3_bucket_name: str,
+        fx_logger: logging.Logger,
+        fx_s3_client: S3Client,
+        fx_lib_record_minimal_item: Record,
     ):
         """Can create an ISO XML as HTML Exporter."""
         with TemporaryDirectory() as tmp_path:
@@ -70,6 +94,7 @@ class TestIsoXmlHtmlExporter:
 
         exporter = IsoXmlHtmlExporter(
             config=mock_config,
+            logger=fx_logger,
             s3=fx_s3_client,
             record=fx_lib_record_minimal_item,
             export_base=exports_path,

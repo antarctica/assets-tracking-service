@@ -21,34 +21,16 @@ class RecordsExporter(Exporter):
     It will be replaced with a more capable record repository in the future.
     """
 
-    def __init__(
-        self,
-        config: Config,
-        logger: logging.Logger,
-        s3: S3Client,
-        records: list[Record],
-        summaries: list[RecordSummary],
-    ) -> None:
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client) -> None:
         """Initialise exporter."""
         super().__init__(config=config, logger=logger, s3=s3)
         self._records: dict[str, Record] = {}
         self._summaries: dict[str, RecordSummary] = {}
 
-        self._index_records(records)
-        self._index_summaries(summaries)
-
-    def _index_records(self, records: list[Record]) -> None:
-        """Index all records and create record summaries."""
-        self._records = {record.file_identifier: record for record in records}
-        self._logger.debug(f"{len(self._records)} records indexed")
     def _get_record_summary(self, identifier: str) -> RecordSummary:
         """
         Get record summary for a record identifier.
 
-    def _index_summaries(self, summaries: list[RecordSummary]) -> None:
-        """Create record summaries for all records."""
-        self._summaries = {summary.file_identifier: summary for summary in summaries}
-        self._logger.debug(f"{len(self._summaries)} record summaries indexed")
         Crude implementation of a record repository interface.
         """
         return self._summaries[identifier]
@@ -117,6 +99,11 @@ class RecordsExporter(Exporter):
         """Exporter name."""
         return "Records"
 
+    def loads(self, summaries: list[RecordSummary], records: list[Record]) -> None:
+        """Populate exporter."""
+        self._summaries = {summary.file_identifier: summary for summary in summaries}
+        self._records = {record.file_identifier: record for record in records}
+
     def export_record(self, file_identifier: str) -> None:
         """Export a record to a directory."""
         self._logger.info(f"Exporting record '{file_identifier}'")
@@ -127,6 +114,7 @@ class RecordsExporter(Exporter):
 
     def publish_record(self, file_identifier: str) -> None:
         """Publish a records to S3."""
+        self._logger.info(f"Publishing record '{file_identifier}'")
         record = self._records[file_identifier]
         for exporter in self._get_exporters(record):
             self._logger.debug(f"Publishing record '{file_identifier}' using {exporter.name} exporter")

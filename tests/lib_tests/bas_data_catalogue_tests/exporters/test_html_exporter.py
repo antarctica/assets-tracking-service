@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import PropertyMock
@@ -19,7 +20,12 @@ class TestHtmlExporter:
     """Test Data Catalogue HTML exporter."""
 
     def test_init(
-        self, mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: Record
+        self,
+        mocker: MockerFixture,
+        fx_logger: logging.Logger,
+        fx_s3_bucket_name: str,
+        fx_s3_client: S3Client,
+        fx_lib_record_minimal_item: Record,
     ):
         """Can create an HTML Exporter."""
         with TemporaryDirectory() as tmp_path:
@@ -31,6 +37,7 @@ class TestHtmlExporter:
 
         exporter = HtmlExporter(
             config=mock_config,
+            logger=fx_logger,
             s3=fx_s3_client,
             record=fx_lib_record_minimal_item,
             export_base=output_path,
@@ -66,7 +73,12 @@ class TestHtmlAliasesExporter:
     """Test HTML alias redirect exporter."""
 
     def test_init(
-        self, mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: Record
+        self,
+        mocker: MockerFixture,
+        fx_logger: logging.Logger,
+        fx_s3_bucket_name: str,
+        fx_s3_client: S3Client,
+        fx_lib_record_minimal_item: Record,
     ):
         """Can create an HTML alias Exporter."""
         with TemporaryDirectory() as tmp_path:
@@ -76,7 +88,11 @@ class TestHtmlAliasesExporter:
         type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
         exporter = HtmlAliasesExporter(
-            config=mock_config, s3=fx_s3_client, record=fx_lib_record_minimal_item, site_base=output_path
+            config=mock_config,
+            logger=fx_logger,
+            s3=fx_s3_client,
+            record=fx_lib_record_minimal_item,
+            site_base=output_path,
         )
 
         assert isinstance(exporter, HtmlAliasesExporter)

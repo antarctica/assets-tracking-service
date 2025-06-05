@@ -1,10 +1,11 @@
+import logging
 from collections.abc import Callable
 from pathlib import Path
 
 from mypy_boto3_s3 import S3Client
 
 from assets_tracking_service.config import Config
-from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import ResourceExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.special.physical_map import (
     ItemCataloguePhysicalMap,
@@ -13,7 +14,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
-class HtmlExporter(Exporter):
+class HtmlExporter(ResourceExporter):
     """
     Data Catalogue HTML item exporter.
 
@@ -25,6 +26,7 @@ class HtmlExporter(Exporter):
     def __init__(
         self,
         config: Config,
+        logger: logging.Logger,
         s3: S3Client,
         record: Record,
         export_base: Path,
@@ -38,7 +40,9 @@ class HtmlExporter(Exporter):
         """
         export_base = export_base / record.file_identifier
         export_name = "index.html"
-        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
+        super().__init__(
+            config=config, logger=logger, s3=s3, record=record, export_base=export_base, export_name=export_name
+        )
         self._get_summary = get_record_summary
         self._get_record = get_record
 
@@ -64,7 +68,7 @@ class HtmlExporter(Exporter):
         ).render()
 
 
-class HtmlAliasesExporter(Exporter):
+class HtmlAliasesExporter(ResourceExporter):
     """
     HTML aliases exporter.
 
@@ -73,7 +77,7 @@ class HtmlAliasesExporter(Exporter):
     Uses S3 object redirects with a minimal HTML page as a fallback.
     """
 
-    def __init__(self, config: Config, s3: S3Client, record: Record, site_base: Path) -> None:
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client, record: Record, site_base: Path) -> None:
         """
         Initialise.
 
@@ -86,7 +90,9 @@ class HtmlAliasesExporter(Exporter):
         export_name = f"{record.file_identifier}.html"
         export_base = site_base
         self._site_base = site_base
-        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
+        super().__init__(
+            config=config, logger=logger, s3=s3, record=record, export_base=export_base, export_name=export_name
+        )
 
     def _get_aliases(self) -> list[str]:
         """Get optional aliases for record as relative file paths / S3 keys."""
@@ -113,7 +119,10 @@ class HtmlAliasesExporter(Exporter):
         """Write redirect pages for each alias to export directory."""
         for alias in self._get_aliases():
             alias_path = self._site_base / alias / "index.html"
-            self._dump(alias_path)
+            alias_path.parent.mkdir(parents=True, exist_ok=True)
+            self._logger.debug(f"Writing file: {alias_path.resolve()}")
+            with alias_path.open("w") as alias_file:
+                alias_file.write(self.dumps())
 
     def publish(self) -> None:
         """Write redirect pages with redirect headers to S3."""
