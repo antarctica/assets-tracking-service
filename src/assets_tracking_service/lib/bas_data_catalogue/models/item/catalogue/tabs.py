@@ -29,7 +29,11 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     ItemSummaryCatalogue,
     Maintenance,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence, ResourceTypeIcon
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import (
+    Licence,
+    ResourceTypeIcon,
+    ResourceTypeLabel,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Series
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import DomainConsistency
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import (
@@ -383,6 +387,14 @@ class AdditionalInfoTab(Tab):
         self._profiles = profiles if profiles is not None else []
         self._kv = kv
 
+    @staticmethod
+    def _format_scale(value: int | None) -> str | None:
+        """Format scale value."""
+        if value is None:
+            return None
+        locale.setlocale(locale.LC_ALL, "en_GB.UTF-8")
+        return f"1:{locale.format_string('%d', value, grouping=True)}"
+
     @property
     def enabled(self) -> bool:
         """Whether tab is enabled."""
@@ -411,7 +423,7 @@ class AdditionalInfoTab(Tab):
     @property
     def item_type(self) -> str:
         """Item type."""
-        return self._item_type.value
+        return ResourceTypeLabel[self._item_type.name].value
 
     @property
     def item_type_icon(self) -> str:
@@ -426,8 +438,7 @@ class AdditionalInfoTab(Tab):
     @property
     def scale(self) -> str | None:
         """Formatted scale if set."""
-        locale.setlocale(locale.LC_ALL, "en_GB.UTF-8")
-        return f"1:{locale.format_string('%d', self._scale, grouping=True)}" if self._scale is not None else None
+        return self._format_scale(self._scale)
 
     @property
     def projection(self) -> Link | None:

@@ -9,7 +9,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements im
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link, unpack
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.utils import md_as_html
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import (
+    ResourceTypeIcon,
+    ResourceTypeLabel,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -106,6 +109,11 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return md_as_html(self.title_md)
 
     @property
+    def _resource_type_label(self) -> str:
+        """Resource type label."""
+        return ResourceTypeLabel[self.resource_type.name].value
+
+    @property
     def _resource_type_icon(self) -> str:
         """Resource type icon."""
         return ResourceTypeIcon[self.resource_type.name].value
@@ -142,7 +150,7 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         published = self._date if self.resource_type != HierarchyLevelCode.COLLECTION else None
         return ItemSummaryFragments(
             access=self.access,
-            item_type=self.resource_type.value.capitalize(),
+            item_type=self._resource_type_label,
             item_type_icon=self._resource_type_icon,
             edition=self._edition,
             published=published,
@@ -449,7 +457,7 @@ class PageHeader:
     @property
     def subtitle(self) -> tuple[str, str]:
         """Subtitle."""
-        return self._item_type.value, ResourceTypeIcon[self._item_type.name].value
+        return ResourceTypeLabel[self._item_type.name].value, ResourceTypeIcon[self._item_type.name].value
 
 
 class PageSummary:

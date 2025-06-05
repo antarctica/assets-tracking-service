@@ -44,12 +44,19 @@ class TestRecordsExporter:
         records = [fx_lib_record_minimal_item_catalogue]
         fx_lib_exporter_records.loads(summaries, records)
 
-    def test_get_item_summary(
+    def test_get_record(
         self, fx_lib_exporter_records_pop: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record
     ):
-        """Can get item summary."""
+        """Can get record."""
+        record = fx_lib_record_minimal_item_catalogue
+        assert fx_lib_exporter_records_pop._get_record(record.file_identifier) == record
+
+    def test_get_record_summary(
+        self, fx_lib_exporter_records_pop: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record
+    ):
+        """Can get record summary."""
         summary = RecordSummary.loads(fx_lib_record_minimal_item_catalogue)
-        assert fx_lib_exporter_records_pop._get_item_summary(summary.file_identifier) == summary
+        assert fx_lib_exporter_records_pop._get_record_summary(summary.file_identifier) == summary
 
     def test_get_exporters(
         self, fx_lib_exporter_records_pop: RecordsExporter, fx_lib_record_minimal_item_catalogue: Record

@@ -41,19 +41,25 @@ class RecordsExporter(Exporter):
         """Index all records and create record summaries."""
         self._records = {record.file_identifier: record for record in records}
         self._logger.debug(f"{len(self._records)} records indexed")
+    def _get_record_summary(self, identifier: str) -> RecordSummary:
+        """
+        Get record summary for a record identifier.
 
     def _index_summaries(self, summaries: list[RecordSummary]) -> None:
         """Create record summaries for all records."""
         self._summaries = {summary.file_identifier: summary for summary in summaries}
         self._logger.debug(f"{len(self._summaries)} record summaries indexed")
-
-    def _get_item_summary(self, identifier: str) -> RecordSummary:
-        """
-        Get title for a record identifier.
-
-        Crude implementation a record repository interface.
+        Crude implementation of a record repository interface.
         """
         return self._summaries[identifier]
+
+    def _get_record(self, identifier: str) -> Record:
+        """
+        Get record for a record identifier.
+
+        Crude implementation of a record repository interface.
+        """
+        return self._records[identifier]
 
     def _get_html_exporter(self, record: Record) -> HtmlExporter:
         """Record as item HTML."""
@@ -64,7 +70,8 @@ class RecordsExporter(Exporter):
             s3=self._s3_client,
             record=record,
             export_base=output_path,
-            get_record_summary=self._get_item_summary,
+            get_record_summary=self._get_record_summary,
+            get_record=self._get_record,
         )
 
     def _get_html_aliases_exporter(self, record: Record) -> HtmlAliasesExporter:

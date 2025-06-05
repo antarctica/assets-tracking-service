@@ -50,6 +50,9 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     Identifiers as ItemCatIdentifiers,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.special.physical_map import (
+    ItemCataloguePhysicalMap,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record as LibRecord
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Date,
@@ -919,9 +922,41 @@ def fx_lib_record_minimal_item_catalogue(fx_lib_record_config_minimal_item_catal
 
 
 @pytest.fixture()
+def fx_lib_record_minimal_item_catalogue_physical_map(fx_lib_record_config_minimal_item_catalogue: dict) -> LibRecord:
+    """Minimal record instance (ItemCataloguePhysicalMap)."""
+    config = deepcopy(fx_lib_record_config_minimal_item_catalogue)
+    config["hierarchy_level"] = HierarchyLevelCode.PAPER_MAP_PRODUCT.value
+    config["identification"]["aggregations"] = [
+        {
+            "identifier": {"identifier": "x", "href": "x", "namespace": "x"},
+            "association_type": "isComposedOf",
+            "initiative_type": "paperMap",
+        }
+    ]
+    return LibRecord.loads(config)
+
+
+@pytest.fixture()
 def fx_lib_record_summary_minimal_item(fx_lib_record_minimal_item_catalogue: Record) -> RecordSummary:
     """Minimal record summary instance (Item)."""
     return RecordSummary.loads(fx_lib_record_minimal_item_catalogue)
+
+
+def _lib_get_record(identifier: str) -> LibRecord:
+    """
+    Minimal record lookup method.
+
+    Standalone method to allow use outside of fixtures.
+    """
+    config = deepcopy(_lib_record_config_minimal_iso())
+    config["file_identifier"] = identifier
+    return LibRecord.loads(config)
+
+
+@pytest.fixture()
+def fx_lib_get_record() -> callable:
+    """Minimal record lookup method."""
+    return _lib_get_record
 
 
 def _lib_get_record_summary(identifier: str) -> RecordSummary:
@@ -984,6 +1019,22 @@ def fx_lib_item_catalogue_min(
     return ItemCatalogue(
         config=fx_config,
         record=fx_lib_record_minimal_item_catalogue,
+        get_record_summary=fx_lib_get_record_summary,
+    )
+
+
+@pytest.fixture()
+def fx_lib_item_catalogue_min_physical_map(
+    fx_config: Config,
+    fx_lib_record_minimal_item_catalogue_physical_map: LibRecord,
+    fx_lib_get_record: callable,
+    fx_lib_get_record_summary: callable,
+) -> ItemCatalogue:
+    """ItemCataloguePhysicalMap based on minimal catalogue record for a physical map."""
+    return ItemCataloguePhysicalMap(
+        config=fx_config,
+        record=fx_lib_record_minimal_item_catalogue_physical_map,
+        get_record=fx_lib_get_record,
         get_record_summary=fx_lib_get_record_summary,
     )
 

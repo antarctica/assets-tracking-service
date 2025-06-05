@@ -661,7 +661,7 @@ class TestInfoTab:
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         assert html.select_one("#info-type i")["class"] == expected.item_type_icon.split(" ")
-        assert html.select_one("#info-type").text.strip().lower() == expected.item_type
+        assert html.select_one("#info-type").text.strip() == expected.item_type
 
     @pytest.mark.parametrize("value", [Series, Series(name="x", edition="x")])
     def test_series(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Series):

@@ -6,6 +6,9 @@ from mypy_boto3_s3 import S3Client
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.special.physical_map import (
+    ItemCataloguePhysicalMap,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
@@ -26,6 +29,7 @@ class HtmlExporter(Exporter):
         record: Record,
         export_base: Path,
         get_record_summary: Callable[[str], RecordSummary],
+        get_record: Callable[[str], Record],
     ) -> None:
         """
         Initialise.
@@ -36,18 +40,27 @@ class HtmlExporter(Exporter):
         export_name = "index.html"
         super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
         self._get_summary = get_record_summary
+        self._get_record = get_record
 
     @property
     def name(self) -> str:
         """Exporter name."""
         return "Item HTML"
 
+    def _item_class(self) -> type[ItemCatalogue]:
+        """Get the ItemCatalogue (sub-)class to use for this record."""
+        if ItemCataloguePhysicalMap.matches(self._record):
+            return ItemCataloguePhysicalMap
+        return ItemCatalogue
+
     def dumps(self) -> str:
         """Encode record as data catalogue item in HTML."""
-        return ItemCatalogue(
+        item_class = self._item_class()
+        return item_class(
             config=self._config,
             record=self._record,
             get_record_summary=self._get_summary,
+            get_record=self._get_record,
         ).render()
 
 

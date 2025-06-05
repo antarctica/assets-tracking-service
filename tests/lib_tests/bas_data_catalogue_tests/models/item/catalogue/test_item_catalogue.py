@@ -8,6 +8,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elements import (
     PageSummary,
 )
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeLabel
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
     AdditionalInfoTab,
     AuthorsTab,
@@ -220,13 +221,12 @@ class TestItemCatalogue:
 
     def test_page_header(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """Can get page header element."""
-        expected = "<em>x</em>"
         fx_lib_item_catalogue_min._record.identification.title = "_x_"
+        expected_title = "<em>x</em>"
+        expected_type = ResourceTypeLabel[fx_lib_item_catalogue_min._record.hierarchy_level.name].value
 
-        assert fx_lib_item_catalogue_min.page_header.title == expected
-        assert (
-            fx_lib_item_catalogue_min.page_header.subtitle[0] == fx_lib_item_catalogue_min._record.hierarchy_level.value
-        )
+        assert fx_lib_item_catalogue_min.page_header.title == expected_title
+        assert fx_lib_item_catalogue_min.page_header.subtitle[0] == expected_type
 
     def test_summary(self, fx_lib_item_catalogue_min: ItemCatalogue):
         """
