@@ -128,6 +128,11 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         """Formatted edition."""
         if self.edition is None or self.resource_type == HierarchyLevelCode.COLLECTION:
             return None
+        if (
+            self.resource_type == HierarchyLevelCode.PRODUCT
+            or self.resource_type == HierarchyLevelCode.PAPER_MAP_PRODUCT
+        ):
+            return f"Ed. {self.edition}"
         return f"v{self.edition}"
 
     @property

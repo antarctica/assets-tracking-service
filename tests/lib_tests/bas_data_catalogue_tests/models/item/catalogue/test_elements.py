@@ -291,42 +291,24 @@ class TestItemSummaryCatalogue:
             assert summary._date is None
 
     @pytest.mark.parametrize(
-        (
-            "resource_type",
-            "exp_resource_type",
-            "edition",
-            "exp_edition",
-            "has_pub",
-            "exp_published",
-            "child_count",
-            "exp_child_count",
-        ),
+        ("resource_type", "edition", "exp_edition", "has_pub", "exp_published", "child_count", "exp_child_count"),
         [
-            (HierarchyLevelCode.PRODUCT, ResourceTypeLabel.PRODUCT, "x", "Ed. x", True, "30 June 2014", 0, None),
-            (HierarchyLevelCode.PRODUCT, ResourceTypeLabel.PRODUCT, "x", "Ed. x", False, None, 0, None),
-            (HierarchyLevelCode.PRODUCT, ResourceTypeLabel.PRODUCT, None, None, True, "30 June 2014", 0, None),
-            (
-                HierarchyLevelCode.PAPER_MAP_PRODUCT,
-                ResourceTypeLabel.PAPER_MAP_PRODUCT,
-                None,
-                None,
-                True,
-                "30 June 2014",
-                0,
-                None,
-            ),
-            (HierarchyLevelCode.COLLECTION, ResourceTypeLabel.COLLECTION, "x", None, True, None, 0, None),
-            (HierarchyLevelCode.COLLECTION, ResourceTypeLabel.COLLECTION, "x", None, False, None, 0, None),
-            (HierarchyLevelCode.COLLECTION, ResourceTypeLabel.COLLECTION, None, None, False, None, 0, None),
-            (HierarchyLevelCode.COLLECTION, ResourceTypeLabel.COLLECTION, None, None, False, None, 1, "1 item"),
-            (HierarchyLevelCode.COLLECTION, ResourceTypeLabel.COLLECTION, None, None, False, None, 2, "2 items"),
+            (HierarchyLevelCode.PRODUCT, "x", "Ed. x", True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.PRODUCT, "x", "Ed. x", False, None, 0, None),
+            (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.PAPER_MAP_PRODUCT, None, None, True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.DATASET, "X", "vX", False, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, "x", None, True, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, "x", None, False, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 0, None),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 1, "1 item"),
+            (HierarchyLevelCode.COLLECTION, None, None, False, None, 2, "2 items"),
         ],
     )
     def test_fragments(
         self,
         fx_lib_record_summary_minimal_item: RecordSummary,
         resource_type: HierarchyLevelCode,
-        exp_resource_type: ResourceTypeLabel,
         edition: str | None,
         exp_edition: str | None,
         has_pub: bool,
@@ -335,6 +317,7 @@ class TestItemSummaryCatalogue:
         exp_child_count: str | None,
     ):
         """Can get fragments to use as part of item summary UI."""
+        exp_resource_type = ResourceTypeLabel[resource_type.name]
         fx_lib_record_summary_minimal_item.hierarchy_level = resource_type
         fx_lib_record_summary_minimal_item.edition = edition
         if has_pub:
