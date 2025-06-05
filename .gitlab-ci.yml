@@ -111,7 +111,7 @@ image: mcr.microsoft.com/playwright/python:v1.52.0-noble
   # setup app deps
   - uv sync --all-groups --python $PYTHON_VERSION
   # Hack for https://gitlab.data.bas.ac.uk/uk-pdc/metadata-infrastructure/metadata-library/-/issues/255
-  - sed -i 's/            configuration\.validate()/            # configuration.validate()  # HACK!/' `.venv/lib/python3.11/site-packages/bas_metadata_library/standards/iso_19115_2/__init__.py`
+  - sed -i 's/            configuration\.validate()/            # configuration.validate()  # HACK!/' .venv/lib/python3.11/site-packages/bas_metadata_library/standards/iso_19115_2/__init__.py
   # start static site for e2e tests
   - python -m http.server 8123 --directory "$STATIC_SITE_PATH" &
 
