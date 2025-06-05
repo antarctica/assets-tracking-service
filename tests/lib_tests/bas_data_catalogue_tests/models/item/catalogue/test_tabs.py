@@ -496,13 +496,13 @@ class TestAdditionalInfoTab:
     @pytest.mark.parametrize(
         ("kv", "expected"),
         [
-            ({"width": 1}, None),
-            ({"height": 1}, None),
-            ({"width": 1, "height": 1}, "1 x 1 mm (width x height)"),
-            ({"width": 210, "height": 297}, "A4 Portrait"),
-            ({"width": 297, "height": 210}, "A4 Landscape"),
-            ({"width": 420, "height": 594}, "A3 Portrait"),
-            ({"width": 594, "height": 420}, "A3 Landscape"),
+            ({"physical_size_width_mm": 1}, None),
+            ({"physical_size_height_mm": 1}, None),
+            ({"physical_size_width_mm": 1, "physical_size_height_mm": 1}, "1 x 1 mm (width x height)"),
+            ({"physical_size_width_mm": 210, "physical_size_height_mm": 297}, "A4 Portrait"),
+            ({"physical_size_width_mm": 297, "physical_size_height_mm": 210}, "A4 Landscape"),
+            ({"physical_size_width_mm": 420, "physical_size_height_mm": 594}, "A3 Portrait"),
+            ({"physical_size_width_mm": 594, "physical_size_height_mm": 420}, "A3 Landscape"),
         ],
     )
     def test_page_size(

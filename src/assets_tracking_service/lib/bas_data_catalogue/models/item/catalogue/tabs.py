@@ -469,10 +469,12 @@ class AdditionalInfoTab(Tab):
             "594_420": "A3 Landscape",
         }
 
-        if "width" in self._kv and "height" in self._kv:
-            key = f"{self._kv['width']}_{self._kv['height']}"
-            value = f"{self._kv['width']} x {self._kv['height']} mm (width x height)"
-            return mapping[f"{self._kv['width']}_{self._kv['height']}"] if key in mapping else value
+        width = self._kv.get("physical_size_width_mm", None)
+        height = self._kv.get("physical_size_height_mm", None)
+        if width and height:
+            key = f"{width}_{height}"
+            value = f"{width} x {height} mm (width x height)"
+            return mapping[f"{width}_{height}"] if key in mapping else value
         return None
 
     @property
