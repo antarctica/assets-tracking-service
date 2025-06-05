@@ -255,6 +255,15 @@ class Aggregations:
         )
 
     @property
+    def peer_opposite_side(self) -> ItemSummaryCatalogue | None:
+        """Item that forms the opposite side of a published map."""
+        items = self._filter(
+            associations=AggregationAssociationCode.PHYSICAL_REVERSE_OF,
+            initiatives=AggregationInitiativeCode.PAPER_MAP,
+        )
+        return items[0] if items else None
+
+    @property
     def parent_collections(self) -> list[ItemSummaryCatalogue]:
         """Collections item is contained within."""
         return self._filter(
@@ -269,6 +278,15 @@ class Aggregations:
             associations=AggregationAssociationCode.IS_COMPOSED_OF,
             initiatives=AggregationInitiativeCode.COLLECTION,
         )
+
+    @property
+    def parent_printed_map(self) -> ItemSummaryCatalogue | None:
+        """Printed map item is a side of."""
+        items = self._filter(
+            associations=AggregationAssociationCode.LARGER_WORK_CITATION,
+            initiatives=AggregationInitiativeCode.PAPER_MAP,
+        )
+        return items[0] if items else None
 
 
 class Dates(RecordDates):
@@ -528,6 +546,12 @@ class PageSummary:
     def collections(self) -> list[Link]:
         """Collections item is part of."""
         return [Link(value=summary.title_html, href=summary.href) for summary in self._aggregations.parent_collections]
+
+    @property
+    def physical_parent(self) -> Link | None:
+        """Item that represents the physical map an item is one side of."""
+        item = self._aggregations.parent_printed_map
+        return Link(value=item.title_html, href=item.href) if item else None
 
     @property
     def items_count(self) -> int:

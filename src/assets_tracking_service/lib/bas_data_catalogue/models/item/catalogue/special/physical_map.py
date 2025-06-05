@@ -151,7 +151,7 @@ class ItemCataloguePhysicalMap(ItemCatalogue):
                     extent=bounding_extent,
                     embedded_maps_endpoint=self._config.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
                 )
-            extents.append(bounding_extent)
+                extents.append(bounding_extent)
 
         return ExtentTab(extents=extents)
 

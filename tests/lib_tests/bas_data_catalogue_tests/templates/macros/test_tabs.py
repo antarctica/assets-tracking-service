@@ -3,9 +3,18 @@ from datetime import date
 
 import pytest
 from bs4 import BeautifulSoup
+from conftest import _lib_get_record
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
-from assets_tracking_service.lib.bas_data_catalogue.models.record import DataQuality, Distribution, ReferenceSystemInfo
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.special.physical_map import (
+    ItemCataloguePhysicalMap,
+)
+from assets_tracking_service.lib.bas_data_catalogue.models.record import (
+    DataQuality,
+    Distribution,
+    Record,
+    ReferenceSystemInfo,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
     Address,
     Citation,
@@ -508,6 +517,37 @@ class TestExtentTab:
         else:
             assert html.select_one("#period-end") is None
 
+    @staticmethod
+    def _get_record_extents(identifier: str) -> Record:
+        """Local get_record method returning related records with an extent."""
+        record = _lib_get_record(identifier)
+        record.identification.extents = Extents(
+            [
+                Extent(
+                    identifier="bounding",
+                    geographic=ExtentGeographic(
+                        bounding_box=BoundingBox(
+                            west_longitude=1.0, east_longitude=1.0, south_latitude=1.0, north_latitude=1.0
+                        )
+                    ),
+                )
+            ]
+        )
+        return record
+
+    @pytest.mark.cov()
+    def test_extents(self, fx_lib_item_catalogue_min_physical_map: ItemCataloguePhysicalMap):
+        """
+        Can get multiple extents.
+
+        E.g. for physical maps.
+        """
+        item = fx_lib_item_catalogue_min_physical_map
+        item._get_record = self._get_record_extents
+        html = BeautifulSoup(fx_lib_item_catalogue_min_physical_map.render(), parser="html.parser", features="lxml")
+
+        assert len(html.select("#tab-content-extent iframe")) == len(item._extent._extents)
+
 
 class TestLineageTab:
     """Test lineage tab template macros."""
@@ -546,43 +586,6 @@ class TestRelatedTab:
                 [
                     Aggregation(
                         identifier=Identifier(identifier="x", href="x", namespace="x"),
-                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
-                        initiative_type=AggregationInitiativeCode.COLLECTION,
-                    ),
-                    Aggregation(
-                        identifier=Identifier(identifier="y", href="y", namespace="y"),
-                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
-                        initiative_type=AggregationInitiativeCode.COLLECTION,
-                    ),
-                ]
-            ),
-        ],
-    )
-    def test_peer_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
-        """
-        Can get optional peer collections with expected values from item.
-
-        Detailed item summary tests are run in common macro tests.
-        """
-        fx_lib_item_catalogue_min._record.identification.aggregations = value
-        expected = fx_lib_item_catalogue_min._related.peer_collections
-        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
-
-        collections = html.select_one("#related-peer-collections")
-        if len(expected) > 0:
-            for item in expected:
-                assert collections.select_one(f"a[href='{item.href}']") is not None
-        else:
-            assert collections is None
-
-    @pytest.mark.parametrize(
-        "value",
-        [
-            Aggregations([]),
-            Aggregations(
-                [
-                    Aggregation(
-                        identifier=Identifier(identifier="x", href="x", namespace="x"),
                         association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
                         initiative_type=AggregationInitiativeCode.COLLECTION,
                     )
@@ -600,6 +603,72 @@ class TestRelatedTab:
             assert html.select_one("#tab-content-related") is not None
         else:
             assert html.select_one("#tab-content-related") is None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Aggregations([]),
+            Aggregations(
+                [
+                    Aggregation(
+                        identifier=Identifier(identifier="x", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                        initiative_type=AggregationInitiativeCode.PAPER_MAP,
+                    )
+                ]
+            ),
+        ],
+    )
+    def test_parent_printed_map(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
+        """
+        Can get optional parent paper map with expected values from item.
+
+        Detailed item summary tests are run in common macro tests.
+        """
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        related = fx_lib_item_catalogue_min._related.parent_printed_map
+        expected: list | None = [related] if related else None
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        items = html.select_one("#related-parent-printed-map")
+        if expected:
+            for item in expected:
+                assert items.select_one(f"a[href='{item.href}']") is not None
+        else:
+            assert items is None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Aggregations([]),
+            Aggregations(
+                [
+                    Aggregation(
+                        identifier=Identifier(identifier="x", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.PHYSICAL_REVERSE_OF,
+                        initiative_type=AggregationInitiativeCode.PAPER_MAP,
+                    )
+                ]
+            ),
+        ],
+    )
+    def test_peer_opposite_side(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
+        """
+        Can get optional opposite side of a paper map with expected values from item.
+
+        Detailed item summary tests are run in common macro tests.
+        """
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        related = fx_lib_item_catalogue_min._related.peer_opposite_side
+        expected: list | None = [related] if related else None
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        items = html.select_one("#related-peer-opposite-side")
+        if expected:
+            for item in expected:
+                assert items.select_one(f"a[href='{item.href}']") is not None
+        else:
+            assert items is None
 
     @pytest.mark.parametrize(
         "value",
@@ -632,6 +701,43 @@ class TestRelatedTab:
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
         collections = html.select_one("#related-parent-collections")
+        if len(expected) > 0:
+            for item in expected:
+                assert collections.select_one(f"a[href='{item.href}']") is not None
+        else:
+            assert collections is None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Aggregations([]),
+            Aggregations(
+                [
+                    Aggregation(
+                        identifier=Identifier(identifier="x", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                        initiative_type=AggregationInitiativeCode.COLLECTION,
+                    ),
+                    Aggregation(
+                        identifier=Identifier(identifier="y", href="y", namespace="y"),
+                        association_type=AggregationAssociationCode.CROSS_REFERENCE,
+                        initiative_type=AggregationInitiativeCode.COLLECTION,
+                    ),
+                ]
+            ),
+        ],
+    )
+    def test_peer_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
+        """
+        Can get optional peer collections with expected values from item.
+
+        Detailed item summary tests are run in common macro tests.
+        """
+        fx_lib_item_catalogue_min._record.identification.aggregations = value
+        expected = fx_lib_item_catalogue_min._related.peer_collections
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        collections = html.select_one("#related-peer-collections")
         if len(expected) > 0:
             for item in expected:
                 assert collections.select_one(f"a[href='{item.href}']") is not None
@@ -701,6 +807,27 @@ class TestInfoTab:
             assert scale.text.strip() == expected
         else:
             assert scale is None
+
+    @staticmethod
+    def _get_related_record_scales(identifier: str) -> Record:
+        """Local get_record method returning related records with a scale."""
+        record = _lib_get_record(identifier)
+        record.identification.spatial_resolution = 200_000
+        return record
+
+    @pytest.mark.cov()
+    def test_scales(self, fx_lib_item_catalogue_min_physical_map: ItemCataloguePhysicalMap):
+        """
+        Can get optional multiple scales.
+
+        E.g. for physical maps.
+        """
+        fx_lib_item_catalogue_min_physical_map._get_record = self._get_related_record_scales
+        html = BeautifulSoup(fx_lib_item_catalogue_min_physical_map.render(), parser="html.parser", features="lxml")
+
+        scale = html.select_one("#info-scale")
+        for value in fx_lib_item_catalogue_min_physical_map._additional_info.scales:
+            assert scale.find(name="li", string=value) is not None
 
     @pytest.mark.parametrize("value", [None, ReferenceSystemInfo(code=Code(value="x"))])
     def test_projection(self, fx_lib_item_catalogue_min: ItemCatalogue, value: ReferenceSystemInfo):

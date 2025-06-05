@@ -127,6 +127,18 @@ class TestAggregations:
 
         assert len(aggregations.peer_collections) > 0
 
+    def test_peer_opposite_side(self):
+        """Can get any item that forms the opposite side of a published map."""
+        expected = Aggregation(
+            identifier=Identifier(identifier="x", href="x", namespace="x"),
+            association_type=AggregationAssociationCode.PHYSICAL_REVERSE_OF,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        )
+        record_aggregations = RecordAggregations([expected])
+        aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
+
+        assert aggregations.peer_opposite_side is not None
+
     def test_parent_collections(self):
         """Can get any collection aggregations (item is part of)."""
         expected = Aggregation(
@@ -150,6 +162,18 @@ class TestAggregations:
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
         assert len(aggregations.child_items) > 0
+
+    def test_parent_printed_map(self):
+        """Can get printed map item that this item is a side of."""
+        expected = Aggregation(
+            identifier=Identifier(identifier="x", href="x", namespace="x"),
+            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        )
+        record_aggregations = RecordAggregations([expected])
+        aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
+
+        assert aggregations.parent_printed_map is not None
 
 
 class TestDates:
@@ -747,3 +771,38 @@ class TestPageSummary:
         )
 
         assert summary.published == expected
+
+    @pytest.mark.parametrize(
+        ("item_type", "has_aggregation"),
+        [(HierarchyLevelCode.PRODUCT, False), (HierarchyLevelCode.PRODUCT, True)],
+    )
+    def test_physical_map(self, item_type: HierarchyLevelCode, has_aggregation: bool):
+        """Can show combination of publication and revision date if relevant."""
+        aggregations = []
+        if has_aggregation:
+            aggregations.append(
+                Aggregation(
+                    identifier=Identifier(identifier="x", href="x", namespace="x"),
+                    association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                    initiative_type=AggregationInitiativeCode.PAPER_MAP,
+                )
+            )
+        summary = PageSummary(
+            item_type=item_type,
+            aggregations=Aggregations(
+                aggregations=RecordAggregations(aggregations), get_summary=_lib_get_record_summary
+            ),
+            access_type=AccessType.PUBLIC,
+            edition=None,
+            published_date=None,
+            revision_date=None,
+            citation=None,
+            abstract="x",
+        )
+
+        physical_parent = summary.physical_parent
+
+        if has_aggregation:
+            assert physical_parent == Link(value="<p>x</p>", href="/items/x/", external=False)
+        if not has_aggregation:
+            assert physical_parent is None

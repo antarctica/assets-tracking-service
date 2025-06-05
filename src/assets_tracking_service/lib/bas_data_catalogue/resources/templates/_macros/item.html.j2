@@ -12,7 +12,14 @@
 
 {% macro not_tabs(data) %}
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-y-4 lg:gap-x-4">
-    {{ summary(data.summary) }}
+    {% if data.sides %}
+      <div class="col-span-2 space-y-8">
+        {{ summary(data.summary) }}
+        {{ sides(data.sides) }}
+      </div>
+    {% else %}
+      {{ summary(data.summary) }}
+    {% endif %}
     {{ graphics(data.graphics) }}
   </div>
 {% endmacro %}
@@ -33,6 +40,9 @@
   <section class="grid grid-cols-1 gap-y-4 lg:gap-x-8 lg:grid-cols-[auto_1fr]">
     {% if data.collections %}
       {{ collections(data.collections) }}
+    {% endif %}
+    {% if data.physical_parent %}
+      {{ physical_parent(data.physical_parent) }}
     {% endif %}
     {% if data.edition %}
       {{ edition(data.edition) }}
@@ -55,6 +65,11 @@
       {% endfor %}
     </ul>
   </div>
+{% endmacro %}
+
+{% macro physical_parent(data) %}
+  <div class="font-bold">One side of</div>
+  <div id="summary-physical-parent"><a class="{{ com.link_classes() }}" href="{{ data.href }}">{{ data.value }}</a></div>
 {% endmacro %}
 
 {% macro edition(value) %}
@@ -89,10 +104,21 @@
 {% endmacro %}
 
 {% macro graphics(data) %}
-  <aside id="item-graphics" class="col-span-1">
+  <aside id="item-graphics" class="col-span-1 space-y-2">
     {% for item in data %}
       {% set alt = item.description or item.identifier %}
       <img id="graphics-{{ item.identifier }}" class="w-full" src="{{ item.href }}" alt="{{ alt }}"/>
+    {% endfor %}
+  </aside>
+{% endmacro %}
+
+{% macro sides(data) %}
+  <aside id="item-sides" class="col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
+    {% for side in data %}
+      <article class="space-y-8">
+        {% call com.item_title() %}{{ side[0] }}{% endcall %}
+        {{ com.item_summary(side[1]) }}
+      </article>
     {% endfor %}
   </aside>
 {% endmacro %}
