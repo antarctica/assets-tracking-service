@@ -11,7 +11,7 @@ class ResourceTypeLabel(Enum):
 
 
 class ResourceTypeIcon(Enum):
-    """Partial mapping of Hierarchy Level code list terms against Font Awesome icon classes."""
+    """Partial mapping of the Hierarchy Level code list against Font Awesome icon classes."""
 
     COLLECTION = "fa-fw far fa-shapes"
     DATASET = "fa-fw far fa-cube"

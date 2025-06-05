@@ -460,6 +460,7 @@ class TestAdditionalInfoTab:
     def test_sheet_number(
         self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
     ):
+        """Can get descriptive series sheet number if set."""
         fx_lib_item_cat_info_tab_minimal._series = series
         assert fx_lib_item_cat_info_tab_minimal.sheet_number == expected
 

@@ -8,6 +8,8 @@ class AggregationAssociationCode(Enum):
     Schema definition: association_type [1]
     ISO element: DS_AssociationTypeCode [2]
 
+    Contains additional local codes.
+
     [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L84
     [2] https://wiki.esipfed.org/ISO_19115-3_Codelists#DS_AssociationTypeCode
     """

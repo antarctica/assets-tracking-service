@@ -1,5 +1,6 @@
 import json
 from collections.abc import Callable
+from typing import Any
 
 from bs4 import BeautifulSoup
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -94,19 +95,15 @@ class ItemCatalogue(ItemBase):
     """
 
     def __init__(
-        self,
-        config: Config,
-        record: Record,
-        get_record_summary: Callable[[str], RecordSummary],
+        self, config: Config, record: Record, get_record_summary: Callable[[str], RecordSummary], **kwargs: Any
     ) -> None:
         super().__init__(record)
-        self.validate(record)
-
         self._config = config
         self._get_summary = get_record_summary
-
         _loader = PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates")
         self._jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
+
+        self.validate(record)
 
     @staticmethod
     def validate(record: Record) -> None:
