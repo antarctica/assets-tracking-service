@@ -26,6 +26,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Identifier,
     Identifiers,
     OnlineResource,
+    Series,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contacts as RecordContacts
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import Lineage
@@ -513,6 +514,25 @@ class TestItemBase:
         item = ItemBase(fx_lib_record_minimal_item)
 
         assert item.resource_type == expected
+
+    @pytest.mark.parametrize(
+        ("series", "sheet", "expected"),
+        [
+            (None, None, None),
+            (Series(name="x", edition="x"), None, Series(name="x", edition="x")),
+            (Series(name="x", edition="x"), "x", Series(name="x", page="x", edition="x")),
+        ],
+    )
+    def test_series_descriptive(
+        self, fx_lib_record_minimal_item: Record, series: Series, sheet: str | None, expected: Series | None
+    ):
+        """Can get optional descriptive series including sheet number via workaround."""
+        fx_lib_record_minimal_item.identification.series = series
+        if sheet:
+            fx_lib_record_minimal_item.identification.supplemental_information = json.dumps({"sheet_number": sheet})
+        item = ItemBase(fx_lib_record_minimal_item)
+
+        assert item.series_descriptive == expected
 
     @pytest.mark.parametrize("expected", ["x", None])
     def test_summary_raw(self, fx_lib_record_minimal_item: Record, expected: str | None):

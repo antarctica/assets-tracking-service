@@ -66,7 +66,7 @@ class TestMacrosItem:
         ],
     )
     def test_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
-        """Can get item graphics with expected values from item."""
+        """Can get item collections with expected values from item."""
         fx_lib_item_catalogue_min._record.identification.aggregations = value
         expected = fx_lib_item_catalogue_min.summary.collections
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")

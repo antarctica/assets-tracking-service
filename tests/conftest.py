@@ -98,6 +98,7 @@ from tests.resources.lib.data_catalogue.records.item_cat_product_all import reco
 from tests.resources.lib.data_catalogue.records.item_cat_product_min import record as product_min_supported
 from tests.resources.lib.data_catalogue.records.item_cat_product_restricted import record as product_restricted
 from tests.resources.lib.data_catalogue.records.item_cat_pub_map import record as product_published_map
+from tests.resources.lib.data_catalogue.exporters.fake_exporter import FakeExporter, FakeResourceExporter
 
 # override `postgresql` fixture with either a local (proc) or remote (noproc) fixture depending on if in CI.
 postgresql = factories.postgresql(postgresql_factory_name)
@@ -273,7 +274,7 @@ def fx_label_value_uri() -> str:
 
 @pytest.fixture()
 def fx_label_value_updated() -> str:
-    """Updated value for use with a Label."""  # noqa: D401
+    """Updated value for use with a Label."""
     return "Connie Watson"
 
 
@@ -579,7 +580,7 @@ def fx_record(fx_record_new: RecordNew) -> Record:
 
 @pytest.fixture()
 def fx_records_client_one(fx_db_client_tmp_db_pop_exported: DatabaseClient, fx_logger: logging.Logger) -> RecordsClient:
-    """Records client setup using a disposable, migrated and exported database containing a record."""  # noqa: D401
+    """Records client setup using a disposable, migrated and exported database containing a record."""
     return RecordsClient(db_client=fx_db_client_tmp_db_pop_exported)
 
 
@@ -1029,7 +1030,7 @@ def fx_lib_item_catalogue_min_physical_map(
     fx_lib_record_minimal_item_catalogue_physical_map: LibRecord,
     fx_lib_get_record: callable,
     fx_lib_get_record_summary: callable,
-) -> ItemCatalogue:
+) -> ItemCataloguePhysicalMap:
     """ItemCataloguePhysicalMap based on minimal catalogue record for a physical map."""
     return ItemCataloguePhysicalMap(
         config=fx_config,
@@ -1047,7 +1048,7 @@ def fx_s3_bucket_name() -> str:
 
 @pytest.fixture()
 def fx_s3_client(mocker: MockerFixture, fx_s3_bucket_name: str) -> S3Client:
-    """Mocked S3 client with testing bucket pre-created."""  # noqa: D401
+    """Mocked S3 client with testing bucket pre-created."""
     mock_config = mocker.Mock()
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID = PropertyMock(return_value="x")
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET = PropertyMock(return_value="x")
@@ -1080,11 +1081,17 @@ def fx_lib_s3_utils(fx_logger: logging.Logger, fx_s3_client: S3Client, fx_s3_buc
 def fx_lib_exporter_base(
     mocker: MockerFixture, fx_logger: logging.Logger, fx_s3_bucket_name: str, fx_s3_client: S3Client
 ) -> Exporter:
-    """Data Catalogue base exporter with a mocked config and S3 client."""  # noqa: D401
+    """
+    Base Data Catalogue exporter.
+
+    With a mocked config and S3 client
+
+    Actual exporter has abstract method so a subclass is used.
+    """
     mock_config = mocker.Mock()
     type(mock_config).EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET = PropertyMock(return_value=fx_s3_bucket_name)
 
-    return Exporter(config=mock_config, logger=fx_logger, s3=fx_s3_client)
+    return FakeExporter(config=mock_config, logger=fx_logger, s3=fx_s3_client)
 
 
 @pytest.fixture()
@@ -1096,7 +1103,13 @@ def fx_lib_exporter_resource_base(
     fx_s3_client: S3Client,
     fx_lib_record_minimal_item: LibRecord,
 ) -> ResourceExporter:
-    """Data Catalogue resource base exporter with a mocked config and S3 client."""  # noqa: D401
+    """
+    Data Catalogue base resource exporter.
+
+    With a mocked config and S3 client
+
+    Actual exporter has abstract method so a subclass is used.
+    """
     with TemporaryDirectory() as tmp_path:
         output_path = Path(tmp_path)
     mock_config = mocker.Mock()
@@ -1104,7 +1117,7 @@ def fx_lib_exporter_resource_base(
     type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
     fx_lib_exporter_base._config = mock_config
 
-    return ResourceExporter(
+    return FakeResourceExporter(
         config=mock_config,
         logger=fx_logger,
         s3=fx_s3_client,
@@ -1116,7 +1129,11 @@ def fx_lib_exporter_resource_base(
 
 @pytest.fixture()
 def fx_lib_exporter_iso_xml_html(
-    mocker: MockerFixture, fx_s3_bucket_name: str, fx_s3_client: S3Client, fx_lib_record_minimal_item: LibRecord
+    mocker: MockerFixture,
+    fx_logger: logging.Logger,
+    fx_s3_bucket_name: str,
+    fx_s3_client: S3Client,
+    fx_lib_record_minimal_item: LibRecord,
 ) -> Exporter:
     """ISO 19115 XML as HTML exporter with a mocked config and S3 client."""
     with TemporaryDirectory() as tmp_path:

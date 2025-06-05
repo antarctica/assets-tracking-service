@@ -7,27 +7,9 @@ import pytest
 from boto3 import client as S3Client  # noqa: N812
 from pytest_mock import MockerFixture
 
-from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, ResourceExporter, S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
-
-
-class FakeResourceExporter(ResourceExporter):
-    """For testing base resource exporter."""
-
-    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client, record: Record, export_base: Path) -> None:
-        super().__init__(
-            config=config, logger=logger, s3=s3, record=record, export_base=export_base, export_name="x.txt"
-        )
-
-    @property
-    def name(self) -> str:
-        """..."""
-        return "FakeResourceExporter"
-
-    def dumps(self) -> str:
-        """..."""
-        return "x"
+from tests.resources.lib.data_catalogue.exporters.fake_exporter import FakeExporter, FakeResourceExporter
 
 
 class TestS3Utils:
@@ -114,7 +96,7 @@ class TestBaseExporter:
         s3_client = mocker.MagicMock()
         mock_config = mocker.Mock()
 
-        base = Exporter(config=mock_config, logger=fx_logger, s3=s3_client)
+        base = FakeExporter(config=mock_config, logger=fx_logger, s3=s3_client)
 
         assert isinstance(base, Exporter)
 
@@ -166,7 +148,7 @@ class TestBaseResourceExporter:
         type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=output_path)
         fx_lib_exporter_base._config = mock_config
 
-        exporter = ResourceExporter(
+        exporter = FakeResourceExporter(
             config=mock_config,
             logger=fx_logger,
             s3=fx_s3_client,
@@ -179,7 +161,7 @@ class TestBaseResourceExporter:
     def test_invalid_record(self, fx_lib_exporter_resource_base: ResourceExporter, fx_lib_record_minimal_iso: Record):
         """Cannot create an ItemBase with an invalid record."""
         with pytest.raises(ValueError, match="File identifier must be set to export record."):
-            ResourceExporter(
+            FakeResourceExporter(
                 config=fx_lib_exporter_resource_base._config,
                 logger=fx_lib_exporter_resource_base._logger,
                 s3=fx_lib_exporter_resource_base._s3_client,
@@ -193,7 +175,7 @@ class TestBaseResourceExporter:
         with TemporaryDirectory() as tmp_path_exporter:
             alt_path = Path(tmp_path_exporter)
         with pytest.raises(ValueError, match="Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."):
-            ResourceExporter(
+            FakeResourceExporter(
                 config=fx_lib_exporter_resource_base._config,
                 logger=fx_lib_exporter_resource_base._logger,
                 s3=fx_lib_exporter_resource_base._s3_client,
@@ -202,53 +184,24 @@ class TestBaseResourceExporter:
                 export_name="x",
             )
 
-    def test_name_invalid(self, fx_lib_exporter_resource_base: ResourceExporter):
-        """Cannot get exporter name from base exporter."""
-        with pytest.raises(NotImplementedError):
-            _ = fx_lib_exporter_resource_base.name
-
-    def test_dumps_invalid(self, fx_lib_exporter_resource_base: ResourceExporter):
-        """Cannot generate a record in a derived format from base exporter."""
-        with pytest.raises(NotImplementedError):
-            _ = fx_lib_exporter_resource_base.dumps()
-
     def test_export(self, fx_lib_exporter_resource_base: ResourceExporter):
         """Can write output to a file at a high level."""
-        exporter = FakeResourceExporter(
-            config=fx_lib_exporter_resource_base._config,
-            logger=fx_lib_exporter_resource_base._logger,
-            s3=fx_lib_exporter_resource_base._s3_client,
-            record=fx_lib_exporter_resource_base._record,
-            export_base=fx_lib_exporter_resource_base._export_path.parent,
-        )
-        exporter.export()
-        assert exporter._export_path.exists()
+        fx_lib_exporter_resource_base.export()
+        assert fx_lib_exporter_resource_base._export_path.exists()
 
     def test_publish(self, fx_s3_bucket_name: str, fx_lib_exporter_resource_base: ResourceExporter):
         """Can write output to an object at a high level."""
-        exporter = FakeResourceExporter(
-            config=fx_lib_exporter_resource_base._config,
-            logger=fx_lib_exporter_resource_base._logger,
-            s3=fx_lib_exporter_resource_base._s3_client,
-            record=fx_lib_exporter_resource_base._record,
-            export_base=fx_lib_exporter_resource_base._export_path.parent,
-        )
-        exporter.publish()
+        fx_lib_exporter_resource_base.publish()
 
-        result = exporter._s3_utils._s3.list_objects_v2(Bucket=fx_s3_bucket_name)
+        result = fx_lib_exporter_resource_base._s3_utils._s3.list_objects_v2(Bucket=fx_s3_bucket_name)
         assert len(result["Contents"]) == 1
 
     def test_publish_unknown_media_type(self, fx_s3_bucket_name: str, fx_lib_exporter_resource_base: ResourceExporter):
         """Can write output with default media type where unknown to an object."""
-        exporter = FakeResourceExporter(
-            config=fx_lib_exporter_resource_base._config,
-            logger=fx_lib_exporter_resource_base._logger,
-            s3=fx_lib_exporter_resource_base._s3_client,
-            record=fx_lib_exporter_resource_base._record,
-            export_base=fx_lib_exporter_resource_base._export_path.parent,
-        )
-        exporter._export_path = exporter._export_path / "x.unknown"
-        exporter.publish()
+        fx_lib_exporter_resource_base._export_path = fx_lib_exporter_resource_base._export_path / "x.unknown"
+        fx_lib_exporter_resource_base.publish()
 
-        result = exporter._s3_utils._s3.get_object(Bucket=fx_s3_bucket_name, Key="x/x.txt/x.unknown")
+        result = fx_lib_exporter_resource_base._s3_utils._s3.get_object(
+            Bucket=fx_s3_bucket_name, Key="x/x.txt/x.unknown"
+        )
         assert result["ContentType"] == "application/octet-stream"

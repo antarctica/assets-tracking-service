@@ -125,6 +125,9 @@ ignore = ["D100", "D104", "D107", "D203", "D212", "D402", "E501", "PT001", "PT02
 #   tests/* | ANN401 | ignore use of 'Any' type
 #   tests/* |   S101 | ignore use of assert
 
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
 [tool.sqlfluff.core]
 dialect = "postgres"
 templater = "raw"

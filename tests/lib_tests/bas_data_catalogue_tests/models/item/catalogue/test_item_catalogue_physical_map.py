@@ -2,7 +2,6 @@ from copy import deepcopy
 from datetime import UTC, datetime
 
 import pytest
-from conftest import _lib_get_record, _lib_get_record_summary
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
@@ -33,6 +32,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     AggregationAssociationCode,
     AggregationInitiativeCode,
 )
+from tests.conftest import _lib_get_record, _lib_get_record_summary
 
 
 @pytest.mark.parametrize(("value", "expected"), [(0, "A"), (25, "Z"), (26, "AA")])

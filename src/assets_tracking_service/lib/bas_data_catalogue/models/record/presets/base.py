@@ -24,7 +24,7 @@ class RecordMagicDiscoveryV1(Record):
     See https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1 for more information about this profile.
     """
 
-    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self, **kwargs: Any) -> None:
         """Process defaults for required properties."""
         date_stamp = None
         if "date_stamp" in kwargs:

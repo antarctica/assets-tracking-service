@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import PropertyMock
 
+import pytest
 from bs4 import BeautifulSoup
 from pytest_mock import MockerFixture
 
@@ -341,6 +342,25 @@ class TestSiteExporter:
             assert fx_lib_exporter_site._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.joinpath("x").exists() is False
             result = fx_lib_exporter_site._s3_client.list_objects(Bucket=fx_s3_bucket_name)
             assert "contents" not in result
+
+    @pytest.mark.cov()
+    def test_purge_empty(
+        self,
+        mocker: MockerFixture,
+        fx_lib_exporter_site: SiteExporter,
+        fx_lib_record_minimal_item_catalogue: Record,
+        fx_s3_bucket_name: str,
+    ):
+        """Can empty export directory and publishing bucket when neither exist."""
+        mock_config = mocker.Mock()
+        type(mock_config).EXPORTER_DATA_CATALOGUE_OUTPUT_PATH = PropertyMock(return_value=Path("/non/existent/path"))
+        fx_lib_exporter_site._config = mock_config
+
+        fx_lib_exporter_site.purge()
+
+        assert list(fx_lib_exporter_site._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.glob("**/*.*")) == []
+        result = fx_lib_exporter_site._s3_client.list_objects(Bucket=fx_s3_bucket_name)
+        assert "contents" not in result
 
     def test_loads(self, fx_lib_exporter_site: SiteExporter, fx_lib_record_minimal_item_catalogue: Record):
         """Can load summaries and records."""

@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from mimetypes import guess_type
 from pathlib import Path
 from shutil import copytree
@@ -71,9 +72,9 @@ class S3Utils:
             self._s3.delete_objects(Bucket=self._bucket, Delete={"Objects": keys})
 
 
-class Exporter:
+class Exporter(ABC):
     """
-    Base class for exporters.
+    Abstract base class for exporters.
 
     Exporters:
     - produce representations of a Record in a particular format, encoding or other form as string output
@@ -114,20 +115,23 @@ class Exporter:
             copytree(resources_path, dest_path)
 
     @property
+    @abstractmethod
     def name(self) -> str:
         """Exporter name."""
-        raise NotImplementedError() from None
+        ...
 
+    @abstractmethod
     def export(self) -> None:
         """Save dumped output to local export directory."""
-        raise NotImplementedError() from None
+        ...
 
+    @abstractmethod
     def publish(self) -> None:
         """Save dumped output to remote S3 bucket."""
-        raise NotImplementedError() from None
+        ...
 
 
-class ResourceExporter(Exporter):
+class ResourceExporter(Exporter, ABC):
     """
     Base exporter for resource records or items.
 
@@ -154,9 +158,10 @@ class ResourceExporter(Exporter):
             msg = "Export base must be relative to EXPORTER_DATA_CATALOGUE_OUTPUT_PATH."
             raise ValueError(msg) from e
 
+    @abstractmethod
     def dumps(self) -> str:
         """Encode resource as a particular format."""
-        raise NotImplementedError() from None
+        ...
 
     def export(self) -> None:
         """Save dumped output to local export directory."""

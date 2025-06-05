@@ -231,9 +231,19 @@ class DataCatalogueExporter(Exporter):
     def _export_cat_html(self, record: Record, summaries: dict[str, RecordSummary]) -> None:
         """Export record as BAS Data Catalogue item HTML."""
 
-        def _get_item_summary(identifier: str) -> RecordSummary:
+        def _get_record(identifier: str) -> Record:  # pragma: no cover
             """
-            Get title for a record identifier.
+            Get record for a record identifier.
+
+            This is a very basic implementation of what will in time be provided by a full record repository interface.
+            It doesn't make sense to implement that within this project so this simple stand-in is used.
+            """
+            records = {record.file_identifier: record for record in self._get_records()}
+            return records[identifier]
+
+        def _get_record_summary(identifier: str) -> RecordSummary:
+            """
+            Get summary for a record identifier.
 
             This is a very basic implementation of what will in time be provided by a full record repository interface.
             It doesn't make sense to implement that within this project so this simple stand-in is used.
@@ -248,7 +258,8 @@ class DataCatalogueExporter(Exporter):
             s3=self._s3,
             record=record,
             export_base=output_path,
-            get_record_summary=_get_item_summary,
+            get_record_summary=_get_record_summary,
+            get_record=_get_record,
         )
         exporter.export()
         exporter.publish()

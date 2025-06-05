@@ -101,7 +101,7 @@ class Item(ItemBase):
         Mapped to: title (from [1])
         [1] https://developers.arcgis.com/rest/users-groups-and-items/common-parameters/#item-parameters
         """
-        return self.title_plain  # pragma: nocover (see `.item_properties()`)
+        return self.title_plain  # pragma: no cover (see `.item_properties()`)
 
     @property
     def _snippet(self) -> str | None:

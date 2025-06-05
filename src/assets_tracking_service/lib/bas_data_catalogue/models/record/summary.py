@@ -100,10 +100,7 @@ class RecordSummary:
         """Create a RecordSummary from a Record."""
         if isinstance(value, Record):
             return cls._loads_record(value)
-        if isinstance(value, dict):
-            return cls._loads_json_dict(value)
-        msg = f"Unsupported RecordSummary load type: {type(value)}"
-        raise TypeError(msg) from None
+        return cls._loads_json_dict(value)
 
     @property
     def revision_creation(self) -> Date:

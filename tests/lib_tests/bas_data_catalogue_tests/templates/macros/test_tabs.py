@@ -3,7 +3,6 @@ from datetime import date
 
 import pytest
 from bs4 import BeautifulSoup
-from conftest import _lib_get_record
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.special.physical_map import (
@@ -60,6 +59,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
     OnlineResourceFunctionCode,
     ProgressCode,
 )
+from tests.conftest import _lib_get_record
 
 
 class TestItemsTab:

@@ -340,7 +340,6 @@ class ItemBase:
         Due to a bug in V4 BAS ISO JSON Schema the 'page' (sheet number) property cannot be set. As a workaround, this
         class supports loading an optional 'sheet_number' from KV properties.
         """
-        # TODO: test
         series = self._record.identification.series
         sheet_number = self.kv.get("sheet_number", None)
         if sheet_number is not None:
