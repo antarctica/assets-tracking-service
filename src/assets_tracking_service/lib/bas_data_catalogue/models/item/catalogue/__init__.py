@@ -219,7 +219,7 @@ class ItemCatalogue(ItemBase):
             item_type=self.resource_type,
             identifiers=self._identifiers,
             dates=self._dates,
-            series=self._record.identification.series,
+            series=self.series_descriptive,
             scale=self._record.identification.spatial_resolution,
             datestamp=self._record.metadata.date_stamp,
             projection=self.projection,

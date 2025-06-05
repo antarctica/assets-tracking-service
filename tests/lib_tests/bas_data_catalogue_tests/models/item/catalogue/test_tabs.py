@@ -445,14 +445,23 @@ class TestAdditionalInfoTab:
         assert AdditionalInfoTab._format_scale(value) == expected
 
     @pytest.mark.parametrize(
-        ("series", "expected"), [(Series(name=None), None), (Series(name="x", edition="x"), "x (x)")]
+        ("series", "expected"), [(Series(name=None), None), (Series(name="x", page="y", edition="z"), "x")]
     )
-    def test_series(
+    def test_series_name(
         self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
     ):
-        """Can get descriptive series if set."""
+        """Can get descriptive series name if set."""
         fx_lib_item_cat_info_tab_minimal._series = series
-        assert fx_lib_item_cat_info_tab_minimal.series == expected
+        assert fx_lib_item_cat_info_tab_minimal.series_name == expected
+
+    @pytest.mark.parametrize(
+        ("series", "expected"), [(Series(name=None), None), (Series(name="x", page="y", edition="z"), "y")]
+    )
+    def test_sheet_number(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
+    ):
+        fx_lib_item_cat_info_tab_minimal._series = series
+        assert fx_lib_item_cat_info_tab_minimal.sheet_number == expected
 
     def test_scale(self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab):
         """Can get scale if set."""

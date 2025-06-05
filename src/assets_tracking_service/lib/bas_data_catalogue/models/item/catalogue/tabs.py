@@ -431,9 +431,14 @@ class AdditionalInfoTab(Tab):
         return ResourceTypeIcon[self._item_type.name].value
 
     @property
-    def series(self) -> str | None:
-        """Descriptive series if set."""
-        return f"{self._series.name} ({self._series.edition})" if self._series.name is not None else None
+    def series_name(self) -> str | None:
+        """Descriptive series name if set."""
+        return self._series.name
+
+    @property
+    def sheet_number(self) -> str | None:
+        """Descriptive series sheet number if set."""
+        return self._series.page
 
     @property
     def scale(self) -> str | None:

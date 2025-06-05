@@ -663,18 +663,31 @@ class TestInfoTab:
         assert html.select_one("#info-type i")["class"] == expected.item_type_icon.split(" ")
         assert html.select_one("#info-type").text.strip() == expected.item_type
 
-    @pytest.mark.parametrize("value", [Series, Series(name="x", edition="x")])
-    def test_series(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Series):
-        """Can get optional item series based on value from item."""
+    @pytest.mark.parametrize("value", [Series, Series(name="x", page="y", edition="z")])
+    def test_series_name(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Series):
+        """Can get optional item descriptive series name based on value from item."""
         fx_lib_item_catalogue_min._record.identification.series = value
-        expected = fx_lib_item_catalogue_min._additional_info.series
+        expected = fx_lib_item_catalogue_min._additional_info.series_name
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
 
-        series = html.select_one("#info-series")
+        series_name = html.select_one("#info-series-name")
         if expected:
-            assert series.text.strip() == expected
+            assert series_name.text.strip() == expected
         else:
-            assert series is None
+            assert series_name is None
+
+    @pytest.mark.parametrize("value", [Series, Series(name="x", page="y", edition="z")])
+    def test_sheet_number(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Series):
+        """Can get optional item descriptive series sheet number based on value from item."""
+        fx_lib_item_catalogue_min._record.identification.series = value
+        expected = fx_lib_item_catalogue_min._additional_info.sheet_number
+        html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
+
+        sheet_number = html.select_one("#info-sheet-number")
+        if expected:
+            assert sheet_number.text.strip() == expected
+        else:
+            assert sheet_number is None
 
     @pytest.mark.parametrize("value", [None, 1.0])
     def test_scale(self, fx_lib_item_catalogue_min: ItemCatalogue, value: float | None):

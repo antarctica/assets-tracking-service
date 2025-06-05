@@ -10,8 +10,12 @@
         <i class="{{ data.item_type_icon }}"></i> {{ data.item_type }}
       {% endcall %}
 
-      {% if data.series %}
-        {% call com.dl_item(title='Series', id='info-series') %}{{ data.series }}{% endcall %}
+      {% if data.series_name %}
+        {% call com.dl_item(title='Series', id='info-series-name') %}{{ data.series_name }}{% endcall %}
+      {% endif %}
+
+      {% if data.sheet_number %}
+        {% call com.dl_item(title='Sheet Number', id='info-sheet-number') %}{{ data.sheet_number }}{% endcall %}
       {% endif %}
 
       {% if data.scale or data.scales %}

@@ -19,7 +19,12 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import (
     HierarchyLevelCode,
     Record,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Identifiers
+from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+    Date,
+    Identifier,
+    Identifiers,
+    Series,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
     Aggregations,
@@ -324,6 +329,23 @@ class ItemBase:
         AKA hierarchy-level/scope-code.
         """
         return self._record.hierarchy_level
+
+    @property
+    def series_descriptive(self) -> Series:
+        """
+        Optional descriptive series.
+
+        Typically used for published maps.
+
+        Due to a bug in V4 BAS ISO JSON Schema the 'page' (sheet number) property cannot be set. As a workaround, this
+        class supports loading an optional 'sheet_number' from KV properties.
+        """
+        # TODO: test
+        series = self._record.identification.series
+        sheet_number = self.kv.get("sheet_number", None)
+        if sheet_number is not None:
+            series.page = sheet_number
+        return series
 
     @property
     def summary_raw(self) -> str | None:

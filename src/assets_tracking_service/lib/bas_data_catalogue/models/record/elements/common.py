@@ -430,12 +430,15 @@ class Series:
     Schema definition: series [1]
     ISO element: gmd:CI_Series [2]
 
+    Note: V4 schema does not support 'page' (sheet number) due to a bug but will in a v5.
+
     [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L1497
     [2] https://www.datypic.com/sc/niem21/e-gmd_CI_Series.html
     """
 
     name: str | None = None
     edition: str | None = None
+    page: str | None = None
 
 
 @dataclass(kw_only=True)

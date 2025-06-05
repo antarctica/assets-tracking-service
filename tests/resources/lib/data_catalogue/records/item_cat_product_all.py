@@ -158,7 +158,7 @@ record.identification.identifiers = Identifiers(
         ),
     ]
 )
-record.identification.series = Series(name="Test Series", edition="1")
+record.identification.series = Series(name="Test Series", page="3", edition="1")
 record.identification.spatial_resolution = 1_234_567_890
 record.identification.contacts = Contacts(
     [
