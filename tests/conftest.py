@@ -84,21 +84,8 @@ from tests.pytest_pg_factories import (  # noqa: F401
 )
 from tests.resources.examples.example_exporter import ExampleExporter
 from tests.resources.examples.example_provider import ExampleProvider
-from tests.resources.lib.data_catalogue.records.item_cat_collection_all import record as collection_all_supported
-from tests.resources.lib.data_catalogue.records.item_cat_collection_min import record as collection_min_supported
-from tests.resources.lib.data_catalogue.records.item_cat_data import record as data_all_supported
-from tests.resources.lib.data_catalogue.records.item_cat_formatting import record as formatting_supported
-from tests.resources.lib.data_catalogue.records.item_cat_licence import (
-    cc_record,
-    ogl_record,
-    ops_record,
-    rights_reversed_record,
-)
-from tests.resources.lib.data_catalogue.records.item_cat_product_all import record as product_all_supported
-from tests.resources.lib.data_catalogue.records.item_cat_product_min import record as product_min_supported
-from tests.resources.lib.data_catalogue.records.item_cat_product_restricted import record as product_restricted
-from tests.resources.lib.data_catalogue.records.item_cat_pub_map import record as product_published_map
 from tests.resources.lib.data_catalogue.exporters.fake_exporter import FakeExporter, FakeResourceExporter
+from tests.resources.lib.data_catalogue.stores.fake_records_store import FakeRecordsStore
 
 # override `postgresql` fixture with either a local (proc) or remote (noproc) fixture depending on if in CI.
 postgresql = factories.postgresql(postgresql_factory_name)
@@ -1328,34 +1315,8 @@ def fx_lib_exporter_site(
     return SiteExporter(config=mock_config, s3=fx_s3_client, logger=fx_logger)
 
 
-def lib_exporter_static_site_records() -> list[LibRecord]:
-    """Records for populating static site exporter."""  # noqa: D401
-    return [
-        collection_min_supported,
-        collection_all_supported,
-        product_min_supported,
-        product_restricted,
-        product_all_supported,
-        formatting_supported,
-        data_all_supported,
-        ogl_record,
-        cc_record,
-        ops_record,
-        rights_reversed_record,
-        product_published_map,
-    ]
-
-
 @pytest.fixture(scope="module")
-def fx_lib_exporter_static_site_records() -> list[LibRecord]:
-    """Records for populating static site exporter."""  # noqa: D401
-    return lib_exporter_static_site_records()
-
-
-@pytest.fixture(scope="module")
-def fx_lib_exporter_static_site(
-    module_mocker: MockerFixture, fx_lib_exporter_static_site_records: list[Record]
-) -> TemporaryDirectory:
+def fx_lib_exporter_static_site(module_mocker: MockerFixture) -> TemporaryDirectory:
     """
     Build static site and export to a temp directory.
 
@@ -1388,9 +1349,10 @@ def fx_lib_exporter_static_site(
             region_name="eu-west-1",
         )
 
-    summaries = [RecordSummary.loads(record) for record in fx_lib_exporter_static_site_records]
+    store = FakeRecordsStore(logger=logger)
+    store.loads(file_identifier=None)
     exporter = SiteExporter(config=config, s3=s3_client, logger=logger)
-    exporter.loads(summaries=summaries, records=fx_lib_exporter_static_site_records)
+    exporter.loads(summaries=store.summaries, records=store.records)
     exporter.export()
 
     if not Path(site_dir.name).joinpath("favicon.ico").exists():

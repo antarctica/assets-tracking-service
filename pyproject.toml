@@ -120,9 +120,10 @@ ignore = ["D100", "D104", "D107", "D203", "D212", "D402", "E501", "PT001", "PT02
 "config.py" = ["D401", "N802"]
 # config.py |   D401 | ignore imperative mood in docstrings (too unreliable)
 # config.py |   N802 | ignore use of upper case method names
-"tests/*" = ["ANN201", "ANN401", "S101"]
+"tests/*" = ["ANN201", "ANN401", "D401", "S101"]
 #   tests/* | ANN201 | ignore public functions
 #   tests/* | ANN401 | ignore use of 'Any' type
+#   tests/* |   D401 | ignore imperative mood in docstrings (too unreliable)
 #   tests/* |   S101 | ignore use of assert
 
 [tool.ruff.lint.flake8-annotations]
@@ -163,6 +164,10 @@ ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET="x"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT="https://example.com/contact"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_SENTRY_SRC="https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN="x"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_GITLAB_STORE_ENDPOINT="x"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_GITLAB_STORE_TOKEN="x"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_GITLAB_STORE_PROJECT_ID="x"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_GITLAB_STORE_CACHE_PATH="cache"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers --random-order -x --ff"
@@ -186,7 +191,7 @@ skip_empty = true
 show_missing = false
 fail_under = 100
 exclude_lines = [
-  "pragma: nocover",
+  "pragma: no cover",
   "@abstractmethod",
 ]
 
