@@ -41,17 +41,34 @@ class TestSiteIndexExporter:
         fx_lib_exporter_site_index.loads(summaries=summaries, records=records)
         assert len(fx_lib_exporter_site_index._summaries) == len(summaries)
 
+    def test_dumps_v1(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
+        """Can dump site index (V1)."""
+        expected = '<ul><li><a href="/items/x/index.html">[DATASET] x - x (None)</a></li></ul>'
+        html = BeautifulSoup(fx_lib_exporter_site_index_pop._dumps_v1(), parser="html.parser", features="lxml")
+
+        result = str(html).replace("\n", "")
+        assert "<h2>V1</h2>" in result
+        assert expected in result
+
+    def test_dumps_v2(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
+        """Can dump site index (V2)."""
+        expected_item = '<tr><td>Item</td><td>DATASET</td><td><a href="/items/x/index.html">x</a></td><td>x</td><td>None</td><td>-</td></tr>'
+        expected_alias = '<td>Alias</td><td>-</td><td><a href="/items/x">x</a></td><td>x</td><td>-</td><td><a href="/datasets/x">datasets/x</a></td></tr>'
+        html = BeautifulSoup(fx_lib_exporter_site_index_pop._dumps_v2(), parser="html.parser", features="lxml")
+
+        result = str(html).replace("\n", "")
+        assert "<h2>V2</h2>" in result
+        assert expected_item in result
+        assert expected_alias in result
+
     def test_dumps(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
         """Can dump site index."""
-        expected_v1 = '<ul><li><a href="/items/x/index.html">[DATASET] x - x (None)</a></li></ul>'
-        expected_v2 = (
-            '<tr><td>Item</td><td>DATASET</td><td><a href="/items/x/index.html">x</a></td><td>x</td><td>None</td></tr>'
-        )
         html = BeautifulSoup(fx_lib_exporter_site_index_pop._dumps(), parser="html.parser", features="lxml")
+
         result = str(html).replace("\n", "")
         assert "<h1>Proto Items Index</h1>" in result
-        assert expected_v1 in result
-        assert expected_v2 in result
+        assert "<h2>V1</h2>" in result
+        assert "<h2>V2</h2>" in result
 
     def test_export(self, fx_lib_exporter_site_index_pop: SiteIndexExporter):
         """Can export site index to a local file."""

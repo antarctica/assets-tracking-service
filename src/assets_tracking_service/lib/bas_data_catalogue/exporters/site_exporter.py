@@ -178,14 +178,37 @@ class SiteIndexExporter(Exporter):
         self._records = records
         self._record_ids = {record.file_identifier for record in records}
 
-    def _dumps(self) -> str:
-        """Build proto/backstage index."""
+    @property
+    def _aliases(self) -> list[dict]:
+        """Get a list of aliases from records."""
+        aliases = []
+        for record in self._records:
+            identifiers = record.identification.identifiers.filter(namespace="alias.data.bas.ac.uk")
+            aliases.extend(
+                [
+                    {
+                        "alias": identifier.href.replace("https://data.bas.ac.uk/", ""),
+                        "href": f"/items/{record.file_identifier}",
+                        "file_identifier": record.file_identifier,
+                        "title": record.identification.title,
+                    }
+                    for identifier in identifiers
+                ]
+            )
+        return aliases
+
+    def _dumps_v1(self) -> str:
+        """Version 1 implementation."""
         item_links = "\n".join(
             [
                 f'<li><a href="/items/{summary.file_identifier}/index.html">[{summary.hierarchy_level.name}] {summary.file_identifier} - {summary.title} ({summary.edition})</a></li>'
                 for summary in self._summaries
             ]
         )
+        return f"<section><h2>V1</h2><ul>{item_links}</ul></section>"
+
+    def _dumps_v2(self) -> str:
+        """Version 2 implementation."""
         summary_rows = "\n".join(
             [
                 f"""
@@ -195,6 +218,7 @@ class SiteIndexExporter(Exporter):
                     <td>{summary.file_identifier}</td>
                     <td>{summary.title}</td>
                     <td>{summary.edition}</td>
+                    <td>-</td>
                 </tr>
                 """
                 for summary in self._summaries
@@ -210,12 +234,52 @@ class SiteIndexExporter(Exporter):
                             <td><a href="/items/{record.file_identifier}/index.html">{record.file_identifier}</a></td>
                             <td>{record.identification.title}</td>
                             <td>{record.identification.edition}</td>
+                            <td>-</td>
                         </tr>
                         """
                 for record in self._records
             ]
         )
+        alias_rows = "\n".join(
+            [
+                f"""
+                <tr>
+                    <td>Alias</td>
+                    <td>-</td>
+                    <td><a href="{alias["href"]}">{alias["file_identifier"]}</a></td>
+                    <td>{alias["title"]}</td>
+                    <td>-</td>
+                    <td><a href="/{alias["alias"]}">{alias["alias"]}</a></td>
+                </tr>
+                """
+                for alias in self._aliases
+            ]
+        )
+        return f"""
+        <section>
+            <h2>V2</h2>
+            <table border="1" cellpadding="5" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Kind</th>
+                        <th>Type</th>
+                        <th>File Identifier</th>
+                        <th>Title</th>
+                        <th>Edition</th>
+                        <th>Alias</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {summary_rows}
+                    {record_rows}
+                    {alias_rows}
+                </tbody>
+            </table>
+        </section>
+        """
 
+    def _dumps(self) -> str:
+        """Build proto/backstage index."""
         return f"""
         <html>
             <head>
@@ -224,28 +288,8 @@ class SiteIndexExporter(Exporter):
             </head>
             <body>
                 <h1>Proto Items Index</h1>
-                <section>
-                    <h2>V2</h2>
-                    <table border="1" cellpadding="5" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>Kind</th>
-                                <th>Type</th>
-                                <th>File Identifier</th>
-                                <th>Title</th>
-                                <th>Edition</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {summary_rows}
-                            {record_rows}
-                        </tbody>
-                    </table>
-                </section>
-                <section>
-                    <h2>V1</h2>
-                    <ul>{item_links}</ul>
-                </section>
+                {self._dumps_v2()}
+                {self._dumps_v1()}
             </body>
         </html>
         """

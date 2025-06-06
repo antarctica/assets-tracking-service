@@ -109,12 +109,19 @@ combined = make_record(
 )
 combined.identification.identifiers.append(Identifier(identifier="123-0-11111-001-1 (Folded)", namespace="isbn"))
 combined.identification.identifiers.append(Identifier(identifier="123-0-22222-001-8 (Flat)", namespace="isbn"))
+combined.identification.identifiers.append(
+    Identifier(
+        identifier="maps/test-pub-map",
+        href="https://data.bas.ac.uk/maps/test-pub-map",
+        namespace="alias.data.bas.ac.uk",
+    ),
+)
 combined.identification.edition = "1"
 combined.identification.series = Series(name="Catalogue Test Resources", edition="1")
 combined.identification.dates.creation = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
 combined.identification.dates.published = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
 combined.identification.supplemental_information = json.dumps(
-    {"physical_size_width_mm": 890, "physical_size_height_mm": 840}
+    {"physical_size_width_mm": 890, "physical_size_height_mm": 840, "sheet_number": 1}
 )
 combined.identification.constraints = constraints
 combined.distribution = distribution
