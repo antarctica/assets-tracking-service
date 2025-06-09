@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Fixed
+
+* Only showing redacted config options if underlying config option is set
+  [#6](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/6)
+
 ## [0.6.0] - 2025-04-24
 
 ### Removed [BREAKING!]
