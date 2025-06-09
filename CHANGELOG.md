@@ -9,6 +9,12 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Added
+
+* Item catalogue template improvements
+* Fake ObjectID in latest assets position view for compatibility with ArcGIS Server
+  [#145](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/145)
+
 ### Fixed
 
 * Only showing redacted config options if underlying config option is set
