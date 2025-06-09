@@ -4,6 +4,9 @@ import pytest
 from bs4 import BeautifulSoup
 
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue import ItemCatalogue, Tab
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.special.physical_map import (
+    ItemCataloguePhysicalMap,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
     Aggregation,
@@ -63,7 +66,7 @@ class TestMacrosItem:
         ],
     )
     def test_collections(self, fx_lib_item_catalogue_min: ItemCatalogue, value: Aggregations):
-        """Can get item graphics with expected values from item."""
+        """Can get item collections with expected values from item."""
         fx_lib_item_catalogue_min._record.identification.aggregations = value
         expected = fx_lib_item_catalogue_min.summary.collections
         html = BeautifulSoup(fx_lib_item_catalogue_min.render(), parser="html.parser", features="lxml")
@@ -75,6 +78,34 @@ class TestMacrosItem:
 
         for collection in expected:
             assert html.select_one(f"a[href='{collection.href}']") is not None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Aggregations([]),
+            Aggregations(
+                [
+                    Aggregation(
+                        identifier=Identifier(identifier="x", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                        initiative_type=AggregationInitiativeCode.PAPER_MAP,
+                    )
+                ]
+            ),
+        ],
+    )
+    def test_physical_parent(
+        self, fx_lib_item_catalogue_min_physical_map: ItemCataloguePhysicalMap, value: Aggregations
+    ):
+        """Can get item physical map parent with expected value from item."""
+        fx_lib_item_catalogue_min_physical_map._record.identification.aggregations = value
+        expected = fx_lib_item_catalogue_min_physical_map.summary.physical_parent
+        html = BeautifulSoup(fx_lib_item_catalogue_min_physical_map.render(), parser="html.parser", features="lxml")
+
+        if expected:
+            assert html.select_one(f"#summary-physical-parent a[href='{expected.href}']") is not None
+        else:
+            assert html.select_one("#summary-physical-parent") is None
 
     @pytest.mark.parametrize("value", [None, "x"])
     def test_edition(self, fx_lib_item_catalogue_min: ItemCatalogue, value: str | None):
@@ -167,10 +198,60 @@ class TestMacrosItem:
 
         assert html.select_one("#item-graphics") is not None
 
-        for graphic in expected:
+        if len(expected) > 0:
+            graphic = expected[0]
             graphic_html = html.select_one(f"#graphics-{graphic.identifier}")
             assert graphic_html is not None
             assert graphic_html["src"] == graphic.href
+
+        # Disabled until we can display multiple graphics sensibly.
+        # for graphic in expected:
+        #     graphic_html = html.select_one(f"#graphics-{graphic.identifier}")  # noqa: ERA001
+        #     assert graphic_html is not None  # noqa: ERA001
+        #     assert graphic_html["src"] == graphic.href  # noqa: ERA001
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            Aggregations([]),
+            Aggregations(
+                [
+                    Aggregation(
+                        identifier=Identifier(identifier="a", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                        initiative_type=AggregationInitiativeCode.PAPER_MAP,
+                    ),
+                    Aggregation(
+                        identifier=Identifier(identifier="b", href="x", namespace="x"),
+                        association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+                        initiative_type=AggregationInitiativeCode.PAPER_MAP,
+                    ),
+                ]
+            ),
+        ],
+    )
+    def test_sides(self, fx_lib_item_catalogue_min_physical_map: ItemCataloguePhysicalMap, value: Aggregations):
+        """
+        Can get item sides with expected values from physical map item.
+
+        Detailed item summary tests are run in common macro tests.
+        """
+        fx_lib_item_catalogue_min_physical_map._record.identification.aggregations = value
+        expected: list | None = fx_lib_item_catalogue_min_physical_map.sides
+        html = BeautifulSoup(fx_lib_item_catalogue_min_physical_map.render(), parser="html.parser", features="lxml")
+
+        sides = html.select_one("#item-sides")
+        assert sides is not None if expected else sides is None
+        if sides is None:
+            return
+
+        for item in expected:
+            # find an article element containing a link matching side[1].href
+            side = next(
+                (article for article in sides.find_all("article") if article.find("a", href=item[1].href)), None
+            )
+            assert side is not None
+            assert item[0] in str(side)
 
     @pytest.mark.parametrize("tab", _lib_item_catalogue_min().tabs)
     def test_tabs_nav(self, fx_lib_item_catalogue_min: ItemCatalogue, tab: Tab):

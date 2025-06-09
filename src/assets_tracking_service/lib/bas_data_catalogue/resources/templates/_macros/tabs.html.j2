@@ -77,8 +77,20 @@
 {% macro extent(data) %}
   <section id="tab-content-extent">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
-      <div class="col-span-1">{{ extent_tab.map(data.map_iframe) }}</div>
-      <div class="col-span-1">{{ extent_tab.info(data) }}</div>
+      {% if data.extents %}
+        {% for extent in data.extents %}
+          <div class="col-span-1 space-y-8">
+            {% call com.item_title() %}{{ extent.label }}{% endcall %}
+            {% call com.item_border(classes="space-y-8") %}
+              {{ extent_tab.map(extent.map_iframe) }}
+              {{ extent_tab.info(extent) }}
+            {% endcall %}
+          </div>
+        {% endfor %}
+      {% elif data %}
+        <div class="col-span-1">{{ extent_tab.map(data.map_iframe) }}</div>
+        <div class="col-span-1 space-y-8">{{ extent_tab.info(data) }}</div>
+      {% endif %}
     </div>
   </section>
 {% endmacro %}
@@ -99,9 +111,10 @@
 {% macro related_section(data) %}
   {% if data.related %}
     <section id="related-{{ data.id }}" class="space-y-8">
+      {% set items = data.related if data.related is iterable else [data.related] %}
       {% call com.item_title() %}{{ data.title }}{% endcall %}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
-        {% for item in data.related %}
+        {% for item in items %}
           {{ com.item_summary(item) }}
         {% endfor %}
       </div>
@@ -111,8 +124,10 @@
 
 {% macro related(data) %}
   <section id="tab-content-related" class="space-y-8">
-    {{ related_section({'id': 'parent-collections', 'title': 'Collections this Item is a part of', 'related': data.parent_collections}) }}
-    {{ related_section({'id': 'peer-collections', 'title': 'Related Collections', 'related': data.peer_collections}) }}
+    {{ related_section({'id': 'parent-printed-map', 'title': 'Printed map this item is a part of', 'related': data.parent_printed_map}) }}
+    {{ related_section({'id': 'peer-opposite-side', 'title': 'Opposite side of the physical map this item is a part of', 'related': data.peer_opposite_side}) }}
+    {{ related_section({'id': 'parent-collections', 'title': 'Collections this item is a part of', 'related': data.parent_collections}) }}
+    {{ related_section({'id': 'peer-collections', 'title': 'Related collections', 'related': data.peer_collections}) }}
   </section>
 {% endmacro %}
 

@@ -65,7 +65,7 @@ class Record:
         - `*.citation.edition`
         - `*.citation.contacts` (except `contact.position`)
         - `*.citation.identifiers`
-        - `*.citation.series`
+        - `*.citation.series` (with local workaround for `series.page`)
 
         - `$schema`
         - `file_identifier`

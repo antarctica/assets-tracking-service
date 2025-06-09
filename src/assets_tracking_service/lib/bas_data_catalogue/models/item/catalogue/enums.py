@@ -1,12 +1,22 @@
 from enum import Enum
 
 
+class ResourceTypeLabel(Enum):
+    """Partial mapping of the Hierarchy Level code list to friendlier terms."""
+
+    COLLECTION = "COLLECTION"
+    DATASET = "DATASET"
+    PRODUCT = "PRODUCT (MAP)"
+    PAPER_MAP_PRODUCT = "PRODUCT (PAPER MAP)"
+
+
 class ResourceTypeIcon(Enum):
-    """Partial mapping of Hierarchy Level code list terms against Font Awesome icon classes."""
+    """Partial mapping of the Hierarchy Level code list against Font Awesome icon classes."""
 
     COLLECTION = "fa-fw far fa-shapes"
     DATASET = "fa-fw far fa-cube"
     PRODUCT = "fa-fw far fa-map"
+    PAPER_MAP_PRODUCT = "fa-fw far fa-map"
 
 
 class DistributionType(Enum):

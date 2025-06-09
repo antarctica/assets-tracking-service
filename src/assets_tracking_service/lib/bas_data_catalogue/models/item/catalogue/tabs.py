@@ -29,7 +29,11 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     ItemSummaryCatalogue,
     Maintenance,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence, ResourceTypeIcon
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import (
+    Licence,
+    ResourceTypeIcon,
+    ResourceTypeLabel,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier, Series
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import DomainConsistency
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import (
@@ -133,6 +137,7 @@ class DataTab(Tab):
         for dist_option in self._resource_distributions:
             for dist_type in self._supported_distributions:
                 if dist_type.matches(option=dist_option, other_options=self._resource_distributions):
+                    # noinspection PyTypeChecker
                     processed.append(
                         dist_type(
                             option=dist_option, other_options=self._resource_distributions, access_type=self._access
@@ -382,6 +387,14 @@ class AdditionalInfoTab(Tab):
         self._profiles = profiles if profiles is not None else []
         self._kv = kv
 
+    @staticmethod
+    def _format_scale(value: int | None) -> str | None:
+        """Format scale value."""
+        if value is None:
+            return None
+        locale.setlocale(locale.LC_ALL, "en_GB.UTF-8")
+        return f"1:{locale.format_string('%d', value, grouping=True)}"
+
     @property
     def enabled(self) -> bool:
         """Whether tab is enabled."""
@@ -410,7 +423,7 @@ class AdditionalInfoTab(Tab):
     @property
     def item_type(self) -> str:
         """Item type."""
-        return self._item_type.value
+        return ResourceTypeLabel[self._item_type.name].value
 
     @property
     def item_type_icon(self) -> str:
@@ -418,15 +431,19 @@ class AdditionalInfoTab(Tab):
         return ResourceTypeIcon[self._item_type.name].value
 
     @property
-    def series(self) -> str | None:
-        """Descriptive series if set."""
-        return f"{self._series.name} ({self._series.edition})" if self._series.name is not None else None
+    def series_name(self) -> str | None:
+        """Descriptive series name if set."""
+        return self._series.name
+
+    @property
+    def sheet_number(self) -> str | None:
+        """Descriptive series sheet number if set."""
+        return self._series.page
 
     @property
     def scale(self) -> str | None:
         """Formatted scale if set."""
-        locale.setlocale(locale.LC_ALL, "en_GB.UTF-8")
-        return f"1:{locale.format_string('%d', self._scale, grouping=True)}" if self._scale is not None else None
+        return self._format_scale(self._scale)
 
     @property
     def projection(self) -> Link | None:
@@ -452,10 +469,12 @@ class AdditionalInfoTab(Tab):
             "594_420": "A3 Landscape",
         }
 
-        if "width" in self._kv and "height" in self._kv:
-            key = f"{self._kv['width']}_{self._kv['height']}"
-            value = f"{self._kv['width']} x {self._kv['height']} mm (width x height)"
-            return mapping[f"{self._kv['width']}_{self._kv['height']}"] if key in mapping else value
+        width = self._kv.get("physical_size_width_mm", None)
+        height = self._kv.get("physical_size_height_mm", None)
+        if width and height:
+            key = f"{width}_{height}"
+            value = f"{width} x {height} mm (width x height)"
+            return mapping[f"{width}_{height}"] if key in mapping else value
         return None
 
     @property

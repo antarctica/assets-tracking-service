@@ -7,15 +7,26 @@
       {% call com.dl_item(title='Item ID', id='info-id') %}{{ data.item_id }}{% endcall %}
 
       {% call com.dl_item(title='Item Type', id='info-type') %}
-        <i class="{{ data.item_type_icon }}"></i> {{ data.item_type | capitalize }}
+        <i class="{{ data.item_type_icon }}"></i> {{ data.item_type }}
       {% endcall %}
 
-      {% if data.series %}
-        {% call com.dl_item(title='Series', id='info-series') %}{{ data.series }}{% endcall %}
+      {% if data.series_name %}
+        {% call com.dl_item(title='Series', id='info-series-name') %}{{ data.series_name }}{% endcall %}
       {% endif %}
 
-      {% if data.scale %}
-        {% call com.dl_item(title='Scale', id='info-scale') %}{{ data.scale }}{% endcall %}
+      {% if data.sheet_number %}
+        {% call com.dl_item(title='Sheet Number', id='info-sheet-number') %}{{ data.sheet_number }}{% endcall %}
+      {% endif %}
+
+      {% if data.scale or data.scales %}
+        {% set scales = data.scales if data.scales else [data.scale] %}
+        {% call com.dl_item(title='Scale', id='info-scale') %}
+          <ul class="space-y-2">
+            {% for scale in scales %}
+              <li>{{ scale }}</li>
+            {% endfor %}
+          </ul>
+        {% endcall %}
       {% endif %}
 
       {% if data.projection %}

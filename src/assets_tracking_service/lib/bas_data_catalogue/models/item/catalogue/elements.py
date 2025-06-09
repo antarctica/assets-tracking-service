@@ -4,11 +4,15 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import TypeVar
 
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemSummaryBase, md_as_html
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemSummaryBase
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Extent as ItemExtent
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import Link, unpack
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
+from assets_tracking_service.lib.bas_data_catalogue.models.item.base.utils import md_as_html
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import (
+    ResourceTypeIcon,
+    ResourceTypeLabel,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -105,6 +109,11 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         return md_as_html(self.title_md)
 
     @property
+    def _resource_type_label(self) -> str:
+        """Resource type label."""
+        return ResourceTypeLabel[self.resource_type.name].value
+
+    @property
     def _resource_type_icon(self) -> str:
         """Resource type icon."""
         return ResourceTypeIcon[self.resource_type.name].value
@@ -119,6 +128,11 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         """Formatted edition."""
         if self.edition is None or self.resource_type == HierarchyLevelCode.COLLECTION:
             return None
+        if (
+            self.resource_type == HierarchyLevelCode.PRODUCT
+            or self.resource_type == HierarchyLevelCode.PAPER_MAP_PRODUCT
+        ):
+            return f"Ed. {self.edition}"
         return f"v{self.edition}"
 
     @property
@@ -141,7 +155,7 @@ class ItemSummaryCatalogue(ItemSummaryBase):
         published = self._date if self.resource_type != HierarchyLevelCode.COLLECTION else None
         return ItemSummaryFragments(
             access=self.access,
-            item_type=self.resource_type.value.capitalize(),
+            item_type=self._resource_type_label,
             item_type_icon=self._resource_type_icon,
             edition=self._edition,
             published=published,
@@ -241,6 +255,15 @@ class Aggregations:
         )
 
     @property
+    def peer_opposite_side(self) -> ItemSummaryCatalogue | None:
+        """Item that forms the opposite side of a published map."""
+        items = self._filter(
+            associations=AggregationAssociationCode.PHYSICAL_REVERSE_OF,
+            initiatives=AggregationInitiativeCode.PAPER_MAP,
+        )
+        return items[0] if items else None
+
+    @property
     def parent_collections(self) -> list[ItemSummaryCatalogue]:
         """Collections item is contained within."""
         return self._filter(
@@ -255,6 +278,15 @@ class Aggregations:
             associations=AggregationAssociationCode.IS_COMPOSED_OF,
             initiatives=AggregationInitiativeCode.COLLECTION,
         )
+
+    @property
+    def parent_printed_map(self) -> ItemSummaryCatalogue | None:
+        """Printed map item is a side of."""
+        items = self._filter(
+            associations=AggregationAssociationCode.LARGER_WORK_CITATION,
+            initiatives=AggregationInitiativeCode.PAPER_MAP,
+        )
+        return items[0] if items else None
 
 
 class Dates(RecordDates):
@@ -448,7 +480,7 @@ class PageHeader:
     @property
     def subtitle(self) -> tuple[str, str]:
         """Subtitle."""
-        return self._item_type.value, ResourceTypeIcon[self._item_type.name].value
+        return ResourceTypeLabel[self._item_type.name].value, ResourceTypeIcon[self._item_type.name].value
 
 
 class PageSummary:
@@ -514,6 +546,12 @@ class PageSummary:
     def collections(self) -> list[Link]:
         """Collections item is part of."""
         return [Link(value=summary.title_html, href=summary.href) for summary in self._aggregations.parent_collections]
+
+    @property
+    def physical_parent(self) -> Link | None:
+        """Item that represents the physical map an item is one side of."""
+        item = self._aggregations.parent_printed_map
+        return Link(value=item.title_html, href=item.href) if item else None
 
     @property
     def items_count(self) -> int:

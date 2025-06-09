@@ -14,6 +14,9 @@ class TestItemTabs:
         endpoint = f"http://localhost:8123/items/{product_min_supported.file_identifier}/index.html"
         page.goto(endpoint)
 
+        status_code = page.evaluate("window.performance.getEntries()[0].responseStatus")
+        assert status_code == 200
+
         # initial tab will be 'licence', expect element from another tab not to be visible
         expect(page.locator("strong", has_text="Item licence")).to_be_visible()
         expect(page.locator("dt", has_text="Item ID")).not_to_be_visible()
@@ -28,6 +31,9 @@ class TestItemTabs:
         """Can switch between visited tabs."""
         endpoint = f"http://localhost:8123/items/{product_min_supported.file_identifier}/index.html"
         page.goto(endpoint)
+        status_code = page.evaluate("window.performance.getEntries()[0].responseStatus")
+        assert status_code == 200
+
         expect(page.locator("strong", has_text="Item licence")).to_be_visible()
 
         # On load, no tab is explicitly selected so there's no URL fragment is present. Changing tab will explicitly
@@ -46,6 +52,9 @@ class TestItemTabs:
         """Can set initial tab on page load if set in URL fragment."""
         endpoint = f"http://localhost:8123/items/{product_min_supported.file_identifier}/index.html"
         page.goto(endpoint + "#tab-info")
+        status_code = page.evaluate("window.performance.getEntries()[0].responseStatus")
+        assert status_code == 200
+
         expect(page.locator("dt", has_text="Item ID")).to_be_visible()
 
 
@@ -56,6 +65,8 @@ class TestItemEmbeddedMap:
         """Can load embedded map."""
         endpoint = f"http://localhost:8123/items/{product_min_supported.file_identifier}/index.html#tab-extent"
         page.goto(endpoint)
+        status_code = page.evaluate("window.performance.getEntries()[0].responseStatus")
+        assert status_code == 200
 
         # get iframe for embedded map by looking for iframe with a base src value
         map_src = page.locator('iframe[src*="embedded-maps.data.bas.ac.uk"]').get_attribute("src")
@@ -70,16 +81,21 @@ class TestItemContactForm:
     """Test contact form in Catalogue Item template."""
 
     def test_send(self, fx_lib_exporter_static_server: Popen, page: Page):
-        """Can use item contact form."""
-        endpoint = f"http://localhost:8123/items/{product_min_supported.file_identifier}/index.html#tab-contact"
+        """
+        Can use item contact form.
 
-        # Intercept contact form action
+        Sets intercept for contact form action
+        """
+
         def handle(route: Route) -> None:
             route.fulfill(status=200, content_type="text/html", body="<html><body>OK</body></html>")
 
         page.route("https://example.com/contact*", handle)
 
+        endpoint = f"http://localhost:8123/items/{product_min_supported.file_identifier}/index.html#tab-contact"
         page.goto(endpoint)
+        status_code = page.evaluate("window.performance.getEntries()[0].responseStatus")
+        assert status_code == 200
 
         expect(page.locator("textarea#message-content")).to_be_visible()
         page.get_by_label("Details").fill("x")
@@ -97,6 +113,8 @@ class TestItemDataActions:
         """Can open a data access information section in an item."""
         endpoint = f"http://localhost:8123/items/{product_data.file_identifier}/index.html#tab-data"
         page.goto(endpoint)
+        status_code = page.evaluate("window.performance.getEntries()[0].responseStatus")
+        assert status_code == 200
 
         # find trigger button for a data access info section
         trigger = page.locator("#tab-content-data button[data-target]").first

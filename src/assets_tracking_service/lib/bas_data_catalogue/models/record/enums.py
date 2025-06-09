@@ -8,6 +8,8 @@ class AggregationAssociationCode(Enum):
     Schema definition: association_type [1]
     ISO element: DS_AssociationTypeCode [2]
 
+    Contains additional local codes.
+
     [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L84
     [2] https://wiki.esipfed.org/ISO_19115-3_Codelists#DS_AssociationTypeCode
     """
@@ -31,6 +33,8 @@ class AggregationInitiativeCode(Enum):
     Schema definition: initiative_type [1]
     ISO element: DS_InitiativeTypeCode [2]
 
+    Contains additional local codes.
+
     [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L104C18-L104
     [2] https://wiki.esipfed.org/ISO_19115-3_Codelists#DS_InitiativeTypeCode
     """
@@ -53,6 +57,7 @@ class AggregationInitiativeCode(Enum):
     DATA_DICTIONARY = "dataDictionary"
     SCIENCE_PAPER = "sciencePaper"
     USER_GUIDE = "userGuide"
+    PAPER_MAP = "paperMap"  # local code
 
 
 class ContactRoleCode(Enum):
@@ -172,6 +177,8 @@ class HierarchyLevelCode(Enum):
     Schema definition: hierarchy_level [1]
     ISO element: MD_ScopeCode [2]
 
+    Contains additional local codes.
+
     [1] https://github.com/antarctica/metadata-library/blob/v0.15.1/src/bas_metadata_library/schemas/dist/iso_19115_2_v4.json#L826C10-L826C25
     [2] https://wiki.esipfed.org/ISO_19115-3_Codelists#MD_ScopeCode
     """
@@ -202,6 +209,7 @@ class HierarchyLevelCode(Enum):
     SERVICE = "service"
     SOFTWARE = "software"
     TILE = "tile"
+    PAPER_MAP_PRODUCT = "paperMapProduct"  # local code
 
 
 class MaintenanceFrequencyCode(Enum):

@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from bas_metadata_library.standards.iso_19115_2 import MetadataRecord, MetadataRecordConfigV4
@@ -6,11 +7,11 @@ from lxml.etree import ElementTree, ProcessingInstruction, fromstring, tostring
 from mypy_boto3_s3 import S3Client
 
 from assets_tracking_service.config import Config
-from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import ResourceExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 
 
-class IsoXmlExporter(Exporter):
+class IsoXmlExporter(ResourceExporter):
     """
     ISO 19115 XML exporter.
 
@@ -19,9 +20,11 @@ class IsoXmlExporter(Exporter):
     Intended for interoperability with clients that prefer ISO XML, or need access to the full underlying record.
     """
 
-    def __init__(self, config: Config, s3: S3Client, record: Record, export_base: Path) -> None:
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client, record: Record, export_base: Path) -> None:
         export_name = f"{record.file_identifier}.xml"
-        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
+        super().__init__(
+            config=config, logger=logger, s3=s3, record=record, export_base=export_base, export_name=export_name
+        )
 
     @property
     def name(self) -> str:
@@ -35,7 +38,7 @@ class IsoXmlExporter(Exporter):
         return record.generate_xml_document().decode()
 
 
-class IsoXmlHtmlExporter(Exporter):
+class IsoXmlHtmlExporter(ResourceExporter):
     """
     ISO 19115 XML (HTML) exporter.
 
@@ -57,13 +60,16 @@ class IsoXmlHtmlExporter(Exporter):
     def __init__(
         self,
         config: Config,
+        logger: logging.Logger,
         s3: S3Client,
         record: Record,
         export_base: Path,
     ) -> None:
         """Initialise exporter."""
         export_name = f"{record.file_identifier}.html"
-        super().__init__(config=config, s3=s3, record=record, export_base=export_base, export_name=export_name)
+        super().__init__(
+            config=config, logger=logger, s3=s3, record=record, export_base=export_base, export_name=export_name
+        )
         self._stylesheet_url = "static/xsl/iso-html/xml-to-html-ISO.xsl"
 
     @property
@@ -79,7 +85,11 @@ class IsoXmlHtmlExporter(Exporter):
         """
         # noinspection PyTypeChecker
         xml = IsoXmlExporter(
-            config=self._config, s3=self._s3_client, record=self._record, export_base=self._export_path.parent
+            config=self._config,
+            logger=self._logger,
+            s3=self._s3_client,
+            record=self._record,
+            export_base=self._export_path.parent,
         ).dumps()
         doc = ElementTree(fromstring(xml.encode()))  # noqa: S320
         root = doc.getroot()

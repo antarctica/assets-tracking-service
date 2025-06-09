@@ -18,7 +18,10 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     ItemSummaryCatalogue,
     Maintenance,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import ResourceTypeIcon
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import (
+    ResourceTypeIcon,
+    ResourceTypeLabel,
+)
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Date, Identifier
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Dates as RecordDates
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -124,6 +127,18 @@ class TestAggregations:
 
         assert len(aggregations.peer_collections) > 0
 
+    def test_peer_opposite_side(self):
+        """Can get any item that forms the opposite side of a published map."""
+        expected = Aggregation(
+            identifier=Identifier(identifier="x", href="x", namespace="x"),
+            association_type=AggregationAssociationCode.PHYSICAL_REVERSE_OF,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        )
+        record_aggregations = RecordAggregations([expected])
+        aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
+
+        assert aggregations.peer_opposite_side is not None
+
     def test_parent_collections(self):
         """Can get any collection aggregations (item is part of)."""
         expected = Aggregation(
@@ -147,6 +162,18 @@ class TestAggregations:
         aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
 
         assert len(aggregations.child_items) > 0
+
+    def test_parent_printed_map(self):
+        """Can get printed map item that this item is a side of."""
+        expected = Aggregation(
+            identifier=Identifier(identifier="x", href="x", namespace="x"),
+            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        )
+        record_aggregations = RecordAggregations([expected])
+        aggregations = Aggregations(record_aggregations, get_summary=_lib_get_record_summary)
+
+        assert aggregations.parent_printed_map is not None
 
 
 class TestDates:
@@ -290,9 +317,11 @@ class TestItemSummaryCatalogue:
     @pytest.mark.parametrize(
         ("resource_type", "edition", "exp_edition", "has_pub", "exp_published", "child_count", "exp_child_count"),
         [
-            (HierarchyLevelCode.PRODUCT, "x", "vx", True, "30 June 2014", 0, None),
-            (HierarchyLevelCode.PRODUCT, "x", "vx", False, None, 0, None),
+            (HierarchyLevelCode.PRODUCT, "x", "Ed. x", True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.PRODUCT, "x", "Ed. x", False, None, 0, None),
             (HierarchyLevelCode.PRODUCT, None, None, True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.PAPER_MAP_PRODUCT, None, None, True, "30 June 2014", 0, None),
+            (HierarchyLevelCode.DATASET, "X", "vX", False, None, 0, None),
             (HierarchyLevelCode.COLLECTION, "x", None, True, None, 0, None),
             (HierarchyLevelCode.COLLECTION, "x", None, False, None, 0, None),
             (HierarchyLevelCode.COLLECTION, None, None, False, None, 0, None),
@@ -312,6 +341,7 @@ class TestItemSummaryCatalogue:
         exp_child_count: str | None,
     ):
         """Can get fragments to use as part of item summary UI."""
+        exp_resource_type = ResourceTypeLabel[resource_type.name]
         fx_lib_record_summary_minimal_item.hierarchy_level = resource_type
         fx_lib_record_summary_minimal_item.edition = edition
         if has_pub:
@@ -328,7 +358,7 @@ class TestItemSummaryCatalogue:
 
         result = summary.fragments
 
-        assert result.item_type == resource_type.value.capitalize()
+        assert result.item_type == exp_resource_type.value
         assert result.edition == exp_edition
         if exp_published is not None:
             assert result.published.value == exp_published
@@ -474,14 +504,14 @@ class TestPageHeader:
         """Can create a page header element."""
         expected_title = "x"
         title = f"<p>{expected_title}</p>"
-        type_ = HierarchyLevelCode.PRODUCT
-        expected_icon = ResourceTypeIcon[type_.name].value
-        expected_type = HierarchyLevelCode.PRODUCT.value
+        type_ = HierarchyLevelCode.PAPER_MAP_PRODUCT
+        expected_type_label = ResourceTypeLabel[type_.name].value
+        expected_type_icon = ResourceTypeIcon[type_.name].value
 
         header = PageHeader(title=title, item_type=type_)
 
         assert header.title == expected_title
-        assert header.subtitle == (expected_type, expected_icon)
+        assert header.subtitle == (expected_type_label, expected_type_icon)
 
 
 class TestPageSummary:
@@ -741,3 +771,38 @@ class TestPageSummary:
         )
 
         assert summary.published == expected
+
+    @pytest.mark.parametrize(
+        ("item_type", "has_aggregation"),
+        [(HierarchyLevelCode.PRODUCT, False), (HierarchyLevelCode.PRODUCT, True)],
+    )
+    def test_physical_map(self, item_type: HierarchyLevelCode, has_aggregation: bool):
+        """Can show combination of publication and revision date if relevant."""
+        aggregations = []
+        if has_aggregation:
+            aggregations.append(
+                Aggregation(
+                    identifier=Identifier(identifier="x", href="x", namespace="x"),
+                    association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+                    initiative_type=AggregationInitiativeCode.PAPER_MAP,
+                )
+            )
+        summary = PageSummary(
+            item_type=item_type,
+            aggregations=Aggregations(
+                aggregations=RecordAggregations(aggregations), get_summary=_lib_get_record_summary
+            ),
+            access_type=AccessType.PUBLIC,
+            edition=None,
+            published_date=None,
+            revision_date=None,
+            citation=None,
+            abstract="x",
+        )
+
+        physical_parent = summary.physical_parent
+
+        if has_aggregation:
+            assert physical_parent == Link(value="<p>x</p>", href="/items/x/", external=False)
+        if not has_aggregation:
+            assert physical_parent is None

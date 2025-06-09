@@ -1,4 +1,5 @@
 import logging
+import shutil
 from pathlib import Path
 from shutil import copy
 
@@ -8,15 +9,15 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from mypy_boto3_s3 import S3Client
 
 from assets_tracking_service.config import Config
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter as BaseExporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import S3Utils
 from assets_tracking_service.lib.bas_data_catalogue.exporters.records_exporter import RecordsExporter
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 from assets_tracking_service.lib.bas_data_catalogue.models.templates import PageMetadata
 
 
-class SiteResourcesExporter:
+class SiteResourcesExporter(Exporter):
     """
     Static site resource exporters.
 
@@ -25,12 +26,8 @@ class SiteResourcesExporter:
     Due to its global nature, does not subclass the BaseExporter to avoid hacking around its requirements.
     """
 
-    def __init__(self, config: Config, s3: S3Client) -> None:
-        self._s3_utils = S3Utils(
-            s3=s3,
-            s3_bucket=config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
-            relative_base=config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
-        )
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client) -> None:
+        super().__init__(config=config, logger=logger, s3=s3)
         self._css_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.css"
         self._fonts_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.fonts"
         self._img_src_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.img"
@@ -151,7 +148,7 @@ class SiteResourcesExporter:
         self._publish_xsl()
 
 
-class SiteIndexExporter:
+class SiteIndexExporter(Exporter):
     """
     Proto Data Catalogue index exporter.
 
@@ -162,38 +159,143 @@ class SiteIndexExporter:
     Due to its global nature, does not subclass the BaseExporter to avoid hacking around its requirements.
     """
 
-    def __init__(self, config: Config, s3: S3Client, logger: logging.Logger, summaries: list[RecordSummary]) -> None:
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client) -> None:
         """Initialise exporter."""
-        self._config = config
-        self._logger = logger
-        self._s3 = s3
-        self._s3_utils = S3Utils(
-            s3=self._s3,
-            s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
-            relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
-        )
-
-        self._summaries: list[RecordSummary] = summaries
+        super().__init__(config=config, logger=logger, s3=s3)
         self._index_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "-" / "index" / "index.html"
+        self._summaries: list[RecordSummary] = []
+        self._records: list[Record] = []
+        self._record_ids = set()
 
     @property
     def name(self) -> str:
         """Exporter name."""
         return "Site Index"
 
-    def _dumps(self) -> str:
-        """Build proto/backstage index."""
+    def loads(self, summaries: list[RecordSummary], records: list[Record]) -> None:
+        """Populate exporter."""
+        self._summaries = summaries
+        self._records = records
+        self._record_ids = {record.file_identifier for record in records}
+
+    @property
+    def _aliases(self) -> list[dict]:
+        """Get a list of aliases from records."""
+        aliases = []
+        for record in self._records:
+            identifiers = record.identification.identifiers.filter(namespace="alias.data.bas.ac.uk")
+            aliases.extend(
+                [
+                    {
+                        "alias": identifier.href.replace("https://data.bas.ac.uk/", ""),
+                        "href": f"/items/{record.file_identifier}",
+                        "file_identifier": record.file_identifier,
+                        "title": record.identification.title,
+                    }
+                    for identifier in identifiers
+                ]
+            )
+        return aliases
+
+    def _dumps_v1(self) -> str:
+        """Version 1 implementation."""
         item_links = "\n".join(
             [
                 f'<li><a href="/items/{summary.file_identifier}/index.html">[{summary.hierarchy_level.name}] {summary.file_identifier} - {summary.title} ({summary.edition})</a></li>'
                 for summary in self._summaries
             ]
         )
-        return f"<html><body><h1>Proto Items Index</h1><ul>{item_links}</ul></body></html>"
+        return f"<section><h2>V1</h2><ul>{item_links}</ul></section>"
+
+    def _dumps_v2(self) -> str:
+        """Version 2 implementation."""
+        summary_rows = "\n".join(
+            [
+                f"""
+                <tr>
+                    <td>ItemSummary</td>
+                    <td>{summary.hierarchy_level.name}</td>
+                    <td>{summary.file_identifier}</td>
+                    <td>{summary.title}</td>
+                    <td>{summary.edition}</td>
+                    <td>-</td>
+                </tr>
+                """
+                for summary in self._summaries
+                if summary.file_identifier not in self._record_ids
+            ]
+        )
+        record_rows = "\n".join(
+            [
+                f"""
+                        <tr>
+                            <td>Item</td>
+                            <td>{record.hierarchy_level.name}</td>
+                            <td><a href="/items/{record.file_identifier}/index.html">{record.file_identifier}</a></td>
+                            <td>{record.identification.title}</td>
+                            <td>{record.identification.edition}</td>
+                            <td>-</td>
+                        </tr>
+                        """
+                for record in self._records
+            ]
+        )
+        alias_rows = "\n".join(
+            [
+                f"""
+                <tr>
+                    <td>Alias</td>
+                    <td>-</td>
+                    <td><a href="{alias["href"]}">{alias["file_identifier"]}</a></td>
+                    <td>{alias["title"]}</td>
+                    <td>-</td>
+                    <td><a href="/{alias["alias"]}">{alias["alias"]}</a></td>
+                </tr>
+                """
+                for alias in self._aliases
+            ]
+        )
+        return f"""
+        <section>
+            <h2>V2</h2>
+            <table border="1" cellpadding="5" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Kind</th>
+                        <th>Type</th>
+                        <th>File Identifier</th>
+                        <th>Title</th>
+                        <th>Edition</th>
+                        <th>Alias</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {summary_rows}
+                    {record_rows}
+                    {alias_rows}
+                </tbody>
+            </table>
+        </section>
+        """
+
+    def _dumps(self) -> str:
+        """Build proto/backstage index."""
+        return f"""
+        <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Proto Items Index</title>
+            </head>
+            <body>
+                <h1>Proto Items Index</h1>
+                {self._dumps_v2()}
+                {self._dumps_v1()}
+            </body>
+        </html>
+        """
 
     def export(self) -> None:
         """Export proto index to directory."""
-        self._logger.info(f"Exporting proto site index to {self._index_path.resolve()}")
         self._index_path.parent.mkdir(parents=True, exist_ok=True)
         with self._index_path.open("w") as f:
             f.write(self._dumps())
@@ -201,12 +303,10 @@ class SiteIndexExporter:
     def publish(self) -> None:
         """Publish proto index to S3."""
         index_key = self._s3_utils.calc_key(self._index_path)
-        index_url = f"https://{self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET}/{index_key}"
-        self._logger.info(f"Publishing proto site index to: {index_url}")
         self._s3_utils.upload_content(key=index_key, content_type="text/html", body=self._dumps())
 
 
-class SitePagesExporter:
+class SitePagesExporter(Exporter):
     """
     Static site pages exporter.
 
@@ -217,19 +317,9 @@ class SitePagesExporter:
 
     def __init__(self, config: Config, s3: S3Client, logger: logging.Logger) -> None:
         """Initialise exporter."""
-        self._config = config
-        self._logger = logger
-
-        self._s3 = s3
-        self._s3_utils = S3Utils(
-            s3=self._s3,
-            s3_bucket=self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
-            relative_base=self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
-        )
-
+        super().__init__(config=config, logger=logger, s3=s3)
         _loader = PackageLoader("assets_tracking_service.lib.bas_data_catalogue", "resources/templates")
         self._jinja = Environment(loader=_loader, autoescape=select_autoescape(), trim_blocks=True, lstrip_blocks=True)
-
         self._templates = ["404.html.j2", "legal/cookies.html.j2", "legal/copyright.html.j2", "legal/privacy.html.j2"]
 
     def _get_page_metadata(self, template_path: str) -> PageMetadata:
@@ -264,7 +354,6 @@ class SitePagesExporter:
     def export_page(self, template_path: str) -> None:
         """Export a page to directory."""
         page_path = self._get_page_path(template_path)
-        self._logger.info(f"Exporting {template_path} to {page_path.resolve()}")
         page_path.parent.mkdir(parents=True, exist_ok=True)
         with page_path.open("w") as f:
             f.write(self._dumps(template_path))
@@ -273,8 +362,6 @@ class SitePagesExporter:
         """Publish a page to S3."""
         page_path = self._get_page_path(template_path)
         page_key = self._s3_utils.calc_key(page_path)
-        page_url = f"https://{self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET}/{page_key}"
-        self._logger.info(f"Publishing {template_path} to: {page_url}")
         self._s3_utils.upload_content(key=page_key, content_type="text/html", body=self._dumps(template_path))
 
     def export(self) -> None:
@@ -288,35 +375,38 @@ class SitePagesExporter:
             self.publish_page(template_path=template)
 
 
-class SiteExporter:
+class SiteExporter(Exporter):
     """
     Data Catalogue static site exporter.
 
     Combines exporters for records and static resources to create a standalone static website.
     """
 
-    def __init__(self, config: Config, s3: S3Client, logger: logging.Logger, records: list[Record]) -> None:
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client) -> None:
         """Initialise exporter."""
-        self._config = config
-        self._logger = logger
-        self._s3 = s3
-
-        self._records = records
-        self._summaries = [RecordSummary.loads(record) for record in self._records]
-
-        self._resources_exporter = SiteResourcesExporter(config=self._config, s3=self._s3)
-        self._index_exporter = SiteIndexExporter(
-            config=self._config, s3=self._s3, logger=self._logger, summaries=self._summaries
-        )
-        self._pages_exporter = SitePagesExporter(config=self._config, s3=self._s3, logger=self._logger)
-        self._records_exporter = RecordsExporter(
-            config=self._config, s3=self._s3, logger=self._logger, records=self._records, summaries=self._summaries
-        )
+        super().__init__(config=config, logger=logger, s3=s3)
+        self._resources_exporter = SiteResourcesExporter(config=self._config, logger=logger, s3=self._s3_client)
+        self._pages_exporter = SitePagesExporter(config=self._config, logger=logger, s3=self._s3_client)
+        self._index_exporter = SiteIndexExporter(config=self._config, logger=logger, s3=self._s3_client)
+        self._records_exporter = RecordsExporter(config=self._config, logger=logger, s3=self._s3_client)
 
     @property
     def name(self) -> str:
         """Exporter name."""
         return "Site"
+
+    def purge(self) -> None:
+        """Empty file system export directory and S3 publishing bucket."""
+        if self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.exists():
+            self._logger.info("Purging file system export directory")
+            shutil.rmtree(self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH)
+        self._logger.info("Purging S3 publishing bucket")
+        self._s3_utils.empty_bucket()
+
+    def loads(self, summaries: list[RecordSummary], records: list[Record]) -> None:
+        """Populate exporter."""
+        self._records_exporter.loads(summaries=summaries, records=records)
+        self._index_exporter.loads(summaries=summaries, records=records)
 
     def export(self) -> None:
         """Export site contents to a directory."""

@@ -1,9 +1,9 @@
 import logging
 
-from mypy_boto3_s3 import S3Client
+from boto3 import client as S3Client  # noqa: N812
 
 from assets_tracking_service.config import Config
-from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter
+from assets_tracking_service.lib.bas_data_catalogue.exporters.base_exporter import Exporter, ResourceExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter, HtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlExporter, IsoXmlHtmlExporter
 from assets_tracking_service.lib.bas_data_catalogue.exporters.json_exporter import JsonExporter
@@ -11,7 +11,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
 
 
-class RecordsExporter:
+class RecordsExporter(Exporter):
     """
     Data Catalogue records exporter.
 
@@ -21,76 +21,70 @@ class RecordsExporter:
     It will be replaced with a more capable record repository in the future.
     """
 
-    def __init__(
-        self,
-        config: Config,
-        s3: S3Client,
-        logger: logging.Logger,
-        records: list[Record],
-        summaries: list[RecordSummary],
-    ) -> None:
+    def __init__(self, config: Config, logger: logging.Logger, s3: S3Client) -> None:
         """Initialise exporter."""
-        self._config = config
-        self._s3 = s3
-        self._logger = logger
-
+        super().__init__(config=config, logger=logger, s3=s3)
         self._records: dict[str, Record] = {}
         self._summaries: dict[str, RecordSummary] = {}
 
-        self._logger.info(f"Initialising records exporter from {len(records)} records")
-        self._index_records(records)
-        self._index_summaries(summaries)
-
-    def _index_records(self, records: list[Record]) -> None:
-        """Index all records and create record summaries."""
-        self._records = {record.file_identifier: record for record in records}
-        self._logger.debug(f"{len(self._records)} records indexed")
-
-    def _index_summaries(self, summaries: list[RecordSummary]) -> None:
-        """Create record summaries for all records."""
-        self._summaries = {summary.file_identifier: summary for summary in summaries}
-        self._logger.debug(f"{len(self._summaries)} record summaries indexed")
-
-    def _get_item_summary(self, identifier: str) -> RecordSummary:
+    def _get_record_summary(self, identifier: str) -> RecordSummary:
         """
-        Get title for a record identifier.
+        Get record summary for a record identifier.
 
-        Crude implementation a record repository interface.
+        Crude implementation of a record repository interface.
         """
         return self._summaries[identifier]
+
+    def _get_record(self, identifier: str) -> Record:
+        """
+        Get record for a record identifier.
+
+        Crude implementation of a record repository interface.
+        """
+        return self._records[identifier]
 
     def _get_html_exporter(self, record: Record) -> HtmlExporter:
         """Record as item HTML."""
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "items"
         return HtmlExporter(
             config=self._config,
-            s3=self._s3,
+            logger=self._logger,
+            s3=self._s3_client,
             record=record,
             export_base=output_path,
-            get_record_summary=self._get_item_summary,
+            get_record_summary=self._get_record_summary,
+            get_record=self._get_record,
         )
 
     def _get_html_aliases_exporter(self, record: Record) -> HtmlAliasesExporter:
         """Record aliases as redirects to item HTML."""
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
-        return HtmlAliasesExporter(config=self._config, s3=self._s3, record=record, site_base=output_path)
+        return HtmlAliasesExporter(
+            config=self._config, logger=self._logger, s3=self._s3_client, record=record, site_base=output_path
+        )
 
     def _get_json_exporter(self, record: Record) -> JsonExporter:
         """Record as BAS Metadata Library JSON."""
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        return JsonExporter(config=self._config, s3=self._s3, record=record, export_base=output_path)
+        return JsonExporter(
+            config=self._config, logger=self._logger, s3=self._s3_client, record=record, export_base=output_path
+        )
 
     def _get_iso_xml_exporter(self, record: Record) -> IsoXmlExporter:
         """Record as ISO XML."""
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        return IsoXmlExporter(config=self._config, s3=self._s3, record=record, export_base=output_path)
+        return IsoXmlExporter(
+            config=self._config, logger=self._logger, s3=self._s3_client, record=record, export_base=output_path
+        )
 
     def _get_iso_xml_html_exporter(self, record: Record) -> IsoXmlHtmlExporter:
         """Record as ISO XML with HTML stylesheet."""
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        return IsoXmlHtmlExporter(config=self._config, s3=self._s3, record=record, export_base=output_path)
+        return IsoXmlHtmlExporter(
+            config=self._config, logger=self._logger, s3=self._s3_client, record=record, export_base=output_path
+        )
 
-    def _get_exporters(self, record: Record) -> list[Exporter]:
+    def _get_exporters(self, record: Record) -> list[ResourceExporter]:
         """Get exporters for record."""
         return [
             self._get_html_exporter(record),
@@ -104,6 +98,11 @@ class RecordsExporter:
     def name(self) -> str:
         """Exporter name."""
         return "Records"
+
+    def loads(self, summaries: list[RecordSummary], records: list[Record]) -> None:
+        """Populate exporter."""
+        self._summaries = {summary.file_identifier: summary for summary in summaries}
+        self._records = {record.file_identifier: record for record in records}
 
     def export_record(self, file_identifier: str) -> None:
         """Export a record to a directory."""

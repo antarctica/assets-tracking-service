@@ -43,7 +43,7 @@ def main() -> None:
     config = Config()
     dumps_css(
         export_path=config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH,
-        tw_cli_path=Path("./scripts/tailwind"),
+        tw_cli_path=Path(".venv/bin/tailwindcss"),
     )
 
 

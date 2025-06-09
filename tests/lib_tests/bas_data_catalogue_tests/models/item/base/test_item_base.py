@@ -6,8 +6,6 @@ import pytest
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base import (
     ItemBase,
     ItemSummaryBase,
-    md_as_html,
-    md_as_plain,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.item.base.elements import (
     Contact,
@@ -28,6 +26,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
     Identifier,
     Identifiers,
     OnlineResource,
+    Series,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Contacts as RecordContacts
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import Lineage
@@ -63,31 +62,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projections import EPSG_4326
 from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
-
-
-class TestMdAsHtml:
-    """Test _md_as_html util function."""
-
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("_x_", "<p><em>x</em></p>"),
-            ("https://example.com", '<p><a href="https://example.com" rel="nofollow">https://example.com</a></p>'),
-            ("x\n* x", "<p>x</p>\n<ul>\n<li>x</li>\n</ul>"),
-        ],
-    )
-    def test_md_as_html(self, value: str, expected: str):
-        """Can convert Markdown to HTML with extensions."""
-        assert md_as_html(value) == expected
-
-
-class TestMdAsPlain:
-    """Test _md_as_plain util function."""
-
-    @pytest.mark.parametrize(("value", "expected"), [("_x_", "x"), (None, "")])
-    def test_md_as_plain(self, value: str | None, expected: str):
-        """Can convert Markdown to plain text."""
-        assert md_as_plain(value) == expected
 
 
 class TestItemBase:
@@ -540,6 +514,25 @@ class TestItemBase:
         item = ItemBase(fx_lib_record_minimal_item)
 
         assert item.resource_type == expected
+
+    @pytest.mark.parametrize(
+        ("series", "sheet", "expected"),
+        [
+            (None, None, None),
+            (Series(name="x", edition="x"), None, Series(name="x", edition="x")),
+            (Series(name="x", edition="x"), "x", Series(name="x", page="x", edition="x")),
+        ],
+    )
+    def test_series_descriptive(
+        self, fx_lib_record_minimal_item: Record, series: Series, sheet: str | None, expected: Series | None
+    ):
+        """Can get optional descriptive series including sheet number via workaround."""
+        fx_lib_record_minimal_item.identification.series = series
+        if sheet:
+            fx_lib_record_minimal_item.identification.supplemental_information = json.dumps({"sheet_number": sheet})
+        item = ItemBase(fx_lib_record_minimal_item)
+
+        assert item.series_descriptive == expected
 
     @pytest.mark.parametrize("expected", ["x", None])
     def test_summary_raw(self, fx_lib_record_minimal_item: Record, expected: str | None):

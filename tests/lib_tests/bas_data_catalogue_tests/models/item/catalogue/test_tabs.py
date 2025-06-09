@@ -16,7 +16,7 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.elemen
     ItemSummaryCatalogue,
     Maintenance,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence
+from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.enums import Licence, ResourceTypeLabel
 from assets_tracking_service.lib.bas_data_catalogue.models.item.catalogue.tabs import (
     AdditionalInfoTab,
     AuthorsTab,
@@ -427,7 +427,7 @@ class TestAdditionalInfoTab:
 
         assert tab.enabled is True
         assert tab.item_id == item_id
-        assert tab.item_type == item_type.value
+        assert tab.item_type == ResourceTypeLabel[item_type.name].value
         assert tab.item_type_icon == "fa-fw far fa-map"
         assert isinstance(tab.dates, dict)
         assert tab.datestamp == FormattedDate.from_rec_date(Date(date=datestamp))
@@ -439,21 +439,35 @@ class TestAdditionalInfoTab:
         assert tab.title != ""
         assert tab.icon != ""
 
+    @pytest.mark.parametrize(("value", "expected"), [(None, None), (1, "1:1"), (1234567890, "1:1,234,567,890")])
+    def test_format_scale(self, value: int | None, expected: str | None):
+        """Can get descriptive series if set."""
+        assert AdditionalInfoTab._format_scale(value) == expected
+
     @pytest.mark.parametrize(
-        ("series", "expected"), [(Series(name=None), None), (Series(name="x", edition="x"), "x (x)")]
+        ("series", "expected"), [(Series(name=None), None), (Series(name="x", page="y", edition="z"), "x")]
     )
-    def test_series(
+    def test_series_name(
         self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
     ):
-        """Can get descriptive series if set."""
+        """Can get descriptive series name if set."""
         fx_lib_item_cat_info_tab_minimal._series = series
-        assert fx_lib_item_cat_info_tab_minimal.series == expected
+        assert fx_lib_item_cat_info_tab_minimal.series_name == expected
 
-    @pytest.mark.parametrize(("scale", "expected"), [(None, None), (1, "1:1"), (1234567890, "1:1,234,567,890")])
-    def test_scale(self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, scale: int | None, expected: str | None):
-        """Can get descriptive series if set."""
-        fx_lib_item_cat_info_tab_minimal._scale = scale
-        assert fx_lib_item_cat_info_tab_minimal.scale == expected
+    @pytest.mark.parametrize(
+        ("series", "expected"), [(Series(name=None), None), (Series(name="x", page="y", edition="z"), "y")]
+    )
+    def test_sheet_number(
+        self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab, series: Series | None, expected: str | None
+    ):
+        """Can get descriptive series sheet number if set."""
+        fx_lib_item_cat_info_tab_minimal._series = series
+        assert fx_lib_item_cat_info_tab_minimal.sheet_number == expected
+
+    def test_scale(self, fx_lib_item_cat_info_tab_minimal: AdditionalInfoTab):
+        """Can get scale if set."""
+        fx_lib_item_cat_info_tab_minimal._scale = 2
+        assert fx_lib_item_cat_info_tab_minimal.scale == "1:2"
 
     @pytest.mark.parametrize(
         ("identifier", "expected"),
@@ -483,13 +497,13 @@ class TestAdditionalInfoTab:
     @pytest.mark.parametrize(
         ("kv", "expected"),
         [
-            ({"width": 1}, None),
-            ({"height": 1}, None),
-            ({"width": 1, "height": 1}, "1 x 1 mm (width x height)"),
-            ({"width": 210, "height": 297}, "A4 Portrait"),
-            ({"width": 297, "height": 210}, "A4 Landscape"),
-            ({"width": 420, "height": 594}, "A3 Portrait"),
-            ({"width": 594, "height": 420}, "A3 Landscape"),
+            ({"physical_size_width_mm": 1}, None),
+            ({"physical_size_height_mm": 1}, None),
+            ({"physical_size_width_mm": 1, "physical_size_height_mm": 1}, "1 x 1 mm (width x height)"),
+            ({"physical_size_width_mm": 210, "physical_size_height_mm": 297}, "A4 Portrait"),
+            ({"physical_size_width_mm": 297, "physical_size_height_mm": 210}, "A4 Landscape"),
+            ({"physical_size_width_mm": 420, "physical_size_height_mm": 594}, "A3 Portrait"),
+            ({"physical_size_width_mm": 594, "physical_size_height_mm": 420}, "A3 Landscape"),
         ],
     )
     def test_page_size(

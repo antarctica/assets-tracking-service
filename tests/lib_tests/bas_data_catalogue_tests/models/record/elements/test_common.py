@@ -132,7 +132,7 @@ class TestCitation:
                 **MIN_CITATION,
                 "contacts": [Contact(organisation=ContactIdentity(name="x"), role=[ContactRoleCode.POINT_OF_CONTACT])],
             },
-            {**MIN_CITATION, "series": Series(name="x", edition="x")},
+            {**MIN_CITATION, "series": Series(name="x", edition="x", page="x")},
         ],
     )
     def test_init(self, values: dict):
@@ -172,9 +172,11 @@ class TestCitation:
         if "series" in values:
             assert citation.series.name == values["series"].name if values["series"].name is not None else None
             assert citation.series.edition == values["series"].edition if values["series"].edition is not None else None
+            assert citation.series.page == values["series"].page if values["series"].page is not None else None
         else:
             assert citation.series.name is None
             assert citation.series.edition is None
+            assert citation.series.page is None
 
     def test_structure_cattrs(self):
         """Can use Cattrs to create a Citation instance from plain types."""

@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 
 from assets_tracking_service.lib.bas_data_catalogue.models.record import Distribution
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
@@ -13,76 +13,43 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.commo
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.distribution import TransferOption
 from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+    Aggregation,
     Constraint,
     Constraints,
     Extent,
     Extents,
     GraphicOverview,
     GraphicOverviews,
-    Maintenance,
 )
 from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
+    AggregationAssociationCode,
+    AggregationInitiativeCode,
     ConstraintRestrictionCode,
     ConstraintTypeCode,
     ContactRoleCode,
     DatePrecisionCode,
     HierarchyLevelCode,
-    MaintenanceFrequencyCode,
     OnlineResourceFunctionCode,
-    ProgressCode,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.extents import make_bbox_extent
+from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.extents import (
+    make_bbox_extent,
+    make_temporal_extent,
+)
 from tests.resources.lib.data_catalogue.records.utils import make_record
 
-# A record to demonstrate a published map.
+# A trio of records to demonstrate a published map with two sides.
 
-abstract = """
-This double-sided topographic map provides an overview, and comparison, of both polar regions at the same scale and
-with the same geographical extent. Smaller panels show seasonal sea-ice extent for both areas; Arctic climatic and
-bio-geographical boundaries, and Antarctica's relationship to the other southern continents.
-
-Side A: Antarctica. A topographic map of Antarctica, including: Coastline and ice shelves, bathymetry, ice/rock limits,
-contours, key mountain summits and hill-shaded terrain, and scientific research stations.
-
-Side B: The Arctic. A topographic map of the Arctic, including: Coastline: bathymetry, contours, key mountain summits
-and hill-shaded terrain, major rivers and lakes, and glaciers and ice caps. It also shows major towns, transport
-networks, airports and national boundaries.
-
-The folded map comes either with an Antarctic card cover (snowy mountains) or an Arctic cover (reindeer). Both
-versions are identical inside and have the same ISBN.
-
-Limits: 90° S - 60° S and 90° N - 60° N (all Antarctica south of 60°S and the Arctic north of 60°N).
-"""
-
-record = make_record(
-    file_identifier="53ed9f6a-2d68-46c2-b5c5-f15422aaf5b2",
-    hierarchy_level=HierarchyLevelCode.PRODUCT,
-    title="Test Resource - Published map (Antarctica and the Arctic)",
-    abstract=abstract,
-    purpose="Item to test published maps are presented correctly.",
-)
-record.identification.identifiers.append(Identifier(identifier="978-0-85665-230-1 (Folded)", namespace="isbn"))
-record.identification.identifiers.append(Identifier(identifier="978-0-85665-231-8 (Flat)", namespace="isbn"))
-record.identification.edition = "5"
-record.identification.series = Series(name="BAS Miscellaneous", edition="15")
-record.identification.dates.creation = Date(date=date(year=2020, month=1, day=1), precision=DatePrecisionCode.YEAR)
-record.identification.dates.published = Date(date=date(year=2020, month=1, day=1), precision=DatePrecisionCode.YEAR)
-record.identification.dates.released = Date(date=date(year=2020, month=1, day=1), precision=DatePrecisionCode.YEAR)
-record.identification.spatial_resolution = 10_000_000
-record.identification.supplemental_information = json.dumps({"width": 890, "height": 840})
-record.identification.maintenance = Maintenance(
-    progress=ProgressCode.COMPLETED, maintenance_frequency=MaintenanceFrequencyCode.NOT_PLANNED
-)
-record.identification.graphic_overviews = GraphicOverviews(
-    [
-        GraphicOverview(
-            identifier="overview",
-            href="https://www.bas.ac.uk/wp-content/uploads/2023/03/Cover-both-lower-res-726x600.png",
-            mime_type="image/png",
-        )
-    ]
-)
-record.identification.constraints = Constraints(
+ids = {
+    "c": "53ed9f6a-2d68-46c2-b5c5-f15422aaf5b2",
+    "a": "bcacfe16-52da-4b26-94db-8a567e4292db",
+    "b": "e30ac1c0-ed6a-49bd-8ca3-205610bf91bf",
+}
+graphics = {
+    "c": "https://cdn.web.bas.ac.uk/add-catalogue/0.0.0/img/items/53ed9f6a-2d68-46c2-b5c5-f15422aaf5b2/overview.jpg",
+    "a": "https://images.unsplash.com/photo-1519821767025-2b43a48282ca?w=360&h=360&auto=format&fit=crop&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "b": "https://images.unsplash.com/photo-1615012553971-f7251c225e01?w=360&h=360&auto=format&fit=crop&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+}
+constraints = Constraints(
     [
         Constraint(
             type=ConstraintTypeCode.ACCESS,
@@ -97,39 +64,7 @@ record.identification.constraints = Constraints(
         ),
     ]
 )
-record.identification.extents = Extents(
-    [Extent(identifier="bounding", geographic=make_bbox_extent(-180, 180, -90, -60))]
-)
-record.identification.contacts.append(
-    Contact(
-        individual=ContactIdentity(
-            name="Gerrish, Laura",
-            href="https://orcid.org/0000-0003-1410-9122",
-            title="orcid",
-        ),
-        organisation=ContactIdentity(
-            name="British Antarctic Survey",
-            href="https://ror.org/01rhff309",
-            title="ror",
-        ),
-        email="lauger@bas.ac.uk",
-        address=Address(
-            delivery_point="British Antarctic Survey, High Cross, Madingley Road",
-            city="Cambridge",
-            administrative_area="Cambridgeshire",
-            postal_code="CB3 0ET",
-            country="United Kingdom",
-        ),
-        online_resource=OnlineResource(
-            href="https://www.bas.ac.uk/profile/lauger",
-            title="Personal profile for Laura Gerrish - BAS public website",
-            description="Staff profile for Laura Gerrish from the British Antarctic Survey (BAS) public website.",
-            function=OnlineResourceFunctionCode.INFORMATION,
-        ),
-        role=[ContactRoleCode.AUTHOR],
-    )
-)
-record.distribution = [
+distribution = [
     Distribution(
         distributor=Contact(
             organisation=ContactIdentity(
@@ -164,3 +99,183 @@ record.distribution = [
         ),
     )
 ]
+
+combined = make_record(
+    file_identifier=ids["c"],
+    hierarchy_level=HierarchyLevelCode.PAPER_MAP_PRODUCT,
+    title="Test Resource - Published map (X and Y)",
+    abstract="A fake published printed map.",
+    purpose="Item to test published maps are presented correctly.",
+)
+combined.identification.identifiers.append(Identifier(identifier="123-0-11111-001-1 (Folded)", namespace="isbn"))
+combined.identification.identifiers.append(Identifier(identifier="123-0-22222-001-8 (Flat)", namespace="isbn"))
+combined.identification.identifiers.append(
+    Identifier(
+        identifier="maps/test-pub-map",
+        href="https://data.bas.ac.uk/maps/test-pub-map",
+        namespace="alias.data.bas.ac.uk",
+    ),
+)
+combined.identification.edition = "1"
+combined.identification.series = Series(name="Catalogue Test Resources", edition="1")
+combined.identification.dates.creation = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
+combined.identification.dates.published = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
+combined.identification.supplemental_information = json.dumps(
+    {"physical_size_width_mm": 890, "physical_size_height_mm": 840, "sheet_number": "1"}
+)
+combined.identification.constraints = constraints
+combined.distribution = distribution
+combined.identification.graphic_overviews = GraphicOverviews(
+    [
+        GraphicOverview(
+            identifier="overview",
+            href=graphics["c"],
+            mime_type="image/png",
+        )
+    ]
+)
+combined.identification.aggregations.extend(
+    [
+        Aggregation(
+            identifier=Identifier(
+                identifier=ids["a"],
+                href=f"https://data.bas.ac.uk/items/{ids['a']}",
+                namespace="data.bas.ac.uk",
+            ),
+            association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        ),
+        Aggregation(
+            identifier=Identifier(
+                identifier=ids["b"],
+                href=f"https://data.bas.ac.uk/items/{ids['b']}",
+                namespace="data.bas.ac.uk",
+            ),
+            association_type=AggregationAssociationCode.IS_COMPOSED_OF,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        ),
+    ]
+)
+combined.identification.extents = Extents(
+    [
+        Extent(
+            identifier="bounding",
+            geographic=make_bbox_extent(-1, 1, -1, 1),
+            temporal=make_temporal_extent(
+                start=datetime(2020, 10, 1, tzinfo=UTC), end=datetime(2023, 10, 2, tzinfo=UTC)
+            ),
+        )
+    ]
+)
+
+side_a = make_record(
+    file_identifier=ids["a"],
+    hierarchy_level=HierarchyLevelCode.PRODUCT,
+    title="Test Resource - Published map (Side X)",
+    abstract="Map X for testing published maps support.",
+    purpose="Item to test published maps are presented correctly (side A).\n\nIt's Sunday, but screw it — juice box time. Say something that will terrify me. Yeah, I invited her. You said you wanted to spend time some with her.",
+)
+side_a.identification.edition = "1"
+side_a.identification.dates.creation = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
+side_a.identification.dates.published = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
+side_a.identification.spatial_resolution = 400_000
+side_a.identification.constraints = constraints
+side_a.distribution = distribution
+side_a.identification.graphic_overviews = GraphicOverviews(
+    [
+        GraphicOverview(
+            identifier="overview",
+            href=graphics["a"],
+            mime_type="image/png",
+        )
+    ]
+)
+side_a.identification.aggregations.extend(
+    [
+        Aggregation(
+            identifier=Identifier(
+                identifier=ids["c"],
+                href=f"https://data.bas.ac.uk/items/{ids['c']}",
+                namespace="data.bas.ac.uk",
+            ),
+            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        ),
+        Aggregation(
+            identifier=Identifier(
+                identifier=ids["b"],
+                href=f"https://data.bas.ac.uk/items/{ids['b']}",
+                namespace="data.bas.ac.uk",
+            ),
+            association_type=AggregationAssociationCode.PHYSICAL_REVERSE_OF,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        ),
+    ]
+)
+side_a.identification.extents = Extents(
+    [
+        Extent(
+            identifier="bounding",
+            geographic=make_bbox_extent(1, 1, 1, 1),
+            temporal=make_temporal_extent(
+                start=datetime(2020, 10, 1, tzinfo=UTC), end=datetime(2020, 10, 2, tzinfo=UTC)
+            ),
+        )
+    ]
+)
+
+side_b = make_record(
+    file_identifier=ids["b"],
+    hierarchy_level=HierarchyLevelCode.PRODUCT,
+    title="Test Resource - Published map (Side Y)",
+    abstract="Map Y for testing published maps support.",
+    purpose="Item to test published maps are presented correctly (side B).",
+)
+side_b.identification.edition = "2"
+side_b.identification.dates.creation = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
+side_b.identification.dates.published = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
+side_b.identification.spatial_resolution = 800_000
+side_b.identification.constraints = constraints
+side_b.distribution = distribution
+side_b.identification.graphic_overviews = GraphicOverviews(
+    [
+        GraphicOverview(
+            identifier="overview",
+            href=graphics["b"],
+            mime_type="image/png",
+        )
+    ]
+)
+side_b.identification.aggregations.extend(
+    [
+        Aggregation(
+            identifier=Identifier(
+                identifier=ids["c"],
+                href=f"https://data.bas.ac.uk/items/{ids['c']}",
+                namespace="data.bas.ac.uk",
+            ),
+            association_type=AggregationAssociationCode.LARGER_WORK_CITATION,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        ),
+        Aggregation(
+            identifier=Identifier(
+                identifier=ids["a"],
+                href=f"https://data.bas.ac.uk/items/{ids['a']}",
+                namespace="data.bas.ac.uk",
+            ),
+            association_type=AggregationAssociationCode.PHYSICAL_REVERSE_OF,
+            initiative_type=AggregationInitiativeCode.PAPER_MAP,
+        ),
+    ]
+)
+side_b.identification.extents = Extents(
+    [
+        Extent(
+            identifier="bounding",
+            geographic=make_bbox_extent(-1, -1, -1, -1),
+            temporal=make_temporal_extent(
+                start=datetime(2023, 10, 1, tzinfo=UTC), end=datetime(2023, 10, 2, tzinfo=UTC)
+            ),
+        )
+    ]
+)

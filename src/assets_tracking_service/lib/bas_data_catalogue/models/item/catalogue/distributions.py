@@ -1,6 +1,7 @@
 import base64
 import re
 from abc import ABC, abstractmethod
+from typing import Any
 
 from humanize import naturalsize
 
@@ -85,6 +86,69 @@ class Distribution(ABC):
         ...
 
 
+class ArcGISDistribution(Distribution, ABC):
+    """
+    Base (abstract) ArcGIS distribution option.
+
+    Represents common properties of ArcGIS distribution types supported by the BAS Data Catalogue.
+    """
+
+    def __init__(
+        self,
+        option: RecordDistribution,
+        other_options: list[RecordDistribution],
+        service_media_href: str,
+        **kwargs: Any,
+    ) -> None:
+        self._layer = option
+        self._service = self._get_service_option(other_options, service_media_href)
+
+    @staticmethod
+    def _get_service_option(options: list[RecordDistribution], target_href: str) -> RecordDistribution:
+        """Get corresponding service option for layer."""
+        try:
+            return next(option for option in options if option.format.href == target_href)
+        except StopIteration:
+            msg = "Required corresponding service option not found in resource distributions."
+            raise ValueError(msg) from None
+
+    @property
+    def size(self) -> str:
+        """Not applicable."""
+        return "-"
+
+    @property
+    def item_link(self) -> Link:
+        """Link to portal item."""
+        href = self._layer.transfer_option.online_resource.href
+        return Link(value=href, href=href, external=True)
+
+    @property
+    def service_endpoint(self) -> str:
+        """Link to service endpoint."""
+        return self._service.transfer_option.online_resource.href
+
+    @property
+    def action(self) -> Link:
+        """Link to distribution without href due to using `access_trigger`."""
+        return Link(value="Add to GIS", href=None)
+
+    @property
+    def action_btn_variant(self) -> str:
+        """Action button variant."""
+        return "primary"
+
+    @property
+    def action_btn_icon(self) -> str:
+        """Action button icon classes."""
+        return "far fa-layer-plus"
+
+    @property
+    def access_target(self) -> str:
+        """DOM selector of element showing more information on accessing layer."""
+        return f"#item-data-info-{self._encode_url(self.item_link.href)}"
+
+
 class FileDistribution(Distribution, ABC):
     """
     Base (abstract) file based distribution option.
@@ -92,9 +156,7 @@ class FileDistribution(Distribution, ABC):
     Represents common properties of file based distribution types supported by the BAS Data Catalogue.
     """
 
-    def __init__(
-        self, option: RecordDistribution, other_options: list[RecordDistribution], access_type: AccessType
-    ) -> None:
+    def __init__(self, option: RecordDistribution, access_type: AccessType, **kwargs: Any) -> None:
         self._option = option
         self._access = access_type
 
@@ -129,18 +191,16 @@ class FileDistribution(Distribution, ABC):
         return None
 
 
-class ArcGisFeatureLayer(Distribution):
+class ArcGisFeatureLayer(ArcGISDistribution):
     """
     ArcGIS Feature Layer distribution option.
 
     Consisting of a Feature Service and Feature Layer option.
     """
 
-    def __init__(
-        self, option: RecordDistribution, other_options: list[RecordDistribution], access_type: AccessType
-    ) -> None:
-        self._layer = option
-        self._service = self._get_service_option(other_options)
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution], **kwargs: Any) -> None:
+        service_media_href = "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
+        super().__init__(option, other_options, service_media_href, **kwargs)
 
     @classmethod
     def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
@@ -159,59 +219,13 @@ class ArcGisFeatureLayer(Distribution):
         # avoid matching for each target href by only returning True if the first target matches
         return match and option.format.href == target_hrefs[0]
 
-    @staticmethod
-    def _get_service_option(options: list[RecordDistribution]) -> RecordDistribution:
-        """Get corresponding service option for layer."""
-        target_href = "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
-        try:
-            return next(option for option in options if option.format.href == target_href)
-        except StopIteration:
-            msg = "Required corresponding service option not found in resource distributions."
-            raise ValueError(msg) from None
-
     @property
     def format_type(self) -> DistributionType:
         """Format type."""
         return DistributionType.ARCGIS_FEATURE_LAYER
 
-    @property
-    def size(self) -> str:
-        """Not applicable."""
-        return "-"
 
-    @property
-    def item_link(self) -> Link:
-        """Link to portal item."""
-        href = self._layer.transfer_option.online_resource.href
-        return Link(value=href, href=href)
-
-    @property
-    def service_endpoint(self) -> str:
-        """Link to service endpoint."""
-        return self._service.transfer_option.online_resource.href
-
-    @property
-    def action(self) -> Link:
-        """Link to distribution without href due to using `access_trigger`."""
-        return Link(value="Add to GIS", href=None)
-
-    @property
-    def action_btn_variant(self) -> str:
-        """Action button variant."""
-        return "primary"
-
-    @property
-    def action_btn_icon(self) -> str:
-        """Action button icon classes."""
-        return "far fa-layer-plus"
-
-    @property
-    def access_target(self) -> str:
-        """DOM selector of element showing more information on accessing layer."""
-        return f"#item-data-info-{self._encode_url(self.item_link.href)}"
-
-
-class ArcGisOgcApiFeatures(Distribution):
+class ArcGisOgcApiFeatures(ArcGISDistribution):
     """
     ArcGIS OGC API Features distribution option.
 
@@ -220,11 +234,9 @@ class ArcGisOgcApiFeatures(Distribution):
     Consisting of an ArcGIS OGC Feature Service and ArcGIS OGC Feature Layer option.
     """
 
-    def __init__(
-        self, option: RecordDistribution, other_options: list[RecordDistribution], access_type: AccessType
-    ) -> None:
-        self._layer = option
-        self._service = self._get_service_option(other_options)
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution], **kwargs: Any) -> None:
+        service_media_href = "https://metadata-resources.data.bas.ac.uk/media-types/x-service/ogc+api+feature"
+        super().__init__(option, other_options, service_media_href, **kwargs)
 
     @classmethod
     def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
@@ -243,70 +255,24 @@ class ArcGisOgcApiFeatures(Distribution):
         # avoid matching for each target href by only returning True if the first target matches
         return match and option.format.href == target_hrefs[0]
 
-    @staticmethod
-    def _get_service_option(options: list[RecordDistribution]) -> RecordDistribution:
-        """Get corresponding service option for layer."""
-        target_href = "https://metadata-resources.data.bas.ac.uk/media-types/x-service/ogc+api+feature"
-        try:
-            return next(option for option in options if option.format.href == target_href)
-        except StopIteration:
-            msg = "Required corresponding service option not found in resource distributions."
-            raise ValueError(msg) from None
-
     @property
     def format_type(self) -> DistributionType:
         """Format type."""
         return DistributionType.ARCGIS_OGC_FEATURE_LAYER
 
-    @property
-    def size(self) -> str:
-        """Not applicable."""
-        return "-"
 
-    @property
-    def item_link(self) -> Link:
-        """Link to portal item."""
-        href = self._layer.transfer_option.online_resource.href
-        return Link(value=href, href=href)
-
-    @property
-    def service_endpoint(self) -> str:
-        """Link to service endpoint."""
-        return self._service.transfer_option.online_resource.href
-
-    @property
-    def action(self) -> Link:
-        """Link to distribution without href due to using `access_trigger`."""
-        return Link(value="Add to GIS", href=None)
-
-    @property
-    def action_btn_variant(self) -> str:
-        """Action button variant."""
-        return "primary"
-
-    @property
-    def action_btn_icon(self) -> str:
-        """Action button icon classes."""
-        return "far fa-layer-plus"
-
-    @property
-    def access_target(self) -> str:
-        """DOM selector of element showing more information on accessing layer."""
-        return f"#item-data-info-{self._encode_url(self.item_link.href)}"
-
-
-class ArcGisVectorTileLayer(Distribution):
+class ArcGisVectorTileLayer(ArcGISDistribution):
     """
     ArcGIS Vector Tile Layer distribution option.
 
     Consisting of a vector tile service and vector tile layer option.
     """
 
-    def __init__(
-        self, option: RecordDistribution, other_options: list[RecordDistribution], access_type: AccessType
-    ) -> None:
-        self._layer = option
-        self._service = self._get_service_option(other_options)
+    def __init__(self, option: RecordDistribution, other_options: list[RecordDistribution], **kwargs: Any) -> None:
+        service_media_href = (
+            "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector"
+        )
+        super().__init__(option, other_options, service_media_href, **kwargs)
 
     @classmethod
     def matches(cls, option: RecordDistribution, other_options: list[RecordDistribution]) -> bool:
@@ -325,56 +291,10 @@ class ArcGisVectorTileLayer(Distribution):
         # avoid matching for each target href by only returning True if the first target matches
         return match and option.format.href == target_hrefs[0]
 
-    @staticmethod
-    def _get_service_option(options: list[RecordDistribution]) -> RecordDistribution:
-        """Get corresponding service option for layer."""
-        target_href = "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+tile+vector"
-        try:
-            return next(option for option in options if option.format.href == target_href)
-        except StopIteration:
-            msg = "Required corresponding service option not found in resource distributions."
-            raise ValueError(msg) from None
-
     @property
     def format_type(self) -> DistributionType:
         """Format type."""
         return DistributionType.ARCGIS_VECTOR_TILE_LAYER
-
-    @property
-    def size(self) -> str:
-        """Not applicable."""
-        return "-"
-
-    @property
-    def item_link(self) -> Link:
-        """Link to portal item."""
-        href = self._layer.transfer_option.online_resource.href
-        return Link(value=href, href=href)
-
-    @property
-    def service_endpoint(self) -> str:
-        """Link to service endpoint."""
-        return self._service.transfer_option.online_resource.href
-
-    @property
-    def action(self) -> Link:
-        """Link to distribution without href due to using `access_trigger`."""
-        return Link(value="Add to GIS", href=None)
-
-    @property
-    def action_btn_variant(self) -> str:
-        """Action button variant."""
-        return "primary"
-
-    @property
-    def action_btn_icon(self) -> str:
-        """Action button icon classes."""
-        return "far fa-layer-plus"
-
-    @property
-    def access_target(self) -> str:
-        """DOM selector of element showing more information on accessing layer."""
-        return f"#item-data-info-{self._encode_url(self.item_link.href)}"
 
 
 class BasPublishedMap(Distribution):
@@ -384,9 +304,7 @@ class BasPublishedMap(Distribution):
     Provides information to users on how to purchase BAS maps.
     """
 
-    def __init__(
-        self, option: RecordDistribution, other_options: list[RecordDistribution], access_type: AccessType
-    ) -> None:
+    def __init__(self, option: RecordDistribution, **kwargs: Any) -> None:
         self.option = option
 
     @classmethod
@@ -447,10 +365,8 @@ class GeoPackage(FileDistribution):
     With support for optional zip compression.
     """
 
-    def __init__(
-        self, option: RecordDistribution, other_options: list[RecordDistribution], access_type: AccessType
-    ) -> None:
-        super().__init__(option, other_options, access_type)
+    def __init__(self, option: RecordDistribution, access_type: AccessType, **kwargs: Any) -> None:
+        super().__init__(option, access_type, **kwargs)
         self._compressed = self._is_compressed(option)
 
     @classmethod
@@ -500,10 +416,8 @@ class Pdf(FileDistribution):
     With support for distinguishing optional georeferencing.
     """
 
-    def __init__(
-        self, option: RecordDistribution, other_options: list[RecordDistribution], access_type: AccessType
-    ) -> None:
-        super().__init__(option, other_options, access_type)
+    def __init__(self, option: RecordDistribution, access_type: AccessType, **kwargs: Any) -> None:
+        super().__init__(option, access_type, **kwargs)
         self._georeferenced = self._is_georeferenced(option)
 
     @classmethod
