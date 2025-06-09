@@ -121,7 +121,7 @@ combined.identification.series = Series(name="Catalogue Test Resources", edition
 combined.identification.dates.creation = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
 combined.identification.dates.published = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
 combined.identification.supplemental_information = json.dumps(
-    {"physical_size_width_mm": 890, "physical_size_height_mm": 840, "sheet_number": 1}
+    {"physical_size_width_mm": 890, "physical_size_height_mm": 840, "sheet_number": "1"}
 )
 combined.identification.constraints = constraints
 combined.distribution = distribution

@@ -1267,9 +1267,12 @@ def fx_lib_exporter_site_index(
 
 @pytest.fixture()
 def fx_lib_exporter_site_index_pop(
-    fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: Record
+    fx_lib_exporter_site_index: SiteIndexExporter, fx_lib_record_minimal_item_catalogue: LibRecord
 ) -> SiteIndexExporter:
     """Site index exporter populated with a single record summary."""
+    fx_lib_record_minimal_item_catalogue.identification.identifiers.append(
+        Identifier(identifier="x", href="https://data.bas.ac.uk/datasets/x", namespace="alias.data.bas.ac.uk")
+    )
     records = [fx_lib_record_minimal_item_catalogue]
     summaries = [RecordSummary.loads(fx_lib_record_minimal_item_catalogue)]
     fx_lib_exporter_site_index.loads(summaries=summaries, records=records)

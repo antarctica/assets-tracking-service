@@ -227,7 +227,7 @@ record.identification.graphic_overviews = GraphicOverviews(
 )
 record.identification.other_citation_details = "Produced by the Mapping and Geographic Information Centre, British Antarctic Survey, 2025, version 1, https://data.bas.ac.uk/maps/1005."
 record.identification.supplemental_information = json.dumps(
-    {"physical_size_width_mm": "210", "physical_size_height_mm": "297"}
+    {"physical_size_width_mm": "210", "physical_size_height_mm": "297", "sheet_number": "4"}
 )
 
 record.distribution = [
