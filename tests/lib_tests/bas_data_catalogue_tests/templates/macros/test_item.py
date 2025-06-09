@@ -198,10 +198,17 @@ class TestMacrosItem:
 
         assert html.select_one("#item-graphics") is not None
 
-        for graphic in expected:
+        if len(expected) > 0:
+            graphic = expected[0]
             graphic_html = html.select_one(f"#graphics-{graphic.identifier}")
             assert graphic_html is not None
             assert graphic_html["src"] == graphic.href
+
+        # Disabled until we can display multiple graphics sensibly.
+        # for graphic in expected:
+        #     graphic_html = html.select_one(f"#graphics-{graphic.identifier}")  # noqa: ERA001
+        #     assert graphic_html is not None  # noqa: ERA001
+        #     assert graphic_html["src"] == graphic.href  # noqa: ERA001
 
     @pytest.mark.parametrize(
         "value",

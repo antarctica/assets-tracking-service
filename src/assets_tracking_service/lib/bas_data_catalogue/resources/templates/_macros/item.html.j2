@@ -12,16 +12,15 @@
 
 {% macro not_tabs(data) %}
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-y-4 lg:gap-x-4">
-    {% if data.sides %}
-      <div class="col-span-2 space-y-8">
-        {{ summary(data.summary) }}
-        {{ sides(data.sides) }}
-      </div>
-    {% else %}
-      {{ summary(data.summary) }}
-    {% endif %}
-    {{ graphics(data.graphics) }}
+    <div class="col-span-2">{{ summary(data.summary) }}</div>
+    <div class="col-span-1">{{ graphics(data.graphics) }}</div>
   </div>
+  {% if data.sides %}
+    {{ sides(data.sides) }}
+  {% endif %}
+  {% if data.tabs %}
+    {{ tabs(data.tabs) }}
+  {% endif %}
 {% endmacro %}
 
 {% macro summary(data) %}
@@ -104,18 +103,23 @@
 {% endmacro %}
 
 {% macro graphics(data) %}
-  <aside id="item-graphics" class="col-span-1 space-y-2">
-    {% for item in data %}
+  <aside id="item-graphics" class="space-y-2">
+    {% if data | length > 0 %}
+      {% set item = data[0] %}
       {% set alt = item.description or item.identifier %}
       <img id="graphics-{{ item.identifier }}" class="w-full" src="{{ item.href }}" alt="{{ alt }}"/>
-    {% endfor %}
+    {% endif %}
+{#    {% for item in data %}#}
+{#      {% set alt = item.description or item.identifier %}#}
+{#      <img id="graphics-{{ item.identifier }}" class="w-full" src="{{ item.href }}" alt="{{ alt }}"/>#}
+{#    {% endfor %}#}
   </aside>
 {% endmacro %}
 
 {% macro sides(data) %}
   <aside id="item-sides" class="col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4">
     {% for side in data %}
-      <article class="space-y-8">
+      <article class="flex flex-col h-full space-y-8">
         {% call com.item_title() %}{{ side[0] }}{% endcall %}
         {{ com.item_summary(side[1]) }}
       </article>

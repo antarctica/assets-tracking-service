@@ -173,7 +173,7 @@ side_a = make_record(
     hierarchy_level=HierarchyLevelCode.PRODUCT,
     title="Test Resource - Published map (Side X)",
     abstract="Map X for testing published maps support.",
-    purpose="Item to test published maps are presented correctly (side A).",
+    purpose="Item to test published maps are presented correctly (side A).\n\nIt's Sunday, but screw it — juice box time. Say something that will terrify me. Yeah, I invited her. You said you wanted to spend time some with her.",
 )
 side_a.identification.edition = "1"
 side_a.identification.dates.creation = Date(date=date(year=2023, month=10, day=30), precision=DatePrecisionCode.YEAR)
