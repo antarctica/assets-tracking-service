@@ -1,3 +1,6 @@
+DROP VIEW IF EXISTS v_util_asset_label CASCADE;
+DROP VIEW IF EXISTS v_util_position_label CASCADE;
+
 CREATE OR REPLACE VIEW v_util_asset_label AS
 SELECT
     a.id AS asset_id,
