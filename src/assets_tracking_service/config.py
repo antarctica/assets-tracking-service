@@ -312,7 +312,7 @@ class Config:
     def DB_DSN_SAFE(self) -> str:
         """DB_DSN with password redacted."""
         dsn_parsed = dsnparse.parse(self.DB_DSN, EditableDsn)
-        dsn_parsed.secret = self._safe_value
+        dsn_parsed.secret = self._safe_value if dsn_parsed.secret else ""
         return dsn_parsed.geturl()
 
     @property
@@ -418,7 +418,7 @@ class Config:
     @property
     def PROVIDER_GEOTAB_PASSWORD_SAFE(self) -> str:
         """PROVIDER_GEOTAB_PASSWORD with value redacted."""
-        return self._safe_value
+        return self._safe_value if self.PROVIDER_GEOTAB_PASSWORD else ""
 
     @property
     def PROVIDER_GEOTAB_DATABASE(self) -> str:
@@ -456,7 +456,7 @@ class Config:
     @property
     def PROVIDER_AIRCRAFT_TRACKING_PASSWORD_SAFE(self) -> str:
         """PROVIDER_AIRCRAFT_TRACKING_PASSWORD with value redacted."""
-        return self._safe_value
+        return self._safe_value if self.PROVIDER_AIRCRAFT_TRACKING_PASSWORD else ""
 
     @property
     def PROVIDER_AIRCRAFT_TRACKING_API_KEY(self) -> str:
@@ -467,7 +467,7 @@ class Config:
     @property
     def PROVIDER_AIRCRAFT_TRACKING_API_KEY_SAFE(self) -> str:
         """PROVIDER_AIRCRAFT_TRACKING_API_KEY with value redacted."""
-        return self._safe_value
+        return self._safe_value if self.PROVIDER_AIRCRAFT_TRACKING_API_KEY else ""
 
     @property
     def PROVIDER_RVDAS_URL(self) -> str:
@@ -495,7 +495,7 @@ class Config:
     @property
     def EXPORTER_ARCGIS_PASSWORD_SAFE(self) -> str:
         """EXPORTER_ARCGIS_PASSWORD with value redacted."""
-        return self._safe_value
+        return self._safe_value if self.EXPORTER_ARCGIS_PASSWORD else ""
 
     @property
     def EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL(self) -> str:
@@ -576,7 +576,7 @@ class Config:
     @property
     def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET_SAFE(self) -> str:
         """EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET with value redacted."""
-        return self._safe_value
+        return self._safe_value if self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET else ""
 
     @property
     def EXPORTER_DATA_CATALOGUE_SENTRY_SRC(self) -> str:

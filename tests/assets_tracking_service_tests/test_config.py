@@ -2,9 +2,11 @@ import os
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any
+from unittest.mock import PropertyMock
 
 import dsnparse
 import pytest
+from pytest_mock import MockerFixture
 
 from assets_tracking_service.config import Config, ConfigurationError, EditableDsn
 
@@ -432,9 +434,33 @@ class TestConfig:
 
         assert getattr(config, property_name) == expected
         if sensitive:
-            assert getattr(config, f"{property_name}_SAFE") == "[**REDACTED**]"
+            assert getattr(config, f"{property_name}_SAFE") == config._safe_value
 
         self._unset_envs(envs, envs_bck)
+
+    @pytest.mark.parametrize(
+        ("property_name", "has_value"),
+        [
+            ("PROVIDER_AIRCRAFT_TRACKING_PASSWORD", True),
+            ("PROVIDER_AIRCRAFT_TRACKING_PASSWORD", False),
+            ("PROVIDER_AIRCRAFT_TRACKING_API_KEY", True),
+            ("PROVIDER_AIRCRAFT_TRACKING_API_KEY", False),
+            ("PROVIDER_GEOTAB_PASSWORD", True),
+            ("PROVIDER_GEOTAB_PASSWORD", False),
+            ("EXPORTER_ARCGIS_PASSWORD", True),
+            ("EXPORTER_ARCGIS_PASSWORD", False),
+            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", True),
+            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", False),
+        ],
+    )
+    def test_redacted_property(self, mocker: MockerFixture, property_name: str, has_value: bool):
+        """Redacted values only return value if secret value has value."""
+        value = "x" if has_value else None
+        expected = "[**REDACTED**]" if has_value else ""
+        config = Config()
+        mocker.patch.object(type(config), property_name, new_callable=PropertyMock, return_value=value)
+
+        assert getattr(config, f"{property_name}_SAFE") == expected
 
     @pytest.mark.cov()
     def test_provider_geotab_group_nvs_l06_code_mapping(self):
