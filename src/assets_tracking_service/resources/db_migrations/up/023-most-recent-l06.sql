@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS public.v_latest_assets_pos_viz;
 DROP VIEW IF EXISTS public.v_latest_assets_pos_geojson;
 DROP VIEW IF EXISTS public.v_latest_assets_pos;
 
