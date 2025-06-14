@@ -336,3 +336,13 @@ Intended as the source of latest position layer.
 A view returning results of [`v_latest_asset_pos`](#v_latest_assets_pos) as a GeoJSON feature collection.
 
 Where each row is a feature with a point geometry and identifier based on the position ID.
+
+Some properties alias columns from `v_latest_assets_pos`, such as 'velocity' to 'speed'
+
+### `v_latest_assets_pos_geojson`
+
+A view returning results of [`v_latest_asset_pos`](#v_latest_assets_pos) with the same aliases defined by
+[`v_latest_assets_pos_geojson`](#v_latest_assets_pos_geojson).
+
+Used as a workaround for testing access through ArcGIS Enterprise, which doesn't use GeoJSON as a source for the
+feature service and so does not see the aliases created by the GeoJSON view.

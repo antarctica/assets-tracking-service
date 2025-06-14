@@ -115,7 +115,7 @@ class ArcGISDistribution(Distribution, ABC):
     @property
     def size(self) -> str:
         """Not applicable."""
-        return "-"
+        return ""
 
     @property
     def item_link(self) -> Link:

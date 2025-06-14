@@ -14,34 +14,34 @@
 {% endmacro %}
 
 {% macro data(data) %}
-  <section id="tab-content-data" class="flex flex-col lg:flex-row lg:gap-x-4">
-    <div class="w-full lg:w-2/3">
-      <div class="grid grid-cols-3 gap-4">
-        <div class="font-bold text-left">Format</div>
-        <div class="font-bold text-center">Size</div>
-        <div class="font-bold text-right">Action</div>
-        <header class="col-span-3 border-b-2 border-grey-500"></header>
-        {% for item in data.items %}
-          {{ data_tab.item(item) }}
-        {% endfor %}
-      </div>
-    </div>
+  <section id="tab-content-data">
     {% if data.access.name != 'PUBLIC' %}
-      <aside id="data-restricted-info" class="w-full lg:w-1/3">
-        {% call com.alert(variant='yellow', classes="border-5 border-yellow-500 space-y-2") %}
-          <p><strong>This item requires permission to access.</strong></p>
-          <p>This may be because the item:</p>
-          <ul class="list-disc pl-4">
-            <li>contains sensitive and/or personal data</li>
-            <li>contains commercially licenced data</li>
-            <li>is under embargo and not yet released</li>
-            <li>includes data from other restricted items</li>
-          </ul>
-          <p>
-            Permission may be granted automatically based on your BAS user account, or require justification.</p>
-          <p>Please <a class="{{ com.link_classes() }}" href="#tab-contact">contact us</a> for more information.</p>
-        {% endcall %}
-      </aside>
+      <div class="grid grid-cols-2 gap-x-4">
+        <div class="space-y-4">
+          {% for item in data.items %}
+            {{ data_tab.item(item) }}
+          {% endfor %}
+        </div>
+        <aside id="data-restricted-info" class="col-span-1">
+          {% call com.alert(variant='yellow', classes="border-5 border-yellow-500 space-y-2") %}
+            <p class="text-lg font-bold">This item requires permission to access</p>
+            <p>This may be because the item:</p>
+            <ul class="list-disc pl-4">
+              <li>contains sensitive and/or personal data</li>
+              <li>contains commercially licenced data</li>
+              <li>is under embargo and not yet released</li>
+              <li>includes data from other restricted items</li>
+            </ul>
+            <p>Permission may be granted automatically based on your BAS user account, or require justification.</p>
+          {% endcall %}
+        </aside>
+      </div>
+    {% else %}
+        <div class="{{ classes }} grid grid-cols-1 lg:grid-cols-2 gap-y-4 lg:gap-x-4 items-start">
+          {% for item in data.items %}
+            {{ data_tab.item(item) }}
+          {% endfor %}
+        </div>
     {% endif %}
   </section>
 {% endmacro %}
@@ -97,7 +97,7 @@
 
 {% macro lineage(data) %}
   <section id="tab-content-lineage">
-    <div class="lg:w-2/3">
+    <div class="w-full lg:w-2/3 mx-auto">
       <div class="p-2 space-y-8">
         {% call com.item_title() %}Lineage Statement{% endcall %}
         {% call com.item_border() %}

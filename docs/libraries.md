@@ -4,12 +4,21 @@ Extensions to, or code closely associated with, third-party libraries relied on 
 
 ## Markdown
 
-### Markdown plain text plugin
-
 Package: `assets_tracking_service.lib.markdown`
+
+### Markdown plain text plugin
 
 A plugin based on https://github.com/kostyachum/python-markdown-plain-text is used to strip Markdown formatting from
 text for use in HTML titles for example.
+
+### Markdown automatic links plugin
+
+A plugin based on ... is used to convert URLs and email addresses in Markdown text into HTML links.
+
+### Markdown list formatting plugin
+
+A plugin based on https://gitlab.com/ayblaq/prependnewline/ is used to automatically add additional line breaks to
+correctly paragraphs from lists in Markdown and ensure proper formatting.
 
 ## BAS Data Catalogue / Metadata Library
 
@@ -20,7 +29,9 @@ Package: `assets_tracking_service.lib.bas_data_catalogue`
 Includes classes for:
 
 - Items and Records within the BAS Data Catalogue and Metadata Library respectively
-- Exporters for publishing representations of Items and Records within the Data Catalogue static site
+- Exporters for building and publishing a static site including static resources, Items and Records
+
+Also includes tests for Jinja2 templates using BeautifulSoup and Playwright.
 
 These redesigned and refactored classes will replace core parts of the BAS Data Catalogue and Metadata Library projects.
 
@@ -76,46 +87,67 @@ For adding a new Record config element:
 Structure:
 
 ```
+├── 404.html
+├── favicon.ico
+├── -/
+│     └── index/
+│          └── index.html -> 'hidden' index page
 ├── collections/
-│      ├── ...
-│      └── abc/
-│          └── index.html  -> redirecting to e.g. /items/123/
+│     ├── foo/
+│     │    └── index.html -> redirecting to /items/123/
+│     └── .../
+│          └── index.html -> redirecting to /items/.../
 ├── datasets/
-│      ├── ...
-│      └── abc/
-│          └── index.html  -> redirecting to e.g. /items/123/
-├── items
-│      ├── ...
-│      └── 123/
-│          └── index.html
+│     ├── foo/
+│     │    └── index.html -> redirecting to /items/123/
+│     └── .../
+│          └── index.html -> redirecting to /items/.../
+├── legal/
+│     ├── cookies/
+│     │    └── index.html
+│     ├── copyright/
+│     │    └── index.html
+│     ├── privacy/
+│     │    └── index.html
 ├── maps/
-│      ├── ...
-│      └── abc/
-│          └── index.html  -> redirecting to e.g. /items/123/
+│     ├── foo/
+│     │    └── index.html -> redirecting to /items/123/
+│     └── .../
+│          └── index.html -> redirecting to /items/.../
+├── items/
+│     ├── 123/
+│     │    └── index.html
+│     └── .../
+│          └── index.html
 ├── records/
-│      ├── ...
-│      ├── 123.html
-│      └── 123.xml
+│     ├── 123.html
+│     ├── 123.json
+│     ├── 123.xml
+│     └── ...
 └── static/
     ├── css/
-    │   └── main.css
-    ├── fonts/
-    │   ├── open-sans.ttf
-    │   └── open-sans-italic.ttf
-    └── xsl/
-        └── iso-html/
-            ├── ...
-            └── xml-to-text-ISO.xsl
+    │    └── main.css
+    ├── fonts
+    │    ├── open-sans-italic.ttf
+    │    └── open-sans.ttf
+    ├── img
+    │    ├── favicon-180.png
+    │    ├── favicon-512.png
+    │    ├── favicon-mask.png
+    │    ├── favicon.ico
+    │    ├── favicon.svg
+    │    └── safari-pinned-tab.svg
+    └── txt
+         ├── heartbeat.txt
+         └── manifest.webmanifest
 ```
 
 The `main.css` file is generated using the Tailwind CSS CLI from `main.src.css` and scans classes used in templates.
 
-To install Tailwind CLI:
+To install the Tailwind CLI via the `pytailwindcss` package, run:
 
 ```
-% wget https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
-% chmod +x tailwindcss-macos-arm64
-% mv tailwindcss-macos-arm64 scripts/tailwind
+% uv run tailwindcss_install
 ```
 
 If templates are updated with new classes, run:
@@ -140,6 +172,27 @@ Once provisioned:
 - record credentials and bucket name within 1Password in the *infrastructure* vault
 - update `tpl/.env.tpl` with 1Password entry references
 - update BAS Ansible provisioning vault with 1Password entry references
+
+### Templates testing
+
+Static content in templates is mostly untested (as it can be verified by viewing the static site).
+
+Dynamic HTML content (Jinja conditionals and loops) is tested using BeautifulSoup and pytest
+parameterised tests to verify expected content is rendered (e.g. with and without an optional publication date.)
+
+Dynamic JavaScript content (e.g. feedback widget) is tested using Playwright to verify expected behaviour.
+
+Additional setup for Playwright (after setting up main project):
+
+```
+% uv run playwright install
+```
+
+To run a specific test file with visible output:
+
+```
+% uv run pytest --headed tests/lib_tests/bas_data_catalogue_tests/e2e/test_item_e2e.py
+```
 
 ## BAS Esri Utilities
 

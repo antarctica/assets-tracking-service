@@ -33,12 +33,44 @@ class RecordSchema(Enum):
     """Record validation schemas."""
 
     ISO_2_V4 = "iso_2_v4"
-    MAGIC_V1 = "magic_v1"
+    MAGIC_V1 = "magic_discovery_v1"
 
+    @staticmethod
+    def map_href(href: str) -> "RecordSchema":
+        """
+        Map a schema href to a RecordSchema enum.
 
-RECORD_SCHEMA_MAPPING = {
-    "https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1/": RecordSchema.MAGIC_V1
-}
+        Raises a KeyError if unsupported or unknown.
+        """
+        mapping = {
+            "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json": RecordSchema.ISO_2_V4,
+            "https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1/": RecordSchema.MAGIC_V1,
+        }
+        return mapping[href]
+
+    @staticmethod
+    def get_schema_contents(schema: "RecordSchema") -> dict:
+        """
+        Get contents of schema.
+
+        Raises a KeyError if unsupported or unknown.
+        """
+        mapping = {
+            RecordSchema.ISO_2_V4: (
+                "bas_metadata_library.schemas.dist",
+                "iso_19115_2_v4.json",
+            ),
+            RecordSchema.MAGIC_V1: (
+                "bas_metadata_library.schemas.dist",
+                "magic_discovery_v1.json",
+            ),
+        }
+        schema_ref, schema_file = mapping[schema]
+        with (
+            resources_as_file(resources_files(schema_ref)) as resources_path,
+            resources_path.joinpath(schema_file).open() as f,
+        ):
+            return json.load(f)
 
 
 @dataclass(kw_only=True)
@@ -249,30 +281,16 @@ class Record:
         normalised = Record._normalise_static_config_values(config)
         return normalised == check
 
-    @staticmethod
-    def _get_schema_contents(file: str) -> dict:
-        """Get contents of a schema from a package resource file."""
-        package_ref = "assets_tracking_service.lib.bas_data_catalogue.resources.schemas"
-        with (
-            resources_as_file(resources_files(package_ref)) as resources_path,
-            resources_path.joinpath(file).open() as f,
-        ):
-            return json.load(f)
-
     @property
     def _profile_schemas(self) -> list[RecordSchema]:
-        """
-        Load any validation schemas based on any domain consistency elements within the Record.
-
-        Applicable and supported schemas are loaded locally from within this package.
-        """
+        """Load any supported validation schemas based on any domain consistency elements within the Record."""
         if self.data_quality is None:
             return []
 
         schemas = []
         for dc in self.data_quality.domain_consistency:
             with contextlib.suppress(KeyError):
-                schemas.append(RECORD_SCHEMA_MAPPING[dc.specification.href])
+                schemas.append(RecordSchema.map_href(dc.specification.href))
 
         return schemas
 
@@ -286,10 +304,7 @@ class Record:
         if force_schemas is not None:
             selected_schemas = force_schemas
 
-        schemas = []
-        for schema in selected_schemas:
-            schemas.append(self._get_schema_contents(file=f"{schema.value}.json"))
-        return schemas
+        return [RecordSchema.get_schema_contents(schema) for schema in selected_schemas]
 
     def validate(self, use_profiles: bool = True, force_schemas: list[RecordSchema] | None = None) -> None:
         """

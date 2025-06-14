@@ -2,7 +2,7 @@ DROP VIEW IF EXISTS public.v_latest_assets_pos_viz;
 DROP VIEW IF EXISTS public.v_latest_assets_pos_geojson;
 DROP VIEW IF EXISTS public.v_latest_assets_pos;
 
--- add fake_object_id column
+-- add fake_object_id column for ArcGIS compatibility
 CREATE OR REPLACE VIEW public.v_latest_assets_pos AS
 WITH latest_p_by_asset AS (
     SELECT
@@ -96,7 +96,7 @@ INNER JOIN LATERAL (
 
 GRANT SELECT ON public.v_latest_assets_pos TO assets_tracking_service_ro;
 
--- no change to the view
+-- no change to this view
 CREATE VIEW v_latest_assets_pos_geojson AS
 SELECT
     json_build_object(
