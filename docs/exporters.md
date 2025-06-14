@@ -140,7 +140,7 @@ Records created by this exporter use the ISO 19115
 [JSON schema](https://metadata-standards.data.bas.ac.uk/standards/iso-19115-19139#json-schemas), maintained as part of
 the BAS Metadata Library.
 
-Records additionally confirm to the
+Records additionally conform to the
 [BAS MAGIC Discovery Profile (v1)](https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1).
 
 #### Metadata record sources

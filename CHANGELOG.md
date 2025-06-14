@@ -11,7 +11,17 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ### Added
 
+* Update symbology of PBs latest asset positions layer
+  [#157](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/157)
+* Improve latest assets position layer abstract
+  [#164](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/164)
+* Rename preference label for SDA in RVDAS provider
+  [#163](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/163)
 * Item catalogue template improvements
+  [!118](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/merge_requests/118)
+  [!113](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/merge_requests/113)
+  [!112](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/merge_requests/112)
+  [!109](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/merge_requests/109)
 * Fake ObjectID in latest assets position view for compatibility with ArcGIS Server
   [#145](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/145)
 

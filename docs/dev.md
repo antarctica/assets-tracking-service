@@ -132,13 +132,13 @@ set in [`pyproject.toml`](../pyproject.toml). Linting checks are run automatical
 To check linting locally:
 
 ```
-% uv run ruff check src/ tests/
+% uv run ruff check src/ tests/ scripts/
 ```
 
 To run formatting locally:
 
 ```
-% uv run ruff format src/ tests/
+% uv run ruff format src/ tests/ scripts/
 ```
 
 ### SQLFluff
@@ -261,6 +261,12 @@ To (re-)record all responses:
 
 ```
 % uv run pytest --record-mode=all
+```
+
+To (re-)record a specific test:
+
+```
+% uv run pytest --record-mode=once tests/test_module.py::<class>.<method>
 ```
 
 ### Continuous Integration
