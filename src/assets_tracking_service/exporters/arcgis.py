@@ -20,7 +20,6 @@ from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums impor
 from assets_tracking_service.lib.bas_esri_utils.client import ArcGisClient
 from assets_tracking_service.lib.bas_esri_utils.models.item import Item as CatalogueItemArcGis
 from assets_tracking_service.models.layer import Layer, LayersClient
-from assets_tracking_service.models.record import RecordsClient
 
 
 class ArcGISAuthenticationError(Exception):
@@ -269,7 +268,6 @@ class ArcGisExporter(Exporter):
         self._logger = logger
         self._db = db
 
-        self._records = RecordsClient(db_client=self._db)
         self._layers = LayersClient(db_client=self._db, logger=self._logger)
 
         try:
