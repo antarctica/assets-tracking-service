@@ -222,7 +222,7 @@ test = [
 requires-dist = [
     { name = "arcgis", specifier = ">=2.4.0" },
     { name = "assets-tracking-service-aircraft-provider", specifier = ">=0.3.2", index = "https://gitlab.data.bas.ac.uk/api/v4/projects/1291/packages/pypi/simple" },
-    { name = "bas-metadata-library", specifier = ">=0.15.1" },
+    { name = "bas-metadata-library", specifier = ">=0.15.3" },
     { name = "beautifulsoup4", specifier = ">=4.13.3" },
     { name = "bleach", specifier = ">=6.2.0" },
     { name = "boto3", specifier = ">=1.37.30" },
@@ -310,7 +310,7 @@ wheels = [
 
 [[package]]
 name = "bas-metadata-library"
-version = "0.15.1"
+version = "0.15.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "importlib-resources" },
@@ -319,9 +319,9 @@ dependencies = [
     { name = "rfc3987" },
     { name = "strict-rfc3339" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/44/df/773006d7df1db61342c76e8aaf85551f79a26382c3d3c18d52a128115bed/bas_metadata_library-0.15.1.tar.gz", hash = "sha256:ca10b4b0538e215050e316e62c11b3e6eaf6a1f82789776a8b15e03fdf186b4b", size = 182353, upload-time = "2024-10-31T13:25:57.667Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/6d/62f92205160cddb4e791fdd9aec1cfe9d9e21f9858433e21ce847e0b236a/bas_metadata_library-0.15.3.tar.gz", hash = "sha256:7ca8acb7972390f524553acbb2ab45d77e765fcd975fe76e26258a1a12524d68", size = 182619, upload-time = "2025-06-14T15:01:25.524Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/6c/cd85e93bfa0efbfb1567bf62295dc97f10c39dea29707bf19bc2b0573964/bas_metadata_library-0.15.1-py3-none-any.whl", hash = "sha256:af7b5e4ab6e93b071123d85ac94271c7a1aa0a4c3386dea7fa8fa96ae469b7b4", size = 250879, upload-time = "2024-10-31T13:25:55.78Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/05/35235d7f5fe4e31e7829648b626d4ed728b789353c4293c82f153446f80d/bas_metadata_library-0.15.3-py3-none-any.whl", hash = "sha256:3a4d685b9ffdab5dd44a0020587edc5af327fcebcf76badb2a0396c421dd0d1d", size = 251117, upload-time = "2025-06-14T15:01:24.204Z" },
 ]
 
 [[package]]

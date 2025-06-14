@@ -47,6 +47,29 @@ from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
 )
 
 
+class TestRecordSchema:
+    """Test RecordSchema enumeration helper methods."""
+
+    def test_map_schema(self):
+        """Can get an enum member for a supported schema."""
+        href = "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json"
+        assert RecordSchema.map_href(href) == RecordSchema.ISO_2_V4
+
+    def test_map_schema_unknown(self):
+        """Cannot get an enum member for an unknown or unsupported schema."""
+        with pytest.raises(KeyError):
+            RecordSchema.map_href("unknown")
+
+    def test_get_schema_contents(self):
+        """Can get the contents of a supported schema."""
+        result = RecordSchema.get_schema_contents(RecordSchema.ISO_2_V4)
+        assert isinstance(result, dict)
+        assert (
+            result["$id"]
+            == "https://metadata-resources.data.bas.ac.uk/bas-metadata-generator-configuration-schemas/v2/iso-19115-2-v4.json"
+        )
+
+
 class TestRecord:
     """Test root Record element."""
 
