@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-06-14
+
 ### Added
 
 * Update symbology of PBs latest asset positions layer
