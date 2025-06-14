@@ -155,7 +155,7 @@ class TestArcGISDistribution:
             "https://metadata-resources.data.bas.ac.uk/media-types/x-service/arcgis+service+feature"
         )
         dist = FakeArcGISDistributionType(option=_make_dist("x"), other_options=[service_dist])
-        assert dist.size == "-"
+        assert dist.size == ""
 
     def test_item_link(self):
         """Can get link to ArcGIS layer."""

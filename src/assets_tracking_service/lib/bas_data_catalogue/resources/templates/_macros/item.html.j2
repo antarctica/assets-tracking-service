@@ -12,8 +12,8 @@
 
 {% macro not_tabs(data) %}
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-y-4 lg:gap-x-4">
-    <div class="col-span-2">{{ summary(data.summary) }}</div>
-    <div class="col-span-1">{{ graphics(data.graphics) }}</div>
+    <div class="col-span-2 self-stretch">{{ summary(data.summary) }}</div>
+    <div class="col-span-1 self-start">{{ graphics(data.graphics) }}</div>
   </div>
   {% if data.sides %}
     {{ sides(data.sides) }}
@@ -24,7 +24,7 @@
 {% endmacro %}
 
 {% macro summary(data) %}
-  <section id="item-summary" class="col-span-2 bg-grey-100 space-y-8 p-4">
+  <section id="item-summary" class="col-span-2 bg-grey-100 space-y-8 p-4 h-full">
     {% if data.grid_enabled %}
       {{ summary_grid(data) }}
     {% endif %}
