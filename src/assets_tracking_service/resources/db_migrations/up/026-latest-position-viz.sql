@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS public.v_latest_assets_pos_viz;
 CREATE OR REPLACE VIEW public.v_latest_assets_pos_viz AS
 SELECT
     asset_id,
@@ -7,6 +8,7 @@ SELECT
     asset_type_label AS type_label,
     time_utc,
     last_fetched_utc,
+    geom_2d,
     lat_dd,
     lon_dd,
     lat_ddm,
