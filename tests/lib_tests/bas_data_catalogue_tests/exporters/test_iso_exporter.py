@@ -74,7 +74,7 @@ class TestIsoXmlExporter:
 
 
 class TestIsoXmlHtmlExporter:
-    """Test ISO 19115 XML as HTML exporter."""
+    """Test ISO 19115 XML HTML exporter."""
 
     def test_init(
         self,
@@ -84,7 +84,7 @@ class TestIsoXmlHtmlExporter:
         fx_s3_client: S3Client,
         fx_lib_record_minimal_item: Record,
     ):
-        """Can create an ISO XML as HTML Exporter."""
+        """Can create an ISO XML HTML Exporter."""
         with TemporaryDirectory() as tmp_path:
             base_path = Path(tmp_path)
             exports_path = base_path.joinpath("exports")
@@ -106,7 +106,7 @@ class TestIsoXmlHtmlExporter:
         assert exporter._export_path == expected
 
     def test_dumps(self, fx_lib_exporter_iso_xml_html: IsoXmlHtmlExporter):
-        """Can prepend stylesheet to string from IsoXmlExporter."""
-        expected = '<?xml-stylesheet type="text/xsl" href="static/xsl/iso-html/xml-to-html-ISO.xsl"?>\n<gmi:MI_Metadata'
+        """Can apply stylesheet to string from IsoXmlExporter."""
+        expected = "<html xmlns:gco"
         result = fx_lib_exporter_iso_xml_html.dumps()
         assert expected in result
