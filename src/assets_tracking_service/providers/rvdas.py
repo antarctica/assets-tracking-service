@@ -217,7 +217,7 @@ class RvdasProvider(Provider):
                 labels=labels,
             )
             if pos["speedknots"] is not None:
-                position.speed = self._units.knots_to_meters_per_second(pos["speedknots"])
+                position.velocity = self._units.knots_to_meters_per_second(pos["speedknots"])
             if pos["headingtrue"] is not None:
                 position.heading = pos["headingtrue"]
 

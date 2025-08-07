@@ -416,8 +416,8 @@ class TestRvdasProvider:
             asset_id=asset.id,
             time=datetime(2025, 4, 12, 12, 9, 34, tzinfo=UTC),
             geom=Point(-45.579346, -60.701442),
-            velocity=None,
-            heading=None,
+            velocity=0.05144444444444445,
+            heading=299.55,
             labels=Labels(
                 [
                     Label(
@@ -436,6 +436,10 @@ class TestRvdasProvider:
                 ]
             ),
         )
+        if key == "speedknots":
+            expected_position.velocity = None
+        elif key == "headingtrue":
+            expected_position.heading = None
         expected_position.labels = Labels(
             [label for label in expected_position.labels if label.scheme != f"rvdas:{key}"]
         )
