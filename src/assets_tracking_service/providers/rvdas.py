@@ -6,6 +6,7 @@ from hashlib import md5
 from json import JSONDecodeError
 
 import requests
+from requests import ConnectionError as HTTPConnectionError
 from requests import HTTPError
 from shapely.geometry.point import Point
 
@@ -67,7 +68,7 @@ class RvdasProvider(Provider):
             except JSONDecodeError as e:
                 msg = "Failed to parse HTTP response as JSON."
                 raise RuntimeError(msg) from e
-        except HTTPError as e:
+        except (HTTPConnectionError, HTTPError) as e:
             msg = "Failed to fetch HTTP response."
             raise RuntimeError(msg) from e
 
