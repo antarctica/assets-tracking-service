@@ -100,11 +100,16 @@ class RvdasProvider(Provider):
                 _position = {
                     "longitude": float(position["geometry"]["coordinates"][0]),
                     "latitude": float(position["geometry"]["coordinates"][1]),
-                    "speedknots": float(position["properties"]["speedknots"]),
-                    "headingtrue": float(position["properties"]["headingtrue"]),
                     "gps_time": str(position["properties"]["gps_time"]),
+                    "speedknots": None,
+                    "headingtrue": None,
                     "_fake_vessel_id": self._fake_vessel_id,
                 }
+                if position["properties"].get("speedknots", None) is not None:
+                    _position["speedknots"] = float(position["properties"]["speedknots"])
+                if position["properties"].get("headingtrue", None) is not None:
+                    _position["headingtrue"] = float(position["properties"]["headingtrue"])
+
                 # hash _position to generate a fake position ID
                 _position["_fake_position_id"] = md5(json.dumps(_position, sort_keys=True).encode()).hexdigest()  # noqa: S324
 

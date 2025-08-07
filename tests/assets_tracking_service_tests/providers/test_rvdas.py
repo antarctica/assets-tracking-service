@@ -166,11 +166,11 @@ class TestRvdasProvider:
         with pytest.raises(RuntimeError, match=msg):
             provider._fetch_latest_positions()
 
-    @pytest.mark.parametrize("key", ["speedknots", "headingtrue", "gps_time"])
-    def test_fetch_latest_vessel_positions_incomplete(
+    @pytest.mark.parametrize("key", ["gps_time"])
+    def test_fetch_latest_vessel_positions_missing(
         self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger, key: str
     ):
-        """Cannot fetch a vessel position when its missing required feature properties."""
+        """Cannot fetch a vessel position when it's missing required feature properties."""
         payload = {
             "type": "FeatureCollection",
             "features": [
@@ -213,6 +213,60 @@ class TestRvdasProvider:
         mocker.patch.object(provider, "_fetch_data", return_value=payload)
 
         assert len(provider._fetch_latest_positions()) == 0
+
+    @pytest.mark.parametrize("key", ["speedknots", "headingtrue"])
+    @pytest.mark.parametrize("missing", ["key", "value"])
+    def test_fetch_latest_vessel_positions_optional(
+        self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger, key: str, missing: str
+    ):
+        """Can fetch a vessel position when it's missing optional feature properties."""
+        payload = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [-45.579345917, -60.701441817]},
+                    "properties": {
+                        "depth_from_transducer": 1189.5,
+                        "depth_time": "2025-04-1002:59:42.098+00",
+                        "gps_time": "2025-04-12 12:09:34.729+00",
+                        "heading_time": "2025-04-12 12:09:34.715+00",
+                        "headingtrue": 299.55,
+                        "lat": -60.70144181666667,
+                        "lon": -45.57934591666666,
+                        "now_time": "2025-04-12 12:09:35.127674+00",
+                        "speed_time": "2025-04-12 12:09:34.729+00",
+                        "speedknots": 0.1,
+                    },
+                }
+            ],
+            "numberReturned": 1,
+            "timeStamp": "2025-04-12T12:09:35Z",
+            "links": [
+                {
+                    "href": "https://example.com/items.json",
+                    "rel": "self",
+                    "type": "application/json",
+                    "title": "This document as JSON",
+                },
+                {
+                    "href": "https://example.com/items.html",
+                    "rel": "alternate",
+                    "type": "text/html",
+                    "title": "This document as HTML",
+                },
+            ],
+        }
+        if missing == "key":
+            del payload["features"][0]["properties"][key]
+        if missing == "value":
+            payload["features"][0]["properties"][key] = None
+        provider = RvdasProvider(config=fx_config, logger=fx_logger)
+        mocker.patch.object(provider, "_fetch_data", return_value=payload)
+
+        positions = provider._fetch_latest_positions()
+        assert len(positions) == 1
+        assert positions[0][key] is None
 
     def test_fetch_active_assets(self, freezer: FrozenDateTimeFactory, fx_provider_rvdas: RvdasProvider):
         """Fetches active assets."""
