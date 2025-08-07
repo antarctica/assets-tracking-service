@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.7.1] - 2025-08-07
+
 ### Fixed
 
 * handling optional position properties in RVDAS provider
