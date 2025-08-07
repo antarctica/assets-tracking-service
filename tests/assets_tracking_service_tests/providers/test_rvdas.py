@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 import pytest
 from freezegun.api import FrozenDateTimeFactory
 from pytest_mock import MockerFixture
+from requests import ConnectionError as HTTPConnectionError
 from shapely.geometry.point import Point
 from ulid import new as new_ulid
 
@@ -43,6 +44,18 @@ class TestRvdasProvider:
         data = provider._fetch_data()
         assert isinstance(data, dict)
 
+    def test_fetch_error(self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
+        """Cannot fetch raw data if endpoint is not accessible."""
+        mocker.patch(
+            "assets_tracking_service.providers.rvdas.requests.get",
+            side_effect=HTTPConnectionError("Connection error"),
+        )
+
+        provider = RvdasProvider(config=fx_config, logger=fx_logger)
+
+        with pytest.raises(RuntimeError, match="Failed to fetch HTTP response."):
+            provider._fetch_data()
+
     @pytest.mark.vcr()
     def test_fetch_data_invalid(self, fx_config: Config, fx_logger: logging.Logger):
         """Cannot fetch raw data if HTTP response is not valid JSON."""
@@ -52,7 +65,7 @@ class TestRvdasProvider:
             provider._fetch_data()
 
     @pytest.mark.vcr()
-    def test_fetch_data_error(self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
+    def test_fetch_data_error(self, fx_config: Config, fx_logger: logging.Logger):
         """Cannot fetch raw data if an HTTP errors occurs."""
         provider = RvdasProvider(config=fx_config, logger=fx_logger)
 
@@ -260,6 +273,7 @@ class TestRvdasProvider:
         if missing == "key":
             del payload["features"][0]["properties"][key]
         if missing == "value":
+            # noinspection PyTypeChecker
             payload["features"][0]["properties"][key] = None
         provider = RvdasProvider(config=fx_config, logger=fx_logger)
         mocker.patch.object(provider, "_fetch_data", return_value=payload)
