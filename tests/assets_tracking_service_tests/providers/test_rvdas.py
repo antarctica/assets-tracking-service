@@ -369,6 +369,85 @@ class TestRvdasProvider:
 
         assert position == expected_position
 
+    @pytest.mark.parametrize("key", ["speedknots", "headingtrue"])
+    def test_fetch_latest_positions_optional(
+        self, mocker: MockerFixture, freezer: FrozenDateTimeFactory, fx_provider_rvdas: RvdasProvider, key: str
+    ):
+        """Fetches latest positions."""
+        freezer.move_to(creation_time)
+
+        positions = [
+            {
+                "longitude": -45.579346,
+                "latitude": -60.701442,
+                "speedknots": 0.1,
+                "headingtrue": 299.55,
+                "gps_time": "2025-04-12 12:09:34.729+00",
+                "_fake_vessel_id": "1",
+                "_fake_position_id": "c28c61d85e803b933c722bef9307cf76",
+            }
+        ]
+        # noinspection PyTypeChecker
+        positions[0][key] = None
+        mocker.patch.object(fx_provider_rvdas, "_fetch_latest_positions", return_value=positions)
+
+        asset = Asset(
+            id=new_ulid(),
+            labels=Labels(
+                [
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:_fake_vessel_id", value="1"),
+                    Label(rel=LabelRelation.SELF, scheme="skos:prefLabel", value="RRS SIR DAVID ATTENBOROUGH"),
+                    Label(
+                        rel=LabelRelation.SELF,
+                        scheme="nvs:L06",
+                        scheme_uri="http://vocab.nerc.ac.uk/collection/L06/current",
+                        value="31",
+                        value_uri="http://vocab.nerc.ac.uk/collection/L06/current/31",
+                    ),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:name", value="RRS SIR DAVID ATTENBOROUGH"),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:imo", value="9798222"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="rvdas"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-12"),
+                ]
+            ),
+        )
+
+        expected_position = PositionNew(
+            asset_id=asset.id,
+            time=datetime(2025, 4, 12, 12, 9, 34, tzinfo=UTC),
+            geom=Point(-45.579346, -60.701442),
+            velocity=0.05144444444444445,
+            heading=299.55,
+            labels=Labels(
+                [
+                    Label(
+                        rel=LabelRelation.SELF,
+                        scheme="rvdas:_fake_position_id",
+                        value="c28c61d85e803b933c722bef9307cf76",
+                    ),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:_fake_vessel_id", value="1"),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:speedknots", value=0.1),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:headingtrue", value=299.55),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:gps_time", value="2025-04-12 12:09:34.729+00"),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:longitude", value=-45.579346),
+                    Label(rel=LabelRelation.SELF, scheme="rvdas:latitude", value=-60.701442),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_id", value="rvdas"),
+                    Label(rel=LabelRelation.PROVIDER, scheme="ats:provider_version", value="2025-04-12"),
+                ]
+            ),
+        )
+        if key == "speedknots":
+            expected_position.velocity = None
+        elif key == "headingtrue":
+            expected_position.heading = None
+        expected_position.labels = Labels(
+            [label for label in expected_position.labels if label.scheme != f"rvdas:{key}"]
+        )
+
+        position = next(fx_provider_rvdas.fetch_latest_positions(assets=[asset]))
+
+        assert position == expected_position
+
     def test_fetch_latest_positions_error(self, mocker: MockerFixture, fx_provider_rvdas: RvdasProvider):
         """Raises error if fetching latest positions fails."""
         mocker.patch.object(fx_provider_rvdas, "_fetch_latest_positions", side_effect=RuntimeError)

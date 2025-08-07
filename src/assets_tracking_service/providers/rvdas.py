@@ -182,38 +182,43 @@ class RvdasProvider(Provider):
             self._logger.exception(msg)
             raise RuntimeError(msg) from e
 
-        for position in positions:
+        for pos in positions:
             try:
                 self._logger.debug("Getting corresponding asset for vessel in position...")
-                asset = indexed_assets[position["_fake_vessel_id"]]
+                asset = indexed_assets[pos["_fake_vessel_id"]]
                 self._logger.debug("Asset ID: '%s'", asset.id)
             except KeyError:
                 self._logger.warning(
-                    "Skipping position for vessel ID: '%s' as asset not available.", position["_fake_vessel_id"]
+                    "Skipping position for vessel ID: '%s' as asset not available.", pos["_fake_vessel_id"]
                 )
                 continue
 
             id_label = Label(
                 rel=LabelRelation.SELF,
                 scheme=self.distinguishing_position_label_scheme,
-                value=position["_fake_position_id"],
+                value=pos["_fake_position_id"],
             )
 
             position_labels = [
                 Label(rel=LabelRelation.SELF, scheme=f"{self.prefix}:{key}", value=value)
-                for key, value in position.items()
+                for key, value in pos.items()
+                if value is not None
             ]
 
             labels = Labels([id_label, *position_labels, *self.provider_labels])
             self._logger.debug("Position labels: '%s'", labels.unstructure())
 
-            time = datetime.fromisoformat(position["gps_time"]).replace(microsecond=0)
+            time = datetime.fromisoformat(pos["gps_time"]).replace(microsecond=0)
 
-            yield PositionNew(
+            position = PositionNew(
                 asset_id=asset.id,
                 time=time,
-                geom=Point(position["longitude"], position["latitude"]),
-                velocity=self._units.knots_to_meters_per_second(position["speedknots"]),
-                heading=position["headingtrue"],
+                geom=Point(pos["longitude"], pos["latitude"]),
                 labels=labels,
             )
+            if pos["speedknots"] is not None:
+                position.velocity = self._units.knots_to_meters_per_second(pos["speedknots"])
+            if pos["headingtrue"] is not None:
+                position.heading = pos["headingtrue"]
+
+            yield position
