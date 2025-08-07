@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Fixed
+
+* handling optional position properties in RVDAS provider
+  [#168](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/168)
+
 ## [0.7.0] - 2025-06-14
 
 ### Added
