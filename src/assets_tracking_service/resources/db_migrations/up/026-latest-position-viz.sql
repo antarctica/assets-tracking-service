@@ -23,6 +23,7 @@ SELECT
 FROM v_latest_assets_pos;
 
 GRANT SELECT ON public.v_latest_assets_pos_geojson TO assets_tracking_service_ro;
+GRANT SELECT ON public.v_latest_assets_pos_viz TO assets_tracking_service_ro;
 
 -- record latest migration
 UPDATE public.meta_migration

@@ -23,7 +23,7 @@ Setup:
 
 ```shell
 # required
-% brew install git uv pre-commit 1password-cli
+% brew install git postgis uv pre-commit 1password-cli
 # optional
 % brew install pgsync
 ```
@@ -85,12 +85,11 @@ Conventions:
 
 - all deployable code should be contained in the `assets-tracking-service` package
 - use `Path.resolve()` if displaying or logging file/directory paths
-- use logging to record how actions progress, using the app [`logger`](../src/assets_tracking_service/log.py)
-  - (e.g. `logger = logging.getLogger('app')`)
-- extensions to third part dependencies should be:
+- use logging to record how actions progress, using the app logger (`logger = logging.getLogger('app')`)
+- extensions to third party dependencies should be:
   - created in `assets_tracking_service.lib`
   - documented in [Libraries](./libraries.md)
-  - tested in `tests/assets_tracking_service_tests/lib_tests/`
+  - tested in `tests.lib_tests/`
 
 ## Python version
 
@@ -114,7 +113,7 @@ Checks are run automatically in [Continuous Integration](#continuous-integration
 ### Updating dependencies
 
 - switch to a clean branch
-- follow https://docs.astral.sh/uv/concepts/projects/sync/#upgrading-locked-package-versions.
+- follow https://docs.astral.sh/uv/concepts/projects/sync/#upgrading-locked-package-versions
 - note upgrades in an issue
 - review any major/breaking upgrades
 - run tests
@@ -162,7 +161,7 @@ To check linting locally:
 
 ### Static security analysis
 
-Ruff is configured to run [Bandit](https://github.com/PyCQA/bandit), a static analysis tool for Python.
+[Ruff](#ruff) is configured to run [Bandit](https://github.com/PyCQA/bandit), a static analysis tool for Python.
 
 **WARNING!** As with all security tools, Bandit is an aid for spotting common mistakes, not a guarantee of secure code.
 In particular this tool can't check for issues that are only be detectable when running code.
@@ -187,8 +186,7 @@ To run pre-commit checks against all files manually:
 ### Pytest
 
 [pytest](https://docs.pytest.org) with a number of plugins is used to test the application. Config options are set in
-[`pyproject.toml`](../pyproject.toml). Tests checks are run automatically in
-[Continuous Integration](#continuous-integration).
+[`pyproject.toml`](../pyproject.toml). Tests are run automatically in [Continuous Integration](#continuous-integration).
 
 Tests for the application are defined in the
 [`tests/assets_tracking_service_tests`](../tests/assets_tracking_service_tests) module.
@@ -208,8 +206,8 @@ e.g.:
 import pytest
 
 @pytest.fixture()
-def fx_test_foo() -> str:
-    """Example of a test fixture."""
+def fx_foo() -> str:
+    """Example test fixture."""
     return 'foo'
 ```
 

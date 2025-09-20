@@ -89,7 +89,7 @@ $ ats-ctl --help
 
 See the [CLI Reference](./docs/cli-reference.md) documentation for available commands.
 
-**Note:** You need to be on the BAS network to access the workstations. Contact @felnne if you do not have access to
+**Note:** You need to be on the BAS network to access these workstations. Contact @felnne if you do not have access to
 the `geoweb` user.
 
 ### Advanced usage
