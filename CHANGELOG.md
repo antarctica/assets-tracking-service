@@ -9,6 +9,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+### Changed
+
+* App dependencies updated
+  [#172](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/172)
+
 ## [0.7.1] - 2025-08-07
 
 ### Fixed
