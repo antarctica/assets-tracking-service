@@ -2,12 +2,11 @@ import contextlib
 
 from arcgis.gis import ItemProperties, ItemTypeEnum, SharingLevel
 from jinja2 import Environment, PackageLoader, select_autoescape
+from lantern.lib.metadata_library.models.record.record import Record
+from lantern.models.item.base.enums import AccessLevel
+from lantern.models.item.base.item import ItemBase
 from lxml.etree import Element, SubElement
 from lxml.etree import tostring as etree_tostring
-
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base import ItemBase as ItemBase
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
 
 TERMS_OF_USE_MAPPING = {
     "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/": "licenses/ogl-3-0.j2"
@@ -50,7 +49,7 @@ class Item(ItemBase):
         arcgis_item_type: ItemTypeEnum,
         arcgis_item_name: str,
         arcgis_item_id: str | None = None,
-        access_type: AccessType | None = None,
+        access_type: AccessLevel | None = None,
     ) -> None:
         super().__init__(record)
         self._id = arcgis_item_id
@@ -252,11 +251,11 @@ class Item(ItemBase):
     @property
     def sharing_level(self) -> SharingLevel:
         """ArcGIS sharing level based on item access type."""
-        access_type = self._access_type if self._access_type is not None else super().access_type
+        access_type = self._access_type if self._access_type is not None else super().access_level
 
-        if access_type == AccessType.PUBLIC:
+        if access_type == AccessLevel.PUBLIC:
             return SharingLevel.EVERYONE
-        if access_type == AccessType.BAS_ALL:
+        if access_type == AccessLevel.BAS_ALL:
             return SharingLevel.ORG
 
         # fail-safe

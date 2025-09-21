@@ -1,51 +1,46 @@
 import logging
 from datetime import UTC, date, datetime
 
-from mypy_boto3_s3 import S3Client
-
-from assets_tracking_service.config import Config
-from assets_tracking_service.db import DatabaseClient
-from assets_tracking_service.exporters.base_exporter import Exporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.html_exporter import HtmlAliasesExporter, HtmlExporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.iso_exporter import IsoXmlExporter, IsoXmlHtmlExporter
-from assets_tracking_service.lib.bas_data_catalogue.exporters.json_exporter import JsonExporter
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import (
+from lantern.lib.metadata_library.models.record.elements.common import (
     Contacts,
     Date,
     Dates,
     Identifiers,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Identifier as CatIdentifier
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import (
+from lantern.lib.metadata_library.models.record.elements.common import Identifier as CatIdentifier
+from lantern.lib.metadata_library.models.record.elements.data_quality import (
     DataQuality,
     Lineage,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+from lantern.lib.metadata_library.models.record.elements.identification import (
     Aggregations,
     Constraints,
     Extents,
     Identification,
     Maintenance,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
+from lantern.lib.metadata_library.models.record.enums import (
     ContactRoleCode,
     HierarchyLevelCode,
     MaintenanceFrequencyCode,
     ProgressCode,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.aggregations import (
+from lantern.lib.metadata_library.models.record.presets.aggregations import (
     make_bas_cat_collection_member,
     make_in_bas_cat_collection,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.base import RecordMagicDiscoveryV1
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.constraints import OGL_V3, OPEN_ACCESS
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.contacts import (
+from lantern.lib.metadata_library.models.record.presets.base import RecordMagicDiscoveryV1
+from lantern.lib.metadata_library.models.record.presets.constraints import OGL_V3, OPEN_ACCESS
+from lantern.lib.metadata_library.models.record.presets.contacts import (
     make_magic_role as magic_contact,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.distribution import make_esri_feature_layer
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.projections import EPSG_4326
-from assets_tracking_service.lib.bas_data_catalogue.models.record.summary import RecordSummary
+from lantern.lib.metadata_library.models.record.presets.distribution import make_esri_feature_layer
+from lantern.lib.metadata_library.models.record.presets.projections import EPSG_4326
+from lantern.lib.metadata_library.models.record.record import Record
+
+from assets_tracking_service.config import Config
+from assets_tracking_service.db import DatabaseClient
+from assets_tracking_service.exporters.base_exporter import Exporter
 from assets_tracking_service.models.layer import LayersClient
 from assets_tracking_service.models.record import RecordsClient
 
@@ -93,7 +88,7 @@ class CollectionRecord(RecordMagicDiscoveryV1):
             ),
             abstract=self._record.abstract,
             purpose=self._record.summary,
-            contacts=Contacts([magic_contact(roles=[ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER])]),
+            contacts=Contacts([magic_contact(roles={ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER})]),
             constraints=Constraints([OPEN_ACCESS, OGL_V3]),
             extents=Extents([self._layers.get_bounding_extent()]),
             aggregations=Aggregations(
@@ -151,7 +146,7 @@ class LayerRecord(RecordMagicDiscoveryV1):
             ),
             abstract=self._record.abstract,
             purpose=self._record.summary,
-            contacts=Contacts([magic_contact(roles=[ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER])]),
+            contacts=Contacts([magic_contact(roles={ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER})]),
             constraints=Constraints([OPEN_ACCESS, OGL_V3]),
             extents=Extents([self._layers.get_extent_by_slug(self._slug)]),
             aggregations=Aggregations([make_in_bas_cat_collection(str(self._collection.id))]),
@@ -195,11 +190,10 @@ class LayerRecord(RecordMagicDiscoveryV1):
 class DataCatalogueExporter(Exporter):
     """Exports metadata records for the BAS Data Catalogue."""
 
-    def __init__(self, config: Config, db: DatabaseClient, s3: S3Client, logger: logging.Logger) -> None:
+    def __init__(self, config: Config, db: DatabaseClient, logger: logging.Logger) -> None:
         self._config = config
         self._logger = logger
         self._db = db
-        self._s3 = s3
         self._layers = LayersClient(db_client=db, logger=logger)
 
     def _get_records(self) -> list[CollectionRecord | LayerRecord]:
@@ -208,121 +202,26 @@ class DataCatalogueExporter(Exporter):
         layers = [LayerRecord(self._config, self._db, self._logger, slug) for slug in self._layers.list_slugs()]
         return [collection, *layers]
 
-    def _get_summarises(self) -> dict[str, RecordSummary]:
-        """
-        Summaries of metadata records for cross-referencing.
-
-        Needed for building Data Catalogue items which may contain references to other items. Record summaries are used
-        to avoid needing to use an index of full records, which would get unwieldy with a large number of records.
-        """
-        return {record.file_identifier: RecordSummary.loads(record) for record in self._get_records()}
-
     def _export_cat_json(self, record: Record) -> None:
         """Export record as BAS Metadata Library JSON."""
         self._logger.debug("Exporting record '%s' as BAS ISO JSON...", record.file_identifier)
-        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        exporter = JsonExporter(
-            config=self._config, logger=self._logger, s3=self._s3, record=record, export_base=output_path
-        )
-        exporter.export()
-        exporter.publish()
+        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records" / f"{record.file_identifier}.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with output_path.open("w") as f:
+            f.write(record.dumps_json())
         self._logger.debug("Exported record '%s' as BAS ISO JSON", record.file_identifier)
-
-    def _export_cat_html(self, record: Record, summaries: dict[str, RecordSummary]) -> None:
-        """Export record as BAS Data Catalogue item HTML."""
-
-        def _get_record(identifier: str) -> Record:  # pragma: no cover
-            """
-            Get record for a record identifier.
-
-            This is a very basic implementation of what will in time be provided by a full record repository interface.
-            It doesn't make sense to implement that within this project so this simple stand-in is used.
-            """
-            records = {record.file_identifier: record for record in self._get_records()}
-            return records[identifier]
-
-        def _get_record_summary(identifier: str) -> RecordSummary:
-            """
-            Get summary for a record identifier.
-
-            This is a very basic implementation of what will in time be provided by a full record repository interface.
-            It doesn't make sense to implement that within this project so this simple stand-in is used.
-            """
-            return summaries[identifier]
-
-        self._logger.debug("Exporting record '%s' as BAS catalogue item...", record.file_identifier)
-        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "items"
-        exporter = HtmlExporter(
-            config=self._config,
-            logger=self._logger,
-            s3=self._s3,
-            record=record,
-            export_base=output_path,
-            get_record_summary=_get_record_summary,
-            get_record=_get_record,
-        )
-        exporter.export()
-        exporter.publish()
-        self._logger.debug("Exported record '%s' as BAS catalogue item", record.file_identifier)
-
-    def _export_aliases_html(self, record: Record) -> None:
-        """Export aliases in record as redirects to catalogue items."""
-        self._logger.debug("Exporting optional catalogue item aliases for record '%s' ...", record.file_identifier)
-        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
-        exporter = HtmlAliasesExporter(
-            config=self._config, logger=self._logger, s3=self._s3, record=record, site_base=output_path
-        )
-        exporter.export()
-        exporter.publish()
-        self._logger.debug("Exported optional catalogue item aliases for record '%s'", record.file_identifier)
-
-    def _export_iso_xml(self, record: Record) -> None:
-        """Export record as ISO XML."""
-        self._logger.debug("Exporting record '%s' as ISO XML...", record.file_identifier)
-        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        exporter = IsoXmlExporter(
-            config=self._config, logger=self._logger, s3=self._s3, record=record, export_base=output_path
-        )
-        exporter.export()
-        exporter.publish()
-        self._logger.debug("Exported record '%s' as ISO XML", record.file_identifier)
-
-    def _export_iso_xml_html(self, record: Record) -> None:
-        """Export record as ISO XML with HTML stylesheet."""
-        self._logger.debug("Exporting record '%s' as ISO XML with HTML stylesheet...", record.file_identifier)
-        output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records"
-        exporter = IsoXmlHtmlExporter(
-            config=self._config, logger=self._logger, s3=self._s3, record=record, export_base=output_path
-        )
-        exporter.export()
-        exporter.publish()
-        self._logger.debug("Exported record '%s' as ISO XML with HTML stylesheet", record.file_identifier)
 
     def export(self) -> None:
         """
-        Export metadata records as a mini Data Catalogue static site.
+        Export metadata records as BAS ISO JSON.
 
-        Records are exported in a variety of formats for Items and Records (HTML, JSON, XML). These outputs are saved
-        as files to a local directory for reference and uploaded to the S3 bucket used for the ADD Metadata Toolbox
-        / Data Catalogue, to avoid needing to publish records separately through the Toolbox project (which is too slow).
+        Records are as source records for importing ino the BAS Data Catalogue.
         """
-        summaries = self._get_summarises()
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH
-        bucket = self._config.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET
-        self._logger.info("Exporting records locally to '%s'", output_path.resolve())
-        self._logger.info("Publishing records to S3 bucket '%s'", bucket)
-
-        self._logger.debug("Ensuring local output path '%s' exists", output_path.resolve())
-        output_path.mkdir(parents=True, exist_ok=True)
+        self._logger.info("Exporting records to '%s'", output_path.resolve())
 
         for record in self._get_records():
             self._logger.info("Exporting record '%s'", record.file_identifier)
-
             self._logger.debug("Ensuring record '%s' is valid", record.file_identifier)
             record.validate()
-
             self._export_cat_json(record=record)
-            self._export_cat_html(record=record, summaries=summaries)
-            self._export_aliases_html(record=record)
-            self._export_iso_xml(record=record)
-            self._export_iso_xml_html(record=record)

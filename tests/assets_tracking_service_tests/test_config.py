@@ -122,11 +122,7 @@ class TestConfig:
         assert version("assets-tracking-service") == config.VERSION
 
     def test_dumps_safe(self, fx_package_version: str, fx_config: Config):
-        """
-        Config can be exported to a dict with sensitive values redacted.
-
-        `EXPORTER_DATA_CATALOGUE_SENTRY_SRC` uses a real value for e2e tests.
-        """
+        """Config can be exported to a dict with sensitive values redacted."""
         redacted_value = "[**REDACTED**]"
         expected: fx_config.ConfigDumpSafe = {
             "VERSION": fx_package_version,
@@ -164,13 +160,6 @@ class TestConfig:
                 "thumbnail_file": "thumbnail.png",
             },
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(fx_config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
-            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
-            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": redacted_value,
-            "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
-            "EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT": fx_config.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
-            "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "https://example.com/contact",
-            "EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN": "x",
-            "EXPORTER_DATA_CATALOGUE_SENTRY_SRC": "https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js",
         }
 
         output = fx_config.dumps_safe()
@@ -408,22 +397,7 @@ class TestConfig:
             ("EXPORTER_ARCGIS_PASSWORD", "x", True),
             ("EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL", "https://example.com", False),
             ("EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER", "https://example.com/arcgis", False),
-            ("EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET", "x", False),
-            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID", "x", False),
-            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", "x", True),
             ("EXPORTER_DATA_CATALOGUE_OUTPUT_PATH", Path("records"), False),
-            (
-                "EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT",
-                "https://embedded-maps-testing.data.bas.ac.uk/v1",
-                False,
-            ),
-            ("EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT", "https://example.com/contact", False),
-            ("EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN", "x", False),
-            (
-                "EXPORTER_DATA_CATALOGUE_SENTRY_SRC",
-                "https://js.sentry-cdn.com/57698b6483c7ac43b7c9c905cdb79943.min.js",
-                False,
-            ),
         ],
     )
     def test_configurable_property(self, property_name: str, expected: Any, sensitive: bool):
@@ -449,8 +423,6 @@ class TestConfig:
             ("PROVIDER_GEOTAB_PASSWORD", False),
             ("EXPORTER_ARCGIS_PASSWORD", True),
             ("EXPORTER_ARCGIS_PASSWORD", False),
-            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", True),
-            ("EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET", False),
         ],
     )
     def test_redacted_property(self, mocker: MockerFixture, property_name: str, has_value: bool):
@@ -594,50 +566,6 @@ class TestConfig:
                 {
                     "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
                     "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": None,
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": None,
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": None,
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": None,
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": "x",
-                }
-            ),
-            (
-                {
-                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": "x",
-                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": None,
                 }
             ),
         ],

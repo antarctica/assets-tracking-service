@@ -3,13 +3,10 @@ from re import escape
 from zoneinfo import ZoneInfo
 
 import pytest
+from lantern.lib.metadata_library.models.record.elements.identification import Extent
+from lantern.lib.metadata_library.models.record.presets.extents import make_bbox_extent, make_temporal_extent
 from pytest_mock import MockerFixture
 
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Extent
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.extents import (
-    make_bbox_extent,
-    make_temporal_extent,
-)
 from assets_tracking_service.models.layer import Layer, LayerNew, LayersClient
 
 

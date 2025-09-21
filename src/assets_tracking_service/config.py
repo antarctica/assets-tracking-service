@@ -151,31 +151,6 @@ class Config:
             except EnvError as e:
                 msg = "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH must be set."
                 raise ConfigurationError(msg) from e
-
-            try:
-                _ = self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID
-            except EnvError as e:
-                msg = "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID must be set."
-                raise ConfigurationError(msg) from e
-
-            try:
-                _ = self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET
-            except EnvError as e:
-                msg = "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET must be set."
-                raise ConfigurationError(msg) from e
-
-            try:
-                _ = self.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET
-            except EnvError as e:
-                msg = "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET must be set."
-                raise ConfigurationError(msg) from e
-
-            try:
-                _ = self.EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT
-            except EnvError as e:
-                msg = "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT must be set."
-                raise ConfigurationError(msg) from e
-
             if (
                 Path(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH).exists()
                 and not Path(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH).is_dir()
@@ -216,13 +191,6 @@ class Config:
         EXPORTER_ARCGIS_FOLDER_NAME: str
         EXPORTER_ARCGIS_GROUP_INFO: ArcGISGroupInfo
         EXPORTER_DATA_CATALOGUE_OUTPUT_PATH: str
-        EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT: str
-        EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT: str
-        EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET: str
-        EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID: str
-        EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET: str
-        EXPORTER_DATA_CATALOGUE_SENTRY_SRC: str
-        EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN: str
 
     def dumps_safe(self) -> ConfigDumpSafe:
         """Dump config for output to the user with sensitive data redacted."""
@@ -257,13 +225,6 @@ class Config:
             "EXPORTER_ARCGIS_FOLDER_NAME": self.EXPORTER_ARCGIS_FOLDER_NAME,
             "EXPORTER_ARCGIS_GROUP_INFO": self.EXPORTER_ARCGIS_GROUP_INFO,
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
-            "EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT": self.EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT,
-            "EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT": self.EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT,
-            "EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET": self.EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET,
-            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID": self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID,
-            "EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET": self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET_SAFE,
-            "EXPORTER_DATA_CATALOGUE_SENTRY_SRC": self.EXPORTER_DATA_CATALOGUE_SENTRY_SRC,
-            "EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN": self.EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN,
         }
 
     @property
@@ -542,50 +503,3 @@ class Config:
         """Path to Data Catalogue site output."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
             return self.env.path("OUTPUT_PATH")
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT(self) -> str:
-        """Endpoint for Embedded Maps Service used to generate extent maps in item catalogue pages."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env("EMBEDDED_MAPS_ENDPOINT", default="https://embedded-maps.data.bas.ac.uk/v1")
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT(self) -> str:
-        """Endpoint for Embedded Maps Service used to generate extent maps in item catalogue pages."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env("ITEM_CONTACT_ENDPOINT")
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET(self) -> str:
-        """S3 bucket for published catalogue output."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env("AWS_S3_BUCKET")
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID(self) -> str:
-        """ID for AWS IAM access key used to publish catalogue output to S3."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env("AWS_ACCESS_ID")
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET(self) -> str:
-        """Secret for AWS IAM access key used to publish catalogue output to S3."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env("AWS_ACCESS_SECRET")
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET_SAFE(self) -> str:
-        """EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET with value redacted."""
-        return self._safe_value if self.EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET else ""
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_SENTRY_SRC(self) -> str:
-        """Sentry dynamic CDN script."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env("SENTRY_SRC")
-
-    @property
-    def EXPORTER_DATA_CATALOGUE_PLAUSIBLE_DOMAIN(self) -> str:
-        """Plausible site/domain name."""
-        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
-            return self.env("PLAUSIBLE_DOMAIN")
