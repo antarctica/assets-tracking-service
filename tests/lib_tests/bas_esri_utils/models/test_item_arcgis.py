@@ -2,21 +2,21 @@ from re import escape
 
 import pytest
 from arcgis.gis import ItemTypeEnum, SharingLevel
-
-from assets_tracking_service.lib.bas_data_catalogue.models.item.base.enums import AccessType
-from assets_tracking_service.lib.bas_data_catalogue.models.record import Record
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.common import Identifier, Identifiers
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.data_quality import DataQuality, Lineage
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import (
+from lantern.lib.metadata_library.models.record.elements.common import Identifier, Identifiers
+from lantern.lib.metadata_library.models.record.elements.data_quality import DataQuality, Lineage
+from lantern.lib.metadata_library.models.record.elements.identification import (
     Constraint,
     Constraints,
     GraphicOverview,
     GraphicOverviews,
 )
-from assets_tracking_service.lib.bas_data_catalogue.models.record.enums import (
+from lantern.lib.metadata_library.models.record.enums import (
     ConstraintRestrictionCode,
     ConstraintTypeCode,
 )
+from lantern.lib.metadata_library.models.record.record import Record
+from lantern.models.item.base.enums import AccessLevel
+
 from assets_tracking_service.lib.bas_esri_utils.models.item import ArcGisItemLicenceHrefUnsupportedError, Item
 
 
@@ -233,7 +233,7 @@ class TestItemArcGIS:
 
     def test_sharing_level_override(self, fx_lib_record_minimal_item: Record):
         """Can override the ArcGIS sharing level."""
-        value = AccessType.BAS_ALL
+        value = AccessLevel.BAS_ALL
         expected = SharingLevel.ORG
         item = Item(
             fx_lib_record_minimal_item, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="...", access_type=value

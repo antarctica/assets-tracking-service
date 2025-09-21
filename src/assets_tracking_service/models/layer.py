@@ -5,14 +5,11 @@ from logging import Logger
 from typing import TypeVar
 
 import cattrs
+from lantern.lib.metadata_library.models.record.elements.identification import Extent
+from lantern.lib.metadata_library.models.record.presets.extents import make_bbox_extent, make_temporal_extent
 from psycopg.sql import SQL, Identifier
 
 from assets_tracking_service.db import DatabaseClient
-from assets_tracking_service.lib.bas_data_catalogue.models.record.elements.identification import Extent
-from assets_tracking_service.lib.bas_data_catalogue.models.record.presets.extents import (
-    make_bbox_extent,
-    make_temporal_extent,
-)
 
 T = TypeVar("T", bound="Layer")
 

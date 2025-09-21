@@ -124,9 +124,8 @@ group information are relative to: `src/assets_tracking_service/resources/arcgis
 The BAS Data Catalogue is data discovery tool used to find, evaluate and access datasets, products, services and other
 resources produced, managed or used by the British Antarctic Survey and UK Polar Data Centre.
 
-This exporter creates and maintains metadata records and items in various formats for each
-[Layer](./data-model.md#layer) using an associated [Record](./data-model.md#record), and lists these within a
-[Collection](#data-catalogue-collection).
+This exporter creates and maintains metadata records for each [Layer](./data-model.md#layer) using an associated
+[Record](./data-model.md#record) within a [Collection](#data-catalogue-collection).
 
 #### Data Catalogue collection
 
@@ -152,64 +151,14 @@ Metadata records combine information from multiple sources:
 
 #### Data Catalogue publishing
 
-Metadata records are exported in a variety of supports to:
+Metadata records are exported to the directory specified by the `EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` config option.
 
-- the directory specified by the `EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` config option
-- the AWS S3 bucket specified by the `EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET` config option
-
-Exported formats:
-
-- ISO 19115/19139 XML
-- ISO 19115/19139 XML with HTML XML stylesheet
-- Data Catalogue item HTML page
-- Data Catalogue item redirect pages for any configured record aliases
-
-**Note:** This exporter bypasses the main Data Catalogue and publishes directly to the catalogue S3 bucket.
 
 #### Data Catalogue configuration options
 
 Required options:
 
 - `EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`:
-  - path to the directory that will contain catalogue files
+  - path to the directory that will contain catalogue records
   - the application will try to create any missing parent directories to this directory if needed
   - e.g. `/data/site`
-- `EXPORTER_DATA_CATALOGUE_EMBEDDED_MAPS_ENDPOINT`
-  - [BAS Embedded Maps Service](https://github.com/antarctica/embedded-maps) endpoint
-  - can/should be omitted to use production endpoint as a default
-- `EXPORTER_DATA_CATALOGUE_ITEM_CONTACT_ENDPOINT`
-  - action to use for the item contact form
-  - should be set the endpoint for Power Automate flow used for processing item messages
-- `EXPORTER_DATA_CATALOGUE_AWS_ACCESS_ID`
-  - AWS IAM credential to use when interacting with AWS
-  - should be a suitably scoped user [1]
-- `EXPORTER_DATA_CATALOGUE_AWS_ACCESS_SECRET`
-  - AWS IAM credential to use when interacting with AWS
-  - should be a suitably scoped user [1]
-- `EXPORTER_DATA_CATALOGUE_AWS_S3_BUCKET`
-  - AWS S3 bucket to use for publishing content
-
-[1] Example minimal IAM policy:
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "MinimalRuntimePermissions",
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket",
-                "s3:PutObject",
-                "s3:DeleteObject",
-                "s3:GetObjectAcl",
-                "s3:PutObjectAcl"
-            ],
-            "Resource": [
-                "arn:aws:s3:::{bucket}",
-                "arn:aws:s3:::{bucket}/*"
-            ]
-        }
-    ]
-}
-```
