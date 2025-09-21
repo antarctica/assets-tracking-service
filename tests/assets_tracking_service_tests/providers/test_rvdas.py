@@ -53,7 +53,7 @@ class TestRvdasProvider:
 
         provider = RvdasProvider(config=fx_config, logger=fx_logger)
 
-        with pytest.raises(RuntimeError, match="Failed to fetch HTTP response."):
+        with pytest.raises(RuntimeError, match=r"Failed to fetch HTTP response."):
             provider._fetch_data()
 
     @pytest.mark.vcr()
@@ -61,7 +61,7 @@ class TestRvdasProvider:
         """Cannot fetch raw data if HTTP response is not valid JSON."""
         provider = RvdasProvider(config=fx_config, logger=fx_logger)
 
-        with pytest.raises(RuntimeError, match="Failed to parse HTTP response as JSON."):
+        with pytest.raises(RuntimeError, match=r"Failed to parse HTTP response as JSON."):
             provider._fetch_data()
 
     @pytest.mark.vcr()
@@ -69,7 +69,7 @@ class TestRvdasProvider:
         """Cannot fetch raw data if an HTTP errors occurs."""
         provider = RvdasProvider(config=fx_config, logger=fx_logger)
 
-        with pytest.raises(RuntimeError, match="Failed to fetch HTTP response."):
+        with pytest.raises(RuntimeError, match=r"Failed to fetch HTTP response."):
             provider._fetch_data()
 
     def test_fetch_latest_vessel_positions(self, mocker: MockerFixture, fx_config: Config, fx_logger: logging.Logger):
@@ -312,7 +312,7 @@ class TestRvdasProvider:
         """Raises error if fetching active assets fails."""
         mocker.patch.object(fx_provider_rvdas, "_fetch_vessels", side_effect=RuntimeError)
 
-        with pytest.raises(RuntimeError, match="Failed to fetch vessels from provider."):
+        with pytest.raises(RuntimeError, match=r"Failed to fetch vessels from provider."):
             next(fx_provider_rvdas.fetch_active_assets())
 
     def test_fetch_latest_positions(self, freezer: FrozenDateTimeFactory, fx_provider_rvdas: RvdasProvider):
@@ -452,7 +452,7 @@ class TestRvdasProvider:
         """Raises error if fetching latest positions fails."""
         mocker.patch.object(fx_provider_rvdas, "_fetch_latest_positions", side_effect=RuntimeError)
 
-        with pytest.raises(RuntimeError, match="Failed to fetch vessel positions from provider."):
+        with pytest.raises(RuntimeError, match=r"Failed to fetch vessel positions from provider."):
             next(fx_provider_rvdas.fetch_latest_positions(assets=[]))
 
     def test_fetch_latest_positions_error_no_asset(

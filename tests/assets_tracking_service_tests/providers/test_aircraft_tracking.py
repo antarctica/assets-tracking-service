@@ -243,7 +243,7 @@ class TestAircraftTrackingProvider:
         """Raises error if fetching active assets fails."""
         mocker.patch.object(fx_provider_aircraft_tracking, "_fetch_aircraft", side_effect=RuntimeError)
 
-        with pytest.raises(RuntimeError, match="Failed to fetch aircraft from provider."):
+        with pytest.raises(RuntimeError, match=r"Failed to fetch aircraft from provider."):
             next(fx_provider_aircraft_tracking.fetch_active_assets())
 
     def test_fetch_latest_positions(
@@ -328,7 +328,7 @@ class TestAircraftTrackingProvider:
         """Raises error if fetching latest positions fails."""
         mocker.patch.object(fx_provider_aircraft_tracking, "_fetch_latest_positions", side_effect=RuntimeError)
 
-        with pytest.raises(RuntimeError, match="Failed to fetch aircraft positions from provider."):
+        with pytest.raises(RuntimeError, match=r"Failed to fetch aircraft positions from provider."):
             next(fx_provider_aircraft_tracking.fetch_latest_positions(assets=[]))
 
     def test_fetch_latest_positions_error_no_asset(
