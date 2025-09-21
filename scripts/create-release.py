@@ -59,7 +59,7 @@ def _bump_change_log_version(bumped_version: str) -> None:
 
 def _run_uv_lock() -> None:
     try:
-        subprocess.run(["uv", "lock"], check=True, capture_output=True, text=True)  # noqa: S603, S607
+        subprocess.run(["uv", "lock"], check=True, capture_output=True, text=True)  # noqa: S607
     except subprocess.CalledProcessError as e:
         print(f"Error running 'uv lock': {e.stderr}")
         raise
@@ -67,7 +67,7 @@ def _run_uv_lock() -> None:
 
 def _run_git_commit(bumped_version: str) -> None:
     try:
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             ["git", "add", "CHANGELOG.md", "pyproject.toml", "uv.lock"],  # noqa: S607
             check=True,
             capture_output=True,
