@@ -37,6 +37,7 @@ from lantern.lib.metadata_library.models.record.presets.contacts import (
 from lantern.lib.metadata_library.models.record.presets.distribution import make_esri_feature_layer
 from lantern.lib.metadata_library.models.record.presets.projections import EPSG_4326
 from lantern.lib.metadata_library.models.record.record import Record
+from lantern.models.record.const import ALIAS_NAMESPACE, CATALOGUE_NAMESPACE
 
 from assets_tracking_service.config import Config
 from assets_tracking_service.db import DatabaseClient
@@ -60,7 +61,7 @@ class CollectionRecord(RecordMagicDiscoveryV1):
         self._layers = LayersClient(db_client=db, logger=logger)
 
         self._slug = "ats_collection"
-        self._alias = "assets-tracking-service"
+        self._alias = "collections/assets-tracking-service"
         self._record = self._records.get_by_slug(self._slug)
 
         identification = Identification(
@@ -81,8 +82,8 @@ class CollectionRecord(RecordMagicDiscoveryV1):
                     ),
                     CatIdentifier(
                         identifier=self._alias,
-                        href=f"https://data.bas.ac.uk/collections/{self._alias}",
-                        namespace="alias.data.bas.ac.uk",
+                        href=f"https://{CATALOGUE_NAMESPACE}/{self._alias}",
+                        namespace=ALIAS_NAMESPACE,
                     ),
                 ]
             ),
