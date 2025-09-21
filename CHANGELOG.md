@@ -13,6 +13,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * App dependencies updated
   [#172](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/172)
+* Tweaking and fixing layer metadata for collection
+  [#173](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/173)
 
 ## [0.7.1] - 2025-08-07
 
