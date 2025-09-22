@@ -32,10 +32,13 @@ ats-ctl = "assets_tracking_service.cli:app_cli"
 
 [dependency-groups]
 dev = [
+    "dunamai>=1.25.0",
+    "pymarkdownlnt>=0.9.32",
     "ruff>=0.13.1",
     "safety>=3.6.1",
     "sqlfluff>=3.4.2",
     "taskipy>=1.14.1",
+    "ty>=0.0.1a21",
 ]
 test = [
     "pytest>=8.4.2",
