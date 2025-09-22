@@ -153,8 +153,8 @@ pytest:
   rules:
     -
       changes:
-        - 'src/assets_tracking_service/*.py'
-        - 'src/assets_tracking_service/resources/db_migrations/**/*.sql'
+        - 'src/**/*.py'
+        - 'src/**/resources/db_migrations/**/*.sql'
         - 'tests/**/*.py'
         - 'pyproject.toml'
         - 'uv.lock'
@@ -184,7 +184,7 @@ sqlfluff:
   rules:
     -
       changes:
-        - 'src/assets_tracking_service/resources/db_migrations/**/*.sql'
+        - 'src/**/resources/db_migrations/**/*.sql'
       if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
 
 safety:
@@ -254,25 +254,6 @@ prerelease:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
 
-deploy_prod:
-  stage: 🚀 deploy
-  needs:
-    - job: publish
-  image: python:3.6-slim
-  variables:
-    DEPLOY_ENV: "production"
-  before_script:
-    - *before_script_deploy
-    - export DEPLOY_APP_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-)  # remove 'v' prefix
-  script:
-    - cd $DEPLOY_ANSIBLE_ROOT_PATH
-    - ansible workstations -m ping -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV
-    - ansible-playbook -v -b -e env=$DEPLOY_ENV -e group=$DEPLOY_GROUP -e project=$DEPLOY_ANSIBLE_ROOT_PATH -e app_version=$DEPLOY_APP_VERSION --vault-id ~/$DEPLOY_ANSIBLE_VAULT_PATH -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV playbooks/$DEPLOY_GROUP/$DEPLOY_PLAYBOOK
-  environment:
-    name: production
-  rules:
-    - if: $CI_COMMIT_TAG
-
 deploy_stage:
   stage: 🚀 deploy
   needs:
@@ -292,6 +273,25 @@ deploy_stage:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
   when: manual
+
+deploy_prod:
+  stage: 🚀 deploy
+  needs:
+    - job: publish
+  image: python:3.6-slim
+  variables:
+    DEPLOY_ENV: "production"
+  before_script:
+    - *before_script_deploy
+    - export DEPLOY_APP_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-)  # remove 'v' prefix
+  script:
+    - cd $DEPLOY_ANSIBLE_ROOT_PATH
+    - ansible workstations -m ping -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV
+    - ansible-playbook -v -b -e env=$DEPLOY_ENV -e group=$DEPLOY_GROUP -e project=$DEPLOY_ANSIBLE_ROOT_PATH -e app_version=$DEPLOY_APP_VERSION --vault-id ~/$DEPLOY_ANSIBLE_VAULT_PATH -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV playbooks/$DEPLOY_GROUP/$DEPLOY_PLAYBOOK
+  environment:
+    name: production
+  rules:
+    - if: $CI_COMMIT_TAG
 
 release:
   stage: 📣 release
