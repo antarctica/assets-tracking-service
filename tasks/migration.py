@@ -1,15 +1,7 @@
-#!/usr/bin/env -S uv run
-# /// script
-# requires-python = ">=3.11"
-# dependencies = []
-# [tool.uv]
-# exclude-newer = "2024-12-28T00:00:00Z"
-# ///
-
 import argparse
 from pathlib import Path
 
-__VERSION__ = "0.3.0"
+__VERSION__ = "0.3.1"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MIGRATIONS_ROOT = PROJECT_ROOT / "src" / "assets_tracking_service" / "resources" / "db_migrations"
 INIT_DOWN_COUNT = 1000

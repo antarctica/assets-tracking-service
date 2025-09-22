@@ -1,13 +1,3 @@
-#!/usr/bin/env -S uv run
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "psycopg[binary]",
-# ]
-# [tool.uv]
-# exclude-newer = "2024-12-28T00:00:00Z"
-# ///
-
 import psycopg
 
 

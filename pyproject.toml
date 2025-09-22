@@ -35,6 +35,7 @@ dev = [
     "ruff>=0.13.1",
     "safety>=3.6.1",
     "sqlfluff>=3.4.2",
+    "taskipy>=1.14.1",
 ]
 test = [
     "pytest>=8.4.2",
@@ -66,6 +67,35 @@ explicit = true
 [tool.uv.sources]
 assets-tracking-service-aircraft-provider = { index = "ats-air" }
 lantern = { index = "lantern" }
+
+[tool.taskipy.variables]
+docs_targets = "docs/"
+types_targets = "src/"
+sql_targets = "src/assets_tracking_service/resources/db_migrations/"
+targets = "src/ tasks/ tests/"
+cov_options = "--cov --cov-report=html"
+
+[tool.taskipy.tasks]
+# generic dev
+build = { cmd = "uv build", help = "Build app package" }
+format = { cmd = "ruff format {targets}", help = "Lint app", use_vars = true }
+lint = { cmd = "ruff check {targets}", help = "Lint app", use_vars = true }
+types = { cmd = "ty check {types_targets}", help = "Type check app", use_vars = true }
+markdown = { cmd = "pymarkdown scan --recurse {docs_targets}", help = "Lint docs", use_vars = true }
+sql = { cmd = "sqlfluff lint {sql_targets}", help = "Lint migrations", use_vars = true }
+pre-commit = { cmd = "pre-commit run --all-files", help = "Run pre-commit hooks on all files" }
+test = { cmd = "pytest", help = "Run tests" }
+test-cov = { cmd = "pytest {cov_options}", help = "Run tests with coverage", use_vars = true }
+test-reset = { cmd = "pytest --cache-clear", help = "Reset pytest cache and run tests" }
+safety = { cmd = "safety scan --detailed-output", help = "Check for insecure dependencies" }
+# CI
+ci-test = { cmd = "pytest {cov_options} -o junit_family=xunit2 --junitxml=test-results.xml --continue-on-collection-errors", help = "Called by CI", use_vars = true }
+ci-safety = { cmd = "safety --stage cicd scan --detailed-output", help = "Called by CI" }
+# app dev
+release = { cmd = "python -m tasks.release", help = "Prepapre app release" }
+reset-db = { cmd = "python -m tasks.reset_db", help = "Reset local dev database" }
+version = { cmd = "python -m tasks.version", help = "Show package version" }
+migration = { cmd = "python -m tasks.migration", help = "Create new database migration" }
 
 [tool.ruff]
 src = ["src"]

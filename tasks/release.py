@@ -1,14 +1,3 @@
-#!/usr/bin/env -S uv run
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "dunamai",
-#     "tomlkit",
-# ]
-# [tool.uv]
-# exclude-newer = "2024-12-28T00:00:00Z"
-# ///
-
 import argparse
 import subprocess
 from datetime import UTC, datetime
@@ -19,7 +8,7 @@ from dunamai import Style, Version
 from tomlkit import dump as toml_dump
 from tomlkit import parse as toml_parse
 
-__VERSION__ = "0.2.0"
+__VERSION__ = "0.3.0"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -65,25 +54,6 @@ def _run_uv_lock() -> None:
         raise
 
 
-def _run_git_commit(bumped_version: str) -> None:
-    try:
-        subprocess.run(
-            ["git", "add", "CHANGELOG.md", "pyproject.toml", "uv.lock"],  # noqa: S607
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        subprocess.run(  # noqa: S603
-            ["git", "commit", "-m", f"{bumped_version} release"],  # noqa: S607
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(f"Error committing release: {e.stderr}")
-        raise
-
-
 def main() -> None:
     """Script entrypoint."""
     parser = argparse.ArgumentParser()
@@ -102,8 +72,6 @@ def main() -> None:
     if args.version_element != "prerelease":
         _bump_change_log_version(bumped_version)
         print("- updated CHANGELOG.md")
-        _run_git_commit(bumped_version)
-        print("- created release commit")
 
 
 if __name__ == "__main__":

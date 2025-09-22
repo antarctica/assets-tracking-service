@@ -33,8 +33,7 @@ variables:
   STATIC_SITE_PATH: "$CI_PROJECT_DIR/_site"
 
   # Linting
-  RUFF_BIN: "uv run --only-group dev --frozen ruff"
-  RUFF_TARGETS: "src/ tests/ scripts/"
+  TASK_BIN: "uv run task"
 
   # Packaging
   PACKAGE_ACCESS_IDENTIFIER: "gitlab-ci"
@@ -153,8 +152,7 @@ pytest:
   before_script:
     - *before_script_testing
   script:
-    - uv run pytest -o junit_family=xunit2 --junitxml=test-results.xml --cov --cov-report=html --continue-on-collection-errors
-    # --continue-on-collection-errors counteracts `-x` flag set in pyproject.toml
+    - $TASK_BIN ci-test
   coverage: '/Total coverage: \d+\.\d+/'
   artifacts:
     when: always
@@ -179,8 +177,8 @@ ruff:
   before_script:
     - *before_script_python
   script:
-    - $RUFF_BIN check $RUFF_TARGETS
-    - $RUFF_BIN format --check $RUFF_TARGETS
+    - $TASK_BIN lint
+    - $TASK_BIN format --check
   rules:
     -
       changes:
@@ -193,7 +191,7 @@ sqlfluff:
   before_script:
     - *before_script_python
   script:
-    - uv run --only-group dev --frozen sqlfluff lint src/assets_tracking_service/resources/db_migrations
+    - $TASK_BIN sql
   rules:
     -
       changes:
@@ -206,7 +204,7 @@ safety:
   before_script:
     - *before_script_python
   script:
-    - uv run --only-group dev --frozen safety --stage cicd scan --detailed-output
+    - $TASK_BIN ci-safety
   rules:
     -
       changes:
@@ -220,7 +218,7 @@ build:
   before_script:
     - *before_script_python
   script:
-    - uv build
+    - $TASK_BIN build
   artifacts:
     paths:
       - dist/
@@ -252,11 +250,12 @@ prerelease:
   needs: []
   before_script:
     - *before_script_python
-    - apt-get update && apt-get install -y git gcc libkrb5-dev
-    - scripts/create-release.py prerelease
-    - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
+    - uv sync --frozen --group=dev --python $PYTHON_VERSION
+    - $TASK_BIN release prerelease
+    - TASK_CMD=($TASK_BIN)
+    - echo "DEPLOY_APP_VERSION=$("${TASK_CMD[@]}" version)" >> build.env
   script:
-    - uv build
+    - $TASK_BIN build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   retry:
     max: 2
