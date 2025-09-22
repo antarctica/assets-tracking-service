@@ -11,6 +11,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ### Changed
 
+* Removing data catalogue code and streamlining catalogue exporter to only generate JSON records
+  [#171](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/171)
 * App dependencies updated
   [#172](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/172)
 * Tweaking and fixing layer metadata for collection

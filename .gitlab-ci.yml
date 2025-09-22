@@ -14,8 +14,9 @@ stages:
 variables:
   # Image
   UV_CACHE_DIR: ".uv-cache"
-  UV_VERSION: "0.6.5"
+  UV_VERSION: "0.8.19"
   PYTHON_VERSION: "3.11"
+  BASE_LAYER: "bookworm-slim"
 
   # Postgres Service
   POSTGRES_HOST: "postgres"
@@ -29,11 +30,9 @@ variables:
   APP_DB_PASSWORD: "password"
   APP_DB_DATABASE: "assets_tracking_dev"  # intentionally different to service DB as not used for tests
   ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$APP_DB_USERNAME:$APP_DB_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
-  STATIC_SITE_PATH: "$CI_PROJECT_DIR/_site"
 
   # Linting
-  RUFF_BIN: "uv run --only-group dev --frozen ruff"
-  RUFF_TARGETS: "src/ tests/ scripts/"
+  TASK_BIN: "uv run task"
 
   # Packaging
   PACKAGE_ACCESS_IDENTIFIER: "gitlab-ci"
@@ -67,27 +66,16 @@ variables:
   # - OP_SERVICE_ACCOUNT_TOKEN
   #   - https://start.1password.com/open/i?a=QSB6V7TUNVEOPPPWR6G7S2ARJ4&v=k34cpwfkqaxp2r56u4aklza6ni&i=hpszegtzzarkgua2ckg57gxpxe&h=magic.1password.eu
 
-image: mcr.microsoft.com/playwright/python:v1.52.0-noble
+image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 
 .before_script_python: &before_script_python
   - apt-get update
 
   # setup UV
-  - curl -LsSfo uv.tar.gz https://github.com/astral-sh/uv/releases/download/$UV_VERSION/uv-x86_64-unknown-linux-gnu.tar.gz
-  - tar -xzf uv.tar.gz
-  - mv uv-x86_64-unknown-linux-gnu/uv uv-x86_64-unknown-linux-gnu/uvx /usr/local/bin
   - uv --version
 
 .before_script_testing: &before_script_testing
   - *before_script_python
-
-  # setup locale
-  - apt-get install -y locales
-  - sed -i 's/# en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
-  - locale-gen
-  - export LANG=en_GB.UTF-8
-  - export LANGUAGE=en_GB:en
-  - export LC_ALL=en_GB.UTF-8
 
   # setup app dep libs
   - apt-get install -y gcc libkrb5-dev
@@ -110,15 +98,13 @@ image: mcr.microsoft.com/playwright/python:v1.52.0-noble
 
   # setup app deps
   - uv sync --all-groups --python $PYTHON_VERSION
-  # start static site for e2e tests
-  - python -m http.server 8123 --directory "$STATIC_SITE_PATH" &
 
 .before_script_deploy: &before_script_deploy
   - apt-get update
 
   # setup 1Password CLI
   - apt-get install -y curl unzip
-  - curl -sSfo op.zip https://cache.agilebits.com/dist/1P/op2/pkg/v2.28.0/op_linux_amd64_v2.28.0.zip
+  - curl -sSfo op.zip https://cache.agilebits.com/dist/1P/op2/pkg/v2.32.0/op_linux_amd64_v2.32.0.zip
   - unzip -od /usr/local/bin/ op.zip
 
   # clone IT Ansible
@@ -155,8 +141,7 @@ pytest:
   before_script:
     - *before_script_testing
   script:
-    - uv run pytest -o junit_family=xunit2 --junitxml=test-results.xml --cov --cov-report=html --continue-on-collection-errors
-    # --continue-on-collection-errors counteracts `-x` flag set in pyproject.toml
+    - $TASK_BIN ci-test
   coverage: '/Total coverage: \d+\.\d+/'
   artifacts:
     when: always
@@ -168,8 +153,8 @@ pytest:
   rules:
     -
       changes:
-        - 'src/assets_tracking_service/*.py'
-        - 'src/assets_tracking_service/resources/db_migrations/**/*.sql'
+        - 'src/**/*.py'
+        - 'src/**/resources/db_migrations/**/*.sql'
         - 'tests/**/*.py'
         - 'pyproject.toml'
         - 'uv.lock'
@@ -181,8 +166,8 @@ ruff:
   before_script:
     - *before_script_python
   script:
-    - $RUFF_BIN check $RUFF_TARGETS
-    - $RUFF_BIN format --check $RUFF_TARGETS
+    - $TASK_BIN lint
+    - $TASK_BIN format --check
   rules:
     -
       changes:
@@ -195,11 +180,11 @@ sqlfluff:
   before_script:
     - *before_script_python
   script:
-    - uv run --only-group dev --frozen sqlfluff lint src/assets_tracking_service/resources/db_migrations
+    - $TASK_BIN sql
   rules:
     -
       changes:
-        - 'src/assets_tracking_service/resources/db_migrations/**/*.sql'
+        - 'src/**/resources/db_migrations/**/*.sql'
       if: '$CI_COMMIT_BRANCH != "main" && $CI_COMMIT_TAG == null'
 
 safety:
@@ -208,7 +193,7 @@ safety:
   before_script:
     - *before_script_python
   script:
-    - uv run --only-group dev --frozen safety --stage cicd scan --detailed-output
+    - $TASK_BIN ci-safety
   rules:
     -
       changes:
@@ -222,7 +207,7 @@ build:
   before_script:
     - *before_script_python
   script:
-    - uv build
+    - $TASK_BIN build
   artifacts:
     paths:
       - dist/
@@ -254,11 +239,12 @@ prerelease:
   needs: []
   before_script:
     - *before_script_python
-    - apt-get update && apt-get install -y git gcc libkrb5-dev
-    - scripts/create-release.py prerelease
-    - echo "DEPLOY_APP_VERSION=$(scripts/read-pyproject-version.py)" >> build.env
+    - uv sync --frozen --group=dev --python $PYTHON_VERSION
+    - $TASK_BIN release prerelease
+    - TASK_CMD=($TASK_BIN)
+    - echo "DEPLOY_APP_VERSION=$("${TASK_CMD[@]}" version)" >> build.env
   script:
-    - uv build
+    - $TASK_BIN build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
   retry:
     max: 2
@@ -267,25 +253,6 @@ prerelease:
       dotenv: build.env
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
-
-deploy_prod:
-  stage: 🚀 deploy
-  needs:
-    - job: publish
-  image: python:3.6-slim
-  variables:
-    DEPLOY_ENV: "production"
-  before_script:
-    - *before_script_deploy
-    - export DEPLOY_APP_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-)  # remove 'v' prefix
-  script:
-    - cd $DEPLOY_ANSIBLE_ROOT_PATH
-    - ansible workstations -m ping -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV
-    - ansible-playbook -v -b -e env=$DEPLOY_ENV -e group=$DEPLOY_GROUP -e project=$DEPLOY_ANSIBLE_ROOT_PATH -e app_version=$DEPLOY_APP_VERSION --vault-id ~/$DEPLOY_ANSIBLE_VAULT_PATH -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV playbooks/$DEPLOY_GROUP/$DEPLOY_PLAYBOOK
-  environment:
-    name: production
-  rules:
-    - if: $CI_COMMIT_TAG
 
 deploy_stage:
   stage: 🚀 deploy
@@ -306,6 +273,25 @@ deploy_stage:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG == null'
   when: manual
+
+deploy_prod:
+  stage: 🚀 deploy
+  needs:
+    - job: publish
+  image: python:3.6-slim
+  variables:
+    DEPLOY_ENV: "production"
+  before_script:
+    - *before_script_deploy
+    - export DEPLOY_APP_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-)  # remove 'v' prefix
+  script:
+    - cd $DEPLOY_ANSIBLE_ROOT_PATH
+    - ansible workstations -m ping -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV
+    - ansible-playbook -v -b -e env=$DEPLOY_ENV -e group=$DEPLOY_GROUP -e project=$DEPLOY_ANSIBLE_ROOT_PATH -e app_version=$DEPLOY_APP_VERSION --vault-id ~/$DEPLOY_ANSIBLE_VAULT_PATH -i inventory/$DEPLOY_GROUP/$DEPLOY_ENV playbooks/$DEPLOY_GROUP/$DEPLOY_PLAYBOOK
+  environment:
+    name: production
+  rules:
+    - if: $CI_COMMIT_TAG
 
 release:
   stage: 📣 release

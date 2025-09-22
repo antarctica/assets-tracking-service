@@ -26,8 +26,5 @@ htmlcov/
 # Terraform generated files
 /provisioning/terraform/.terraform
 
-# Tailwind generated files
-scripts/tailwind
-
 # App generated files
 exports/

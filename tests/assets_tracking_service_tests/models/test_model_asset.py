@@ -19,24 +19,24 @@ class TestAssetNew:
 
     def test_empty_labels(self):
         """Empty labels triggers error."""
-        with pytest.raises(ValueError, match="Invalid labels: It must not be empty."):
+        with pytest.raises(ValueError, match=r"Invalid labels: It must not be empty."):
             AssetNew(labels=Labels([]))
 
     def test_not_labels_object(self, fx_label_minimal: Label):
         """Non-Labels object triggers error."""
-        with pytest.raises(TypeError, match="Invalid labels: It must be a Labels object."):
+        with pytest.raises(TypeError, match=r"Invalid labels: It must be a Labels object."):
             # noinspection PyTypeChecker
             AssetNew(labels=[fx_label_minimal])
 
     def test_not_one_pref_label(self, fx_label_minimal: Label):
         """No skos:prefLabel triggers error."""
         with pytest.raises(
-            ValueError, match="Invalid labels: It must include at least and at most one skos:prefLabel item."
+            ValueError, match=r"Invalid labels: It must include at least and at most one skos:prefLabel item."
         ):
             AssetNew(labels=Labels([Label(rel=LabelRelation.SELF, scheme="foo", value="bar")]))
 
         with pytest.raises(
-            ValueError, match="Invalid labels: It must include at least and at most one skos:prefLabel item."
+            ValueError, match=r"Invalid labels: It must include at least and at most one skos:prefLabel item."
         ):
             AssetNew(labels=Labels([fx_label_minimal, fx_label_minimal]))
 

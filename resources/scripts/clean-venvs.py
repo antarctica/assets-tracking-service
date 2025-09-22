@@ -1,11 +1,3 @@
-#!/usr/bin/env -S uv run
-# /// script
-# requires-python = ">=3.11"
-# dependencies = []
-# [tool.uv]
-# exclude-newer = "2024-12-28T00:00:00Z"
-# ///
-
 from pathlib import Path
 from shutil import rmtree
 

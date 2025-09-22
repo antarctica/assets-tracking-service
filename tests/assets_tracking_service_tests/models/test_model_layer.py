@@ -236,5 +236,5 @@ class TestLayersClient:
         self, fx_layers_client_one: LayersClient, fx_record_layer_slug: str, dates: dict
     ):
         """Cannot set data/metadata last refreshed times with invalid values."""
-        with pytest.raises(ValueError, match="It must be UTC."):
+        with pytest.raises(ValueError, match=r"It must be UTC."):
             fx_layers_client_one.set_last_refreshed(slug=fx_record_layer_slug, **dates)

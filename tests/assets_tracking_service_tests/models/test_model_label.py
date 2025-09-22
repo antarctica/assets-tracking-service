@@ -69,16 +69,16 @@ class TestLabel:
         """Invalid relation triggers error."""
         rel = "invalid"
 
-        with pytest.raises(TypeError, match="Invalid label relation"):
+        with pytest.raises(TypeError, match=r"Invalid label relation"):
             Label(rel=rel, scheme=fx_label_scheme, value=fx_label_value)
 
     # noinspection PyArgumentList
     def test_missing_empty_scheme(self, fx_label_rel: LabelRelation, fx_label_value: str):
         """Missing scheme triggers error."""
-        with pytest.raises(TypeError, match="missing 1 required keyword-only argument"):
+        with pytest.raises(TypeError, match=r"missing 1 required keyword-only argument"):
             Label(rel=fx_label_rel, value=fx_label_value)
 
-        with pytest.raises(ValueError, match="Invalid label scheme"):
+        with pytest.raises(ValueError, match=r"Invalid label scheme"):
             Label(rel=fx_label_rel, scheme="", value=fx_label_value)
 
     @pytest.mark.parametrize("value", [0, 0.0])
@@ -89,20 +89,20 @@ class TestLabel:
     @pytest.mark.parametrize("value", ["", None])
     def test_value_invalid(self, fx_label_rel: LabelRelation, fx_label_scheme: str, value: str | None):
         """Missing value triggers error."""
-        with pytest.raises(ValueError, match="Invalid label value"):
+        with pytest.raises(ValueError, match=r"Invalid label value"):
             Label(rel=fx_label_rel, scheme=fx_label_scheme, value=value)
 
     # noinspection PyArgumentList
     def test_missing_value_type(self, fx_label_rel: LabelRelation, fx_label_scheme: str):
         """Missing value triggers error."""
-        with pytest.raises(TypeError, match="missing 1 required keyword-only argument"):
+        with pytest.raises(TypeError, match=r"missing 1 required keyword-only argument"):
             Label(rel=fx_label_rel, scheme=fx_label_scheme)
 
     def test_empty_scheme_uri(
         self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str, fx_label_value_uri: str
     ):
         """Empty scheme URI triggers error."""
-        with pytest.raises(ValueError, match="Invalid label scheme URI"):
+        with pytest.raises(ValueError, match=r"Invalid label scheme URI"):
             Label(
                 rel=fx_label_rel,
                 scheme=fx_label_scheme,
@@ -115,7 +115,7 @@ class TestLabel:
         self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_scheme_uri: str, fx_label_value: str
     ):
         """Empty value URI triggers error."""
-        with pytest.raises(ValueError, match="Invalid label value URI"):
+        with pytest.raises(ValueError, match=r"Invalid label value URI"):
             Label(
                 rel=fx_label_rel,
                 scheme=fx_label_scheme,
@@ -126,7 +126,7 @@ class TestLabel:
 
     def test_invalid_expiry(self, fx_label_rel: LabelRelation, fx_label_scheme: str, fx_label_value: str):
         """Invalid expiry triggers error."""
-        with pytest.raises(ValueError, match="Invalid label expiration"):
+        with pytest.raises(ValueError, match=r"Invalid label expiration"):
             Label(rel=fx_label_rel, scheme=fx_label_scheme, value=fx_label_value, expiration=1_000_000_000_000)
 
     @pytest.mark.parametrize(
@@ -268,7 +268,7 @@ class TestLabels:
 
     def test_filter_by_schema_none(self, fx_labels_one: Labels):
         """Filters labels based on schema."""
-        with pytest.raises(ValueError, match="No label with scheme"):
+        with pytest.raises(ValueError, match=r"No label with scheme"):
             fx_labels_one.filter_by_scheme(scheme="unknown")
 
     def test_eq(self, fx_label_minimal: Label, fx_label_expired: Label):

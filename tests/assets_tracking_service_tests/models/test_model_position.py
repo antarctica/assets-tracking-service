@@ -73,7 +73,7 @@ class TestPositionNew:
 
     def test_invalid_labels(self, fx_asset: Asset, fx_position_time: datetime, fx_position_geom_3d: Point):
         """Non-Labels object triggers error."""
-        with pytest.raises(TypeError, match="Invalid labels: It must be a Labels object."):
+        with pytest.raises(TypeError, match=r"Invalid labels: It must be a Labels object."):
             # noinspection PyTypeChecker
             PositionNew(asset_id=fx_asset.id, time=fx_position_time, geom=fx_position_geom_3d, labels="invalid")
 
