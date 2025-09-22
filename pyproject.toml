@@ -99,6 +99,8 @@ release = { cmd = "python -m tasks.release", help = "Prepapre app release" }
 reset-db = { cmd = "python -m tasks.reset_db", help = "Reset local dev database" }
 version = { cmd = "python -m tasks.version", help = "Show package version" }
 migration = { cmd = "python -m tasks.migration", help = "Create new database migration" }
+config-init = { cmd = "op inject --in-file resources/env/.env.tpl --out-file .env", help = "Initialise config file" }
+pgsync-init = { cmd = "op inject --in-file resources/pgsync/.pgsync.yml.tpl --out-file .pgsync.yml", help = "Initialise pgsync config" }
 
 [tool.ruff]
 src = ["src"]
