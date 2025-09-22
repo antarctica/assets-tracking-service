@@ -151,14 +151,15 @@ Metadata records combine information from multiple sources:
 
 #### Data Catalogue publishing
 
-Metadata records are exported to the directory specified by the `EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` config option.
-
+The [Non-Interactive](https://github.com/antarctica/lantern/blob/main/docs/usage.md#non-interactive-record-publishing-workflow)
+Data Catalogue publishing workflow is used to publish records exported to the directory specified by the
+`EXPORTER_DATA_CATALOGUE_OUTPUT_PATH` config option.
 
 #### Data Catalogue configuration options
 
 Required options:
 
 - `EXPORTER_DATA_CATALOGUE_OUTPUT_PATH`:
-  - path to the directory that will contain catalogue records
+  - path to the directory that will contain catalogue records for publishing
   - the application will try to create any missing parent directories to this directory if needed
   - e.g. `/data/site`
