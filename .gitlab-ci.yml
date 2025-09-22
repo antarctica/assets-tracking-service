@@ -30,7 +30,6 @@ variables:
   APP_DB_PASSWORD: "password"
   APP_DB_DATABASE: "assets_tracking_dev"  # intentionally different to service DB as not used for tests
   ASSETS_TRACKING_SERVICE_DB_DSN: "postgresql://$APP_DB_USERNAME:$APP_DB_PASSWORD@$POSTGRES_HOST/$APP_DB_DATABASE"
-  STATIC_SITE_PATH: "$CI_PROJECT_DIR/_site"
 
   # Linting
   TASK_BIN: "uv run task"
@@ -78,14 +77,6 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 .before_script_testing: &before_script_testing
   - *before_script_python
 
-  # setup locale
-  - apt-get install -y locales
-  - sed -i 's/# en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
-  - locale-gen
-  - export LANG=en_GB.UTF-8
-  - export LANGUAGE=en_GB:en
-  - export LC_ALL=en_GB.UTF-8
-
   # setup app dep libs
   - apt-get install -y gcc libkrb5-dev
 
@@ -107,8 +98,6 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
 
   # setup app deps
   - uv sync --all-groups --python $PYTHON_VERSION
-  # start static site for e2e tests
-  - python -m http.server 8123 --directory "$STATIC_SITE_PATH" &
 
 .before_script_deploy: &before_script_deploy
   - apt-get update
