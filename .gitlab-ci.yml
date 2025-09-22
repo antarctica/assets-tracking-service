@@ -107,16 +107,14 @@ image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   - curl -sSfo op.zip https://cache.agilebits.com/dist/1P/op2/pkg/v2.32.0/op_linux_amd64_v2.32.0.zip
   - unzip -od /usr/local/bin/ op.zip
 
-  # clone IT Ansible
-  - apt-get install -y git
-  - git clone --branch $DEPLOY_ANSIBLE_BRANCH https://gitlab-ci-token:$CI_JOB_TOKEN@$DEPLOY_ANSIBLE_REPO $DEPLOY_ANSIBLE_ROOT_PATH
-
   # setup Ansible
-  - apt-get install -y ssh build-essential
+  - apt-get install -y git ssh build-essential
+  - git clone --branch $DEPLOY_ANSIBLE_BRANCH https://gitlab-ci-token:$CI_JOB_TOKEN@$DEPLOY_ANSIBLE_REPO $DEPLOY_ANSIBLE_ROOT_PATH
   - python -m venv $DEPLOY_ANSIBLE_VENV
   - $DEPLOY_ANSIBLE_VENV/bin/python -m pip install --upgrade pip
   - $DEPLOY_ANSIBLE_VENV/bin/python -m pip install -r $DEPLOY_ANSIBLE_ROOT_PATH/requirements.txt
   - export PATH=$DEPLOY_ANSIBLE_VENV/bin:$PATH
+
 
   # setup Ansible vault
   - op read --out-file ~/$DEPLOY_ANSIBLE_VAULT_PATH "op://Infrastructure/Ansible Vault - BAS IT Ansible MAGIC/password"
@@ -239,6 +237,7 @@ prerelease:
   needs: []
   before_script:
     - *before_script_python
+    - apt-get install -y git
     - uv sync --frozen --group=dev --python $PYTHON_VERSION
     - $TASK_BIN release prerelease
     - TASK_CMD=($TASK_BIN)
