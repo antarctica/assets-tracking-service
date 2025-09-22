@@ -9,6 +9,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-09-22
+
 ### Changed
 
 * Removing data catalogue code and streamlining catalogue exporter to only generate JSON records
