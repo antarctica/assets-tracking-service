@@ -7,9 +7,9 @@ Generic requirements:
 - a service or server for running Python command line applications (Python version: 3.11)
 - a service or server for hosting Postgres databases (minimum Postgres version: 12, with PostGIS extension)
 - a [1Password](https://1password.com) account for storing application secrets and infrastructure details
-- a [Sentry](http://sentry.io) account for application [Monitoring](./implementation.md#monitoring)
+- a [Sentry](http://sentry.io) account for application [Monitoring](/docs/implementation.md#monitoring)
 - a GitLab access token for accessing restricted packages during deployment
-- requirements for [Providers](./providers.md) and [Exporters](./exporters.md) as needed
+- requirements for [Providers](/docs/providers.md) and [Exporters](/docs/exporters.md) as needed
 - an application in the BAS IT [Ansible 🛡️](https://gitlab.data.bas.ac.uk/station-data-management/ansible) project
 
 Specific requirements:
@@ -27,38 +27,39 @@ Specific requirements:
   - name: `ansible`
   - role: *reporter*
   - scopes: *read_api*
-  - credential stored in the *Infrastructure* vault in 1Password and documented in [Infrastructure](./infrastructure.md)
+  - credential stored in the *Infrastructure* vault in 1Password linked to in [Infrastructure](/docs/infrastructure.md)
 - access to the [MAGIC 1Password 🔒](https://magic.1password.eu/) account with:
   - a service account that can access the *Infrastructure* vault
 
 In addition:
 
-- any requirements listed in the GitLab CI/CD configuration ([`.gitlab-ci.yml`](../.gitlab-ci.yml))
-- any requirements listed by [Providers](./providers.md) and [Exporters](./exporters.md)
+- any requirements listed in the GitLab CI/CD configuration (`.gitlab-ci.yml`)
+- any requirements listed by [Providers](/docs/providers.md) and [Exporters](/docs/exporters.md)
 
 ## Installation
 
 ### Perform a manual deployment
 
-As per the [Manual Deployment](./deploy.md#manual-deployment) instructions.
+As per the [Manual Deployment](/docs/deploy.md#ansible-playbook) instructions.
 
-This will automatically run [Database Migrations](./implementation.md#database-migrations) and configure cron jobs for
-[Scheduled Tasks](./implementation.md#scheduled-tasks).
+This will automatically run [Database Migrations](/docs/implementation.md#database-migrations) and configure cron jobs
+for [Scheduled Tasks](/docs/implementation.md#scheduled-tasks).
 
 ### Setup providers and exporters
 
-Follow any setup instructions for [Providers](./providers.md) and [Exporters](./exporters.md).
+Follow any setup instructions for [Providers](/docs/providers.md) and [Exporters](/docs/exporters.md).
 
 ### Verify usage
 
-```
+```text
 % ssh geoweb@bslws01.nerc-bas.ac.uk
 $ module load assets-tracking-service
 $ ats-ctl data run
 ```
 
-**Note:** This will send a check-in to the [Sentry Monitor](./implementation.md#scheduled-tasks). The monitor will be
-created automatically if needed.
+> [!NOTE]
+> This will send a check-in to the [Sentry Monitor](/docs/implementation.md#scheduled-tasks). The monitor will be
+> created automatically if needed.
 
 ### Setup Sentry monitoring
 
@@ -68,11 +69,3 @@ If needed, configuring alerts for the Sentry monitor from the Sentry dashboard:
 - conditions: post message to `#dev` channel in the MAGIC Teams workspace (in addition to email notification)
 - action interval: *5 minutes*
 - alert owner: `#magic`
-
-### Setup cron
-
-Set permissions:
-
-```
-$ chmod +x ~/cron_bin/assets_tracking_service
-```

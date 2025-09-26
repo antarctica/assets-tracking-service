@@ -1,15 +1,22 @@
 # BAS Assets Tracking Service - Configuration
 
-The application configuration is defined by the [`Config`](../src/assets_tracking_service/config.py) class.
+Application configuration is managed by the `assets_tracking_service.Config` class.
 
-Configuration options can be defined using environment variables and/or an `.env` file. Where an option is set by both
-an environment variable and in an `.env` file, the environment variable takes precedence.
+<!-- pyml disable md028 -->
+> [!TIP]
+> User configurable options can be defined using environment variables and/or an `.env` file, with environment
+> variables taking precedence. Variables are prefixed with `ASSETS_TRACKING_SERVICE_` to avoid conflicts with other
+> applications.
+>
+> E.g. use `ASSETS_TRACKING_SERVICE_FOO` to set a `FOO` option.
 
-All environment variables (whether defined directly or in an `.env` file) are prefixed with `ASSETS_TRACKING_SERVICE_`.
-I.e. An option `FOO` should be set as `ASSETS_TRACKING_SERVICE_FOO`.
+> [!NOTE]
+> Config option values may be [Overridden](/docs/dev.md#pytest-env) in application tests.
+<!-- pyml enable md028 -->
 
 ## Config options
 
+<!-- pyml disable md013 -->
 | Option                                            | Type            | Configurable | Required | Sensitive | Since Version | Summary                                                             | Default                                           | Example                                                   |
 |---------------------------------------------------|-----------------|--------------|----------|-----------|---------------|---------------------------------------------------------------------|---------------------------------------------------|-----------------------------------------------------------|
 | `DB_DSN`                                          | String          | Yes          | Yes      | Yes       | v0.3.x        | Postgres connection string                                          | *N/A*                                             | 'postgresql://username:password@$db.example.com/database' |
@@ -47,39 +54,47 @@ I.e. An option `FOO` should be set as `ASSETS_TRACKING_SERVICE_FOO`.
 | `SENTRY_ENVIRONMENT`                              | String          | Yes          | No       | No        | v0.4.x        | [2]                                                                 | 'development'                                     | 'production'                                              |
 | `SENTRY_MONITOR_SLUG_ATS_RUN`                     | String          | No           | -        | -         | v0.4.x        | Name of the relevant sentry cron monitor for tracking data refresh  | *N/A*                                             | 'ats-run'                                                 |
 | `VERSION`                                         | String          | No           | -        | -         | v0.3.x        | Application package version                                         | *N/A*                                             | '0.3.0'                                                   |
+<!-- pyml enable md013 -->
 
 [1] If associated exporter, provider or feature is enabled.
 
-- see [Exporters](./exporters.md) documentation for relevant exporter configuration options
-- see [Providers](./providers.md) documentation for relevant provider configuration options
+- see [Exporters](/docs/exporters.md) documentation for relevant exporter configuration options
+- see [Providers](/docs/providers.md) documentation for relevant provider configuration options
 
 [2] Sets Sentry [environment](https://docs.sentry.io/platforms/python/configuration/environments/) name
 
 [3] Sets Python logging level. May be set as either a numeric value or it's label (e.g. 'INFO' instead of 20).
 
-### Config option types
+## Config option types
 
-All configuration options (whether defined as an environment variable or in an `.env` file) are read as string values.
-The type column in the above shows the data type each option will be parsed as, and cast to, by the
-[`Config`](../src/assets_tracking_service/config.py) class.
-
-E.g. a boolean option of `'true'`, `'True'`, etc. will be parsed as `True` in Python.
+All [Config Options](#config-options) are read as string values. They will then be parsed and cast to the listed type
+by the `Config` class. E.g. `'true'` and `'True'` will be parsed as Python's `True` constant for a boolean option.
 
 ## Config validation
 
-The `validate()` method performs basic validation of configurable options. This is limited to whether required options
-are set and can be parsed. It does not check connection details can be used to connect to a service for example, as
-this will be caught as a runtime error elsewhere in the application.
+The `Config.validate()` method performs limited validation of configurable [Config Options](#config-options), raising
+an exception if invalid.
 
-See the [CLI Reference](./cli-reference.md#config-commands) documentation for how to validate the current configuration.
+This checks whether required options are set and can be parsed, it does not check whether access credentials work with
+a remote service for example. These sorts of errors SHOULD be caught elsewhere in the application.
+
+> [!TIP]
+> Run the `config check` [CLI Command](/docs/cli-reference.md#config-commands) to validate the current configuration.
 
 ## Config listing
 
-The `dumps_safe()` method returns a typed dict of configurable and unconfigurable options. Where an option is
-sensitive, a 'safe' version will be returned with sensitive values substituted.
+> [!TIP]
+> Run the `config show` [CLI Command](/docs/cli-reference.md#config-commands) to display the current configuration.
 
-See the [CLI Reference](./cli-reference.md#config-commands) documentation for how to display the current configuration.
+## Generate an environment config file
+
+Run the `config-init` [Development Task](/docs/dev.md#development-tasks) to generate a new `.env` file from the
+`resources/env/.env.tpl` template.
+
+> [!IMPORTANT]
+> This uses the [1Password CLI](https://developer.1password.com/docs/cli/) to inject relevant secrets. You must have
+> access to the MAGIC 1Password vault to run this task.
 
 ## Adding configuration options
 
-See the [Developing](./dev.md#adding-configuration-options) documentation.
+See the [Development](/docs/dev.md#adding-configuration-options) documentation.

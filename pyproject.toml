@@ -1,7 +1,7 @@
 [project]
 name = "assets-tracking-service"
 version = "0.8.0"
-description = "Service to track the location of BAS assets, including ships, aircraft, and vehicles."
+description = "A service to track the location of BAS assets, including ships, aircraft, and vehicles."
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -72,7 +72,7 @@ assets-tracking-service-aircraft-provider = { index = "ats-air" }
 lantern = { index = "lantern" }
 
 [tool.taskipy.variables]
-docs_targets = "docs/"
+docs_targets = "docs/ README.md CHANGELOG.md"
 types_targets = "src/"
 sql_targets = "src/assets_tracking_service/resources/db_migrations/"
 targets = "src/ tasks/ tests/"
@@ -101,6 +101,7 @@ version = { cmd = "python -m tasks.version", help = "Show package version" }
 migration = { cmd = "python -m tasks.migration", help = "Create new database migration" }
 config-init = { cmd = "op inject --in-file resources/env/.env.tpl --out-file .env", help = "Initialise config file" }
 pgsync-init = { cmd = "op inject --in-file resources/pgsync/.pgsync.yml.tpl --out-file .pgsync.yml", help = "Initialise pgsync config" }
+pgsync = { cmd = "pgsync", help = "Run prod -> dev DB sync" }
 
 [tool.ruff]
 src = ["src"]

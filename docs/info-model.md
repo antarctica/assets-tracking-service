@@ -3,9 +3,9 @@
 ## Background
 
 This model is bespoke to this project rather than using a model from a standard such as SensorML which was considered
-unsuitable. Alignments with any standards should be possible through an [Exporter](./implementation.md#exporters).
+unsuitable. Alignments with any standards should be possible through an [Exporter](/docs/implementation.md#exporters).
 
-This information model is abstract and requires a concrete implementation through the [Data Model](./data-model.md).
+This information model is abstract and requires a concrete implementation through the [Data Model](/docs/data-model.md).
 
 ## Entities
 
@@ -37,7 +37,7 @@ From a geospatial perspective:
 
 ## Provider
 
-[Providers](./implementation.md#providers) are services that give access to asset and asset position information.
+[Providers](/docs/implementation.md#providers) are services that give access to asset and asset position information.
 
 Providers are not represented directly/separately in this information model but are referenced from [Assets](#asset)
 and [Asset Positions](#asset-position) via [Provider Labels](#provider-labels).
@@ -115,6 +115,7 @@ See also the [Provider Labels](#provider-labels) section.
 
 Asset positions represent where something was at a point in time (and optionally elevation, speed and bearing/heading).
 
+<!-- pyml disable md013 -->
 | Property   | Name     | Occurrence | Data Type         | Data Form                                        | Description         |
 |------------|----------|------------|-------------------|--------------------------------------------------|---------------------|
 | `id`       | ID       | 1          | String            | -                                                | Unique Identifier   |
@@ -123,9 +124,11 @@ Asset positions represent where something was at a point in time (and optionally
 | `velocity` | Velocity | 0-1        | Float             | Unit: meters per second                          | Speed at position   |
 | `heading`  | Heading  | 0-1        | Float             | Unit: degrees                                    | Direction of travel |
 | `labels`   | Labels   | 0-n        | [Labels](#labels) | -                                                | Annotations         |
+<!-- pyml enable md013 -->
 
 ### Asset position units
 
+<!-- pyml disable md013 -->
 | Property (Dimension) | Name      | Unit of Measure   | Precision (Minimum) | Min Value                 | Max Value   |
 |----------------------|-----------|-------------------|---------------------|---------------------------|-------------|
 | `time`               | Time      | Second            | Second              | 0001-01-01T00:00:00+00:00 | [Now (UTC)] |
@@ -134,12 +137,13 @@ Asset positions represent where something was at a point in time (and optionally
 | `geom` (z)           | Elevation | Metres            | 6 decimal places    | -                         | -           |
 | `heading`            | Heading   | Decimal degrees   | 4 decimal places    | 0                         | 360         |
 | `velocity`           | Velocity  | Metres per second | 4 decimal places    | -                         | -           |
+<!-- pyml enable md013 -->
 
 **Note:** The 'precision (minimum)' column states the precision information model implementations MUST preserve, not a
 minimum precision for data values. Data beyond this minimum precision MAY be truncated or generalised and MUST NOT be
 relied upon.
 
-### Asset identifiers
+### Asset identifier
 
 Asset provider IDs:
 
@@ -199,6 +203,7 @@ The current and supported labels version, that MUST be used, is "1".
 
 ### Labels version 1
 
+<!-- pyml disable md013 -->
 | Property     | Name       | Occurrence | Data Type                | Data Form                                 | Description                              |
 |--------------|------------|------------|--------------------------|-------------------------------------------|------------------------------------------|
 | `rel`        | Relation   | 1          | String                   | -                                         | How label relates to entity              |
@@ -208,6 +213,7 @@ The current and supported labels version, that MUST be used, is "1".
 | `value_uri`  | Value URI  | 0-1        | String                   | URI                                       | URI of a resource for the value          |
 | `creation`   | Creation   | 1          | Integer                  | Timezone: *UTC*, Format: *Unix timestamp* | Time label was created                   |
 | `expiration` | Expiration | 0-1        | Integer                  | Timezone: *UTC*, Format: *Unix timestamp* | Time after which label no longer applies |
+<!-- pyml enable md013 -->
 
 #### Label relation
 
@@ -215,10 +221,10 @@ Label relations describe how a label relates to the entity it's attached to.
 
 Label relations:
 
-- MUST be a value from the [LinkRelations](../src/assets_tracking_service/models/label.py) enumeration
-  - values SHOULD be taken from the
+- MUST be a value from the `assets_tracking_service/models/label.LinkRelations` enum
+  - this enum SHOULD be expanded using values from the
     [IANA Link Relations](https://www.iana.org/assignments/link-relations/link-relations.xhtml) registry
-  - local values MAY be used if no externally defined value applies
+  - local values MAY be used if no suitable value applies
 
 Most labels describe things about the entity (e.g. asset) and SHOULD use the 'self' relation.
 
@@ -283,7 +289,7 @@ These entities enable this application to function. They are not intended to be 
 Layers are subsets of Asset and Asset Position entities for a particular use-case.
 
 A layer may filter Assets to a particular type (e.g. aircraft) and/or Asset Positions to a particular time period. See
-the [Data Access](../README.md#data-access) for currently available layers.
+the [Data Access](/README.md#data-access) for currently available layers.
 
 | Property | Name   | Occurrence | Data Type                         | Data Form | Description                    |
 |----------|--------|------------|-----------------------------------|-----------|--------------------------------|

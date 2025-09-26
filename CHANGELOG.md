@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Wherever possible, a reference to an issue in the project issue tracker should be included to give additional context.
 
+<!-- pyml disable no-duplicate-heading,no-duplicate-header -->
 ## [Unreleased]
+
+### Changed
+
+* General documentation update and markdown linting
+  [#176](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/176)
 
 ## [0.8.0] - 2025-09-22
 
@@ -366,7 +372,7 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 ## [0.1.0] - 2023-01-30
 
-###  Added
+### Added
 
 * Initial information and data model documentation
 * Initial data sources documentation
@@ -437,3 +443,4 @@ Wherever possible, a reference to an issue in the project issue tracker should b
   [#36](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/36)
 * Cleaning up old experimental files
   [#65](https://gitlab.data.bas.ac.uk/MAGIC/locations-api/-/issues/65)
+<!-- pyml enable no-duplicate-heading,no-duplicate-header -->
