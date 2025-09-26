@@ -4,7 +4,8 @@ Extensions to, or code closely associated with, third-party libraries relied on 
 
 ## BAS Esri Utilities
 
-**Note:** These are rough/working notes that will be written up properly when this module is extracted.
+> [!TIP]
+> These are rough/working notes that will be written up properly when this module is extracted.
 
 Package: `assets_tracking_service.lib.bas_esri_utils`
 
@@ -36,7 +37,7 @@ for that resource would relate to two ArcGIS items.
 
 The relationship between these entities can be summarised as:
 
-```
+```text
 [Resource] -> [Record] -> [Item]                  # ISO 19115 model
                             ├── [ArcGIS Item]     # ArcGIS model
                             └── ...

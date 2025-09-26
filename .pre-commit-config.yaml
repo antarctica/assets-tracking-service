@@ -25,3 +25,7 @@ repos:
   rev: 3.4.2
   hooks:
     - id: sqlfluff-lint
+- repo: https://github.com/jackdewinter/pymarkdown
+  rev: v0.9.32
+  hooks:
+      - id: pymarkdown

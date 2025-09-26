@@ -2,11 +2,12 @@
 
 ## Overview
 
-This data model implements the abstract [Information Model](./info-model.md) using a relational database, specifically
-PostgreSQL and PostGIS as an [Application Database](./implementation.md#database).
+This data model implements the abstract [Information Model](/docs/info-model.md) using a relational database,
+specifically PostgreSQL and PostGIS as the [Application Database](/docs/implementation.md#database).
 
-[Database Migrations](./implementation.md#database-migrations) represent the normative/authoritative definition of
-this model. This documentation is for information only.
+> [!NOTE]
+> [Database Migrations](/docs/implementation.md#database-migrations) represent the normative/authoritative definition
+> of this model. This documentation is for information only.
 
 ## Summary
 
@@ -15,7 +16,7 @@ In general:
 - the Asset and Asset Position entities, and Layer and Record meta-entities, are mapped to database tables
 - the Labels entity is implemented as a JSONB column (with labels encoded as JSON) within relevant tables
 - an additional `nvs_l06_lookup` table is used to support views
-- an additional `meta_migration` table is used to track [Database Migrations](./implementation.md#database-migrations)
+- an additional `meta_migration` table is used to track [Database Migrations](/docs/implementation.md#database-migrations)
 
 ## Asset
 
@@ -23,6 +24,7 @@ Entity type: *table*
 
 Entity name/reference: `public.asset`
 
+<!-- pyml disable md013 -->
 | Property (Abstract) | Property (Database)         | Data Type   | Constraints                                                |
 |---------------------|-----------------------------|-------------|------------------------------------------------------------|
 | -                   | `pk`                        | INTEGER     | Primary key                                                |
@@ -30,6 +32,7 @@ Entity name/reference: `public.asset`
 | `labels`            | `labels`                    | JSONB       | Check (`are_labels_v1_valid`, `are_labels_v1_valid_asset`) |
 | -                   | [`created_at`](#created-at) | TIMESTAMPTZ | Not null                                                   |
 | -                   | [`updated_at`](#updated-at) | TIMESTAMPTZ | Not null                                                   |
+<!-- pyml enable md013 -->
 
 ## Asset Position
 
@@ -37,6 +40,7 @@ Entity type: *table*
 
 Entity name/reference: `public.position`
 
+<!-- pyml disable md013 -->
 | Property (Abstract) | Property (Database)         | Data Type              | Constraints                                       |
 |---------------------|-----------------------------|------------------------|---------------------------------------------------|
 | -                   | `pk`                        | INTEGER                | Primary key                                       |
@@ -50,6 +54,7 @@ Entity name/reference: `public.position`
 | `labels`            | `labels`                    | JSONB                  | Check (`are_labels_v1_valid`)                     |
 | -                   | [`created_at`](#created-at) | TIMESTAMPTZ            | Not null                                          |
 | -                   | [`updated_at`](#updated-at) | TIMESTAMPTZ            | Not null                                          |
+<!-- pyml enable md013 -->
 
 ### Asset position geometry
 
@@ -66,9 +71,13 @@ As PostGIS requires all dimensions (X, Y and Z) to be specified:
   - `geom_dimensions` MUST be set to `2`
 - this workaround is an implementation detail, the `geom_dimensions` column MUST NOT be exposed to end users
 
-**Note:** Other dimensions (such as 4D points with measure values, etc.) are not supported.
+<!-- pyml disable md028 -->
+> [!NOTE]
+> Other dimensions (such as 4D points with measure values, etc.) are not supported.
 
-**Note:** With this workaround, the Z value cannot be trusted within Postgres and spatial queries.
+> [!WARNING]
+> With this workaround, the Z value alone MUST NOT be trusted within Postgres and spatial queries.
+<!-- pyml enable md028 -->
 
 ## Label
 
@@ -171,8 +180,8 @@ Entity type: *table*
 
 Entity name/reference: `public.meta_migration`
 
-Records the currently applied [Database Migration](./implementation.md#database-migrations), a concept specific to this
-data model.
+Records the currently applied [Database Migration](/docs/implementation.md#database-migrations), a concept specific to
+this data model.
 
 | Property (Abstract) | Property (Database)         | Data Type   | Constraints |
 |---------------------|-----------------------------|-------------|-------------|
@@ -188,6 +197,7 @@ Entity type: *table*
 
 Entity name/reference: `public.layer`
 
+<!-- pyml disable md013 -->
 | Property (Abstract) | Property (Database)         | Data Type   | Constraints                                                |
 |---------------------|-----------------------------|-------------|------------------------------------------------------------|
 | -                   | `pk`                        | INTEGER     | Primary key                                                |
@@ -200,6 +210,7 @@ Entity name/reference: `public.layer`
 | -                   | `metadata_last_refreshed`   | TIMESTAMPTZ | -                                                          |
 | -                   | [`created_at`](#created-at) | TIMESTAMPTZ | Not null                                                   |
 | -                   | [`updated_at`](#updated-at) | TIMESTAMPTZ | Not null                                                   |
+<!-- pyml enable md013 -->
 
 ### Layer source view
 
@@ -226,6 +237,7 @@ Entity name/reference: `public.record`
 
 A subset of the [ISO 19115](https://metadata-standards.data.bas.ac.uk/standards/iso-19115-19139) information model.
 
+<!-- pyml disable md013 -->
 | Property (Abstract) | Property (Database)         | Data Type   | Constraints                                                |
 |---------------------|-----------------------------|-------------|------------------------------------------------------------|
 | -                   | `pk`                        | INTEGER     | Primary key                                                |
@@ -240,6 +252,7 @@ A subset of the [ISO 19115](https://metadata-standards.data.bas.ac.uk/standards/
 | -                   | `gitlab_issue`              | TEXT        | -                                                          |
 | -                   | [`created_at`](#created-at) | TIMESTAMPTZ | Not null                                                   |
 | -                   | [`updated_at`](#updated-at) | TIMESTAMPTZ | Not null                                                   |
+<!-- pyml enable md013 -->
 
 ### Record slug
 
@@ -247,6 +260,7 @@ A value corresponding to the `slug` of a [Layer](#layer) used as a foreign key.
 
 ### Record ISO 19115 properties
 
+<!-- pyml disable md013 -->
 | Property (Database) | Property (Resource File) | Property (ISO 19115)                                           | Required |
 |---------------------|--------------------------|----------------------------------------------------------------|----------|
 | `title`             | -                        | `identification.title.value`                                   | Yes      |
@@ -258,6 +272,7 @@ A value corresponding to the `slug` of a [Layer](#layer) used as a foreign key.
 | `update_frequency`  | -                        | `identification.maintenance.update_frequency`                  | Yes      |
 | `gitlab_issue`      | -                        | `identification.identifiers[namespace='gitlab.data.bas.ac.uk]` | No       |
 | -                   | `lineage.md`             | `data_quality.lineage.statement`                               | No       |
+<!-- pyml enable md013 -->
 
 Values for `update_frequency` MUST be taken from the ISO 19915
 [`MD_MaintenanceFrequencyCode`](https://wiki.esipfed.org/ISO_19115-3_Codelists#MD_MaintenanceFrequencyCode) code list.
@@ -338,11 +353,3 @@ A view returning results of [`v_latest_asset_pos`](#v_latest_assets_pos) as a Ge
 Where each row is a feature with a point geometry and identifier based on the position ID.
 
 Some properties alias columns from `v_latest_assets_pos`, such as 'velocity' to 'speed'
-
-### `v_latest_assets_pos_geojson`
-
-A view returning results of [`v_latest_asset_pos`](#v_latest_assets_pos) with the same aliases defined by
-[`v_latest_assets_pos_geojson`](#v_latest_assets_pos_geojson).
-
-Used as a workaround for testing access through ArcGIS Enterprise, which doesn't use GeoJSON as a source for the
-feature service and so does not see the aliases created by the GeoJSON view.

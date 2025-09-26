@@ -19,7 +19,7 @@ End users may access information through a combination of:
 
 As a high-level data flow:
 
-![high](./img/architecture-high.png)
+![high](/docs/img/architecture-high.png)
 
 Where:
 - a primary tracking service receives data from an asset
@@ -42,7 +42,7 @@ At a lower level, this project can be broken down into:
 
 As a lower-level data flow:
 
-![low](./img/architecture-low.png)
+![low](/docs/img/architecture-low.png)
 
 Where:
 - a primary tracking service receives data from an asset
@@ -59,9 +59,9 @@ Where:
 
 Providers are interfaces between external tracking services and the application.
 
-See [Providers](./providers.md) documentation for more information and available providers.
+See [Providers](/docs/providers.md) documentation for more information and available providers.
 
-See [Infrastructure](./infrastructure.md#providers) documentation for provider credentials.
+See [Infrastructure](/docs/infrastructure.md#providers) documentation for provider credentials.
 
 ### Restricted providers
 
@@ -73,28 +73,28 @@ packages and included as private dependencies from authenticated private Pip ind
 Exporters are interfaces between the application and services that allow clients and tools that use asset location
 information (access services).
 
-See [Exporters](./exporters.md) documentation for more information and available providers.
+See [Exporters](/docs/exporters.md) documentation for more information and available providers.
 
-See [Infrastructure](./infrastructure.md#exporters) documentation for exporter credentials.
+See [Infrastructure](/docs/infrastructure.md#exporters) documentation for exporter credentials.
 
 ## Command line interface
 
 [Typer](https://typer.tiangolo.com/) (which builds upon [Click](https://click.palletsprojects.com)) is used as the
-framework for the [Control CLI](./cli-reference.md).
+framework for the [Control CLI](/docs/cli-reference.md).
 
 ## Scheduled tasks
 
 Cron is used to call relevant [CLI](#command-line-interface) commands every 5 minutes. See the
-[Automatic Processing](../README.md#automatic-processing) documentation for more information.
+[Automatic Processing](/README.md#automatic-processing) documentation for more information.
 
 ## Configuration
 
-See [Configuration](./config.md) documentation.
+See [Configuration](/docs/config.md) documentation.
 
 ## Models
 
 Models defined in `assets_tracking_service.models` represent entities in the application
-[Data Model](./data-model.md) and manage data in the [Database](#database).
+[Data Model](/docs/data-model.md) and manage data in the [Database](#database).
 
 ## Database
 
@@ -102,24 +102,26 @@ Models defined in `assets_tracking_service.models` represent entities in the app
 persisting information.
 
 [Database Migrations](#database-migrations) define all entities, functions, etc. needed to implement the application
-[Data Model](./data-model.md), including [Views](./data-model.md#views).
+[Data Model](/docs/data-model.md), including [Views](/docs/data-model.md#views).
 
 ### Database client
 
-A basic [psycopg3](https://www.psycopg.org/psycopg3/) based [Database Client](../src/assets_tracking_service/db.py) is
-used as an interface between the application and the database.
+A basic [psycopg3](https://www.psycopg.org/psycopg3/) based database client (`assets_tracking_service.DatabaseClient`)
+is used as an interface between the application and the database.
 
-**Note:** This database client runs a `set timezone to 'UTC'` to ensure all data is returned in the correct timezone.
+> [!NOTE]
+> This database client automatically runs `set timezone to 'UTC'` to ensure all data is returned in the correct timezone.
 
 ### Database migrations
 
 A basic database migrations implementation is used to manage objects within the application [Database](#database).
 
-Migrations are SQL files defined in [`resources/db_migrations`](../src/assets_tracking_service/resources/db_migrations),
-executed by the application [Database Client](#database-client) through the application [CLI](#command-line-interface). To allow checking all migrations
-have been applied, the latest applied migration is recorded in the `meta_migration` table.
+Migrations in SQL files defined in `assets_tracking_service/resources/db_migrations` are executed by the application
+[Database Client](#database-client) through the application [CLI](#command-line-interface). To check all migrations
+have been applied, the latest applied migration is recorded in a `meta_migration` table.
 
-**Note:** Migrations prior to `014-migrations-tracking` cannot be tracked by this feature.
+> [!NOTE]
+> Migrations prior to `014-migrations-tracking` cannot be tracked by this feature.
 
 Migrations MUST be defined in both a forward (create, apply changes) and reverse (destroy, revert changes) direction
 by creating an *up* and *down* migration file.
@@ -127,7 +129,7 @@ by creating an *up* and *down* migration file.
 Migrations are intended to be applied together - i.e. migrated either fully up to the latest set of changes, or fully
 down to the base, empty, state. Applying migrations to an intermediate state is not supported.
 
-See the [Developing](./dev.md#adding-database-migrations) documentation for how to add a new migration.
+See the [Developing](/docs/dev.md#adding-database-migrations) documentation for how to add a new migration.
 
 ### Database permissions
 
@@ -147,7 +149,7 @@ where datname = 'assets-tracking-service';
 
 ## Library extensions
 
-See [Libraries](./libraries.md) documentation.
+See [Libraries](/docs/libraries.md) documentation.
 
 ## Logs
 
