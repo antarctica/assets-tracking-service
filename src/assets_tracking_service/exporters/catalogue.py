@@ -94,9 +94,12 @@ class CollectionRecord(RecordMagicDiscoveryV1):
             extents=Extents([self._layers.get_bounding_extent()]),
             aggregations=Aggregations(
                 [
-                    make_bas_cat_collection_member(item_id=str(record_id))
-                    for record_id in self._records.list_ids()
-                    if record_id != self._record.id
+                    make_in_bas_cat_collection(collection_id="b8b78c6c-fac2-402c-a772-9f518c7121e5"),
+                    *[
+                        make_bas_cat_collection_member(item_id=str(record_id))
+                        for record_id in self._records.list_ids()
+                        if record_id != self._record.id
+                    ],
                 ]
             ),
             maintenance=Maintenance(

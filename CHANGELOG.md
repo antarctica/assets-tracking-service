@@ -14,6 +14,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * General documentation update and markdown linting
   [#176](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/176)
+* Including data catalogue collection in MAGIC team collection
+  [#177](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/177)
 
 ## [0.8.0] - 2025-09-22
 
