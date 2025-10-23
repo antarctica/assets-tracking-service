@@ -5,6 +5,8 @@ from typing import TypedDict
 
 import dsnparse
 from environs import Env, EnvError, EnvValidationError
+from jwskate import InvalidJwk, Jwk
+from lantern.lib.metadata_library.models.record.utils.admin import AdministrationKeys
 
 
 class EditableDsn(dsnparse.ParseResult):
@@ -157,6 +159,14 @@ class Config:
             ):
                 msg = "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH must be a directory."
                 raise ConfigurationError(msg)
+            try:
+                _ = self.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS
+            except EnvError as e:
+                msg = "Variables used for EXPORTER_DATA_CATALOGUE_ADMIN_KEYS must be set."
+                raise ConfigurationError(msg) from e
+            except InvalidJwk as e:
+                msg = "Variables used for EXPORTER_DATA_CATALOGUE_ADMIN_KEYS must be valid JWKs."
+                raise ConfigurationError(msg) from e
 
     class ConfigDumpSafe(TypedDict):
         """Types for `dumps_safe`."""
@@ -191,6 +201,7 @@ class Config:
         EXPORTER_ARCGIS_FOLDER_NAME: str
         EXPORTER_ARCGIS_GROUP_INFO: ArcGISGroupInfo
         EXPORTER_DATA_CATALOGUE_OUTPUT_PATH: str
+        EXPORTER_DATA_CATALOGUE_ADMIN_KEYS: dict
 
     def dumps_safe(self) -> ConfigDumpSafe:
         """Dump config for output to the user with sensitive data redacted."""
@@ -225,6 +236,7 @@ class Config:
             "EXPORTER_ARCGIS_FOLDER_NAME": self.EXPORTER_ARCGIS_FOLDER_NAME,
             "EXPORTER_ARCGIS_GROUP_INFO": self.EXPORTER_ARCGIS_GROUP_INFO,
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(self.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
+            "EXPORTER_DATA_CATALOGUE_ADMIN_KEYS": self.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS_SAFE,
         }
 
     @property
@@ -503,3 +515,24 @@ class Config:
         """Path to Data Catalogue site output."""
         with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_"):
             return self.env.path("OUTPUT_PATH")
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_ADMIN_KEYS(self) -> AdministrationKeys:
+        """
+        Signing and encryption keys for administrative metadata in Data Catalogue records.
+
+        The signing public key isn't needed as we don't need to verify data as we're authoring it.
+        """
+        with self.env.prefixed(self._app_prefix), self.env.prefixed("EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_"):
+            return AdministrationKeys(
+                encryption_private=Jwk(self.env.json("ENCRYPTION_KEY_PRIVATE")),
+                signing_private=Jwk(self.env.json("SIGNING_KEY_PRIVATE")),
+            )
+
+    @property
+    def EXPORTER_DATA_CATALOGUE_ADMIN_KEYS_SAFE(self) -> dict:
+        """EXPORTER_DATA_CATALOGUE_ADMIN_KEYS with sensitive value redacted."""
+        keys = self.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS
+        if keys.encryption_private is not None and keys.signing_private is not None:
+            return {"encryption_private": self._safe_value, "signing_private": self._safe_value}
+        return {"encryption_private": None, "signing_private": None}

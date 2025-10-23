@@ -1,17 +1,9 @@
 import logging
 from datetime import UTC, date, datetime
 
-from lantern.lib.metadata_library.models.record.elements.common import (
-    Contacts,
-    Date,
-    Dates,
-    Identifiers,
-)
-from lantern.lib.metadata_library.models.record.elements.common import Identifier as CatIdentifier
-from lantern.lib.metadata_library.models.record.elements.data_quality import (
-    DataQuality,
-    Lineage,
-)
+from lantern.lib.metadata_library.models.record.elements.administration import Administration
+from lantern.lib.metadata_library.models.record.elements.common import Contacts, Date, Dates, Identifier, Identifiers
+from lantern.lib.metadata_library.models.record.elements.data_quality import DataQuality, Lineage
 from lantern.lib.metadata_library.models.record.elements.identification import (
     Aggregations,
     Constraints,
@@ -25,18 +17,19 @@ from lantern.lib.metadata_library.models.record.enums import (
     MaintenanceFrequencyCode,
     ProgressCode,
 )
+from lantern.lib.metadata_library.models.record.presets.admin import OPEN_ACCESS
 from lantern.lib.metadata_library.models.record.presets.aggregations import (
     make_bas_cat_collection_member,
     make_in_bas_cat_collection,
 )
 from lantern.lib.metadata_library.models.record.presets.base import RecordMagicDiscoveryV1
-from lantern.lib.metadata_library.models.record.presets.constraints import OGL_V3, OPEN_ACCESS
-from lantern.lib.metadata_library.models.record.presets.contacts import (
-    make_magic_role as magic_contact,
-)
+from lantern.lib.metadata_library.models.record.presets.constraints import OGL_V3
+from lantern.lib.metadata_library.models.record.presets.constraints import OPEN_ACCESS as OPEN_ACCESS_CONSTRAINT
+from lantern.lib.metadata_library.models.record.presets.contacts import make_magic_role as magic_contact
 from lantern.lib.metadata_library.models.record.presets.distribution import make_esri_feature_layer
 from lantern.lib.metadata_library.models.record.presets.projections import EPSG_4326
 from lantern.lib.metadata_library.models.record.record import Record
+from lantern.lib.metadata_library.models.record.utils.admin import set_admin
 from lantern.models.record.const import ALIAS_NAMESPACE, CATALOGUE_NAMESPACE
 
 from assets_tracking_service.config import Config
@@ -75,22 +68,17 @@ class CollectionRecord(RecordMagicDiscoveryV1):
             edition=self._record.edition,
             identifiers=Identifiers(
                 [
-                    CatIdentifier(
-                        identifier=self._record.gitlab_issue,
-                        href=self._record.gitlab_issue,
-                        namespace="gitlab.data.bas.ac.uk",
-                    ),
-                    CatIdentifier(
+                    Identifier(
                         identifier=self._alias,
                         href=f"https://{CATALOGUE_NAMESPACE}/{self._alias}",
                         namespace=ALIAS_NAMESPACE,
-                    ),
+                    )
                 ]
             ),
             abstract=self._record.abstract,
             purpose=self._record.summary,
             contacts=Contacts([magic_contact(roles={ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER})]),
-            constraints=Constraints([OPEN_ACCESS, OGL_V3]),
+            constraints=Constraints([OPEN_ACCESS_CONSTRAINT, OGL_V3]),
             extents=Extents([self._layers.get_bounding_extent()]),
             aggregations=Aggregations(
                 [
@@ -114,6 +102,13 @@ class CollectionRecord(RecordMagicDiscoveryV1):
             identification=identification,
         )
         self.set_citation()
+        set_admin(
+            keys=self._config.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS,
+            record=self,
+            admin_meta=Administration(
+                id=str(self._record.id), gitlab_issues=[self._record.gitlab_issue], access_permissions=[OPEN_ACCESS]
+            ),
+        )
 
 
 class LayerRecord(RecordMagicDiscoveryV1):
@@ -139,19 +134,10 @@ class LayerRecord(RecordMagicDiscoveryV1):
             title=self._record.title,
             dates=self._dates,
             edition=self._record.edition,
-            identifiers=Identifiers(
-                [
-                    CatIdentifier(
-                        identifier=self._record.gitlab_issue,
-                        href=self._record.gitlab_issue,
-                        namespace="gitlab.data.bas.ac.uk",
-                    ),
-                ]
-            ),
             abstract=self._record.abstract,
             purpose=self._record.summary,
             contacts=Contacts([magic_contact(roles={ContactRoleCode.AUTHOR, ContactRoleCode.PUBLISHER})]),
-            constraints=Constraints([OPEN_ACCESS, OGL_V3]),
+            constraints=Constraints([OPEN_ACCESS_CONSTRAINT, OGL_V3]),
             extents=Extents([self._layers.get_extent_by_slug(self._slug)]),
             aggregations=Aggregations([make_in_bas_cat_collection(str(self._collection.id))]),
             maintenance=Maintenance(
@@ -177,6 +163,13 @@ class LayerRecord(RecordMagicDiscoveryV1):
             distribution=distribution,
         )
         self.set_citation()
+        set_admin(
+            keys=self._config.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS,
+            record=self,
+            admin_meta=Administration(
+                id=str(self._record.id), gitlab_issues=[self._record.gitlab_issue], access_permissions=[OPEN_ACCESS]
+            ),
+        )
 
     @property
     def _dates(self) -> Dates:
@@ -212,7 +205,7 @@ class DataCatalogueExporter(Exporter):
         output_path = self._config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH / "records" / f"{record.file_identifier}.json"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with output_path.open("w") as f:
-            f.write(record.dumps_json())
+            f.write(record.dumps_json(strip_admin=False))
         self._logger.debug("Exported record '%s' as BAS ISO JSON", record.file_identifier)
 
     def export(self) -> None:

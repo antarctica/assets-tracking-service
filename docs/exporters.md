@@ -144,6 +144,9 @@ the BAS Metadata Library.
 Records additionally conform to the
 [BAS MAGIC Discovery Profile (v1)](https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1).
 
+Records additionally conform to the
+[BAS MAGIC Administration (v1)](https://metadata-standards.data.bas.ac.uk/standards/magic-administration-v1).
+
 #### Data Catalogue metadata sources
 
 Metadata records combine information from multiple sources:
@@ -165,3 +168,7 @@ Required options:
   - path to the directory that will contain catalogue records for publishing
   - the application will try to create any missing parent directories to this directory if needed
   - e.g. `./exports`
+- `EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_ENCRYPTION_KEY_PRIVATE`
+  - JSON encoded JSON Web Key (JWK) for encrypting administrative metadata
+- `EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_SIGNING_KEY_PRIVATE`
+  - JSON encoded JSON Web Key (JWK) for signing administrative metadata

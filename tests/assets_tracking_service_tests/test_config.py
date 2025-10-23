@@ -160,6 +160,10 @@ class TestConfig:
                 "thumbnail_file": "thumbnail.png",
             },
             "EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": str(fx_config.EXPORTER_DATA_CATALOGUE_OUTPUT_PATH.resolve()),
+            "EXPORTER_DATA_CATALOGUE_ADMIN_KEYS": {
+                "encryption_private": redacted_value,
+                "signing_private": redacted_value,
+            },
         }
 
         output = fx_config.dumps_safe()
@@ -568,6 +572,22 @@ class TestConfig:
                     "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": None,
                 }
             ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "/tmp",  # noqa: S108
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_ENCRYPTION_KEY_PRIVATE": None,
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_SIGNING_KEY_PRIVATE": '{"kty":"EC","kid":"magic_metadata_testing_signing_key","alg":"ES256","crv":"P-256","x":"243mJW8nkwqB76WGb1Y4DGaU_KpFR7m5PyQvveubgHA","y":"l9M7YErkNgM5FL58EavMBxJVgG60DE_qyif3Bp1lawU"}',
+                }
+            ),
+            (
+                {
+                    "ASSETS_TRACKING_SERVICE_ENABLE_EXPORTER_DATA_CATALOGUE": "true",
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH": "/tmp",  # noqa: S108
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_ENCRYPTION_KEY_PRIVATE": '{"kty":"EC","kid":"magic_metadata_testing_signing_key","alg":"ES256","crv":"P-256","x":"243mJW8nkwqB76WGb1Y4DGaU_KpFR7m5PyQvveubgHA","y":"l9M7YErkNgM5FL58EavMBxJVgG60DE_qyif3Bp1lawU"}',
+                    "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_SIGNING_KEY_PRIVATE": None,
+                }
+            ),
         ],
     )
     def test_validate_missing_required_option(self, envs: dict):
@@ -582,6 +602,21 @@ class TestConfig:
 
         config = Config(read_env=False)
 
+        with pytest.raises(ConfigurationError):
+            config.validate()
+
+        self._unset_envs(envs, envs_bck)
+
+    @pytest.mark.cov()
+    def test_validate_invalid_admin_keys(self):
+        """Needed to satisfy coverage that admin metadata keys are valid JSON Web Keys."""
+        envs = {
+            "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_ENCRYPTION_KEY_PRIVATE": "x",
+            "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_SIGNING_KEY_PRIVATE": "x",
+        }
+        envs_bck = self._set_envs(envs)
+
+        config = Config()
         with pytest.raises(ConfigurationError):
             config.validate()
 

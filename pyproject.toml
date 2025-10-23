@@ -16,7 +16,7 @@ dependencies = [
     "geojson>=3.2.0",
     "importlib-resources>=6.5.2",
     "jinja2>=3.1.6",
-    "lantern>=0.3.0",
+    "lantern==0.3.0.post107",
     "mygeotab>=0.9.3",
     "pint>=0.25.0",
     "psycopg[binary]>=3.2.10",
@@ -193,6 +193,8 @@ ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_PASSWORD="x"
 ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_PORTAL="https://example.com"
 ASSETS_TRACKING_SERVICE_EXPORTER_ARCGIS_BASE_ENDPOINT_SERVER="https://example.com/arcgis"
 ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_OUTPUT_PATH="site"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_ENCRYPTION_KEY_PRIVATE = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MzZQPXly16iAS2fzW_SbKqKHazsId57y7U35G9j4bbs\",\"y\":\"6__rBtqNe6unAdllQpb2cypCH9u8-LouEX47uC-ncN0\",\"d\":\"_fA1R8yP_uvfB7Qv9IApj7yydLA47N81Y75jZ92QH6U\",\"alg\":\"ECDH-ES+A128KW\",\"kid\":\"magic_metadata_testing_encryption_key\"}"
+ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_SIGNING_KEY_PRIVATE = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"243mJW8nkwqB76WGb1Y4DGaU_KpFR7m5PyQvveubgHA\",\"y\":\"l9M7YErkNgM5FL58EavMBxJVgG60DE_qyif3Bp1lawU\",\"d\":\"SdvAiYZplSs_rR0Rqbs2mqMBLyfOUmRNBZkr4XZPxPg\",\"alg\":\"ES256\",\"kid\":\"magic_metadata_testing_signing_key\"}"
 
 [tool.pytest.ini_options]
 # --strict-markers | fail if unknown markers are used
