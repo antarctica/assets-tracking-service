@@ -197,7 +197,7 @@ wheels = [
 
 [[package]]
 name = "assets-tracking-service"
-version = "0.8.0"
+version = "0.9.0"
 source = { editable = "." }
 dependencies = [
     { name = "arcgis" },
@@ -248,7 +248,7 @@ requires-dist = [
     { name = "geojson", specifier = ">=3.2.0" },
     { name = "importlib-resources", specifier = ">=6.5.2" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "lantern", specifier = "==0.3.0.post107", index = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/simple" },
+    { name = "lantern", specifier = ">=0.4.0", index = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/simple" },
     { name = "mygeotab", specifier = ">=0.9.3" },
     { name = "pint", specifier = ">=0.25.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.10" },
@@ -1550,7 +1550,7 @@ wheels = [
 
 [[package]]
 name = "lantern"
-version = "0.3.0.post107"
+version = "0.4.0"
 source = { registry = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/simple" }
 dependencies = [
     { name = "bas-metadata-library" },
@@ -1573,9 +1573,9 @@ dependencies = [
     { name = "requests" },
     { name = "sentry-sdk" },
 ]
-sdist = { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/9660bf242ed1bb02c96aafd738b1bb12d2c9a20b82db4f169a1f238981f0bcbb/lantern-0.3.0.post107.tar.gz", hash = "sha256:9660bf242ed1bb02c96aafd738b1bb12d2c9a20b82db4f169a1f238981f0bcbb" }
+sdist = { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/4e20179c6beb7fa52e05c784da8259bbe0353d5229c35a001082d31b2cd25169/lantern-0.4.0.tar.gz", hash = "sha256:4e20179c6beb7fa52e05c784da8259bbe0353d5229c35a001082d31b2cd25169" }
 wheels = [
-    { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/13f2ba330054f279d92e1ac92a46e19e4b49dfeef50a66cbac846fece14da02d/lantern-0.3.0.post107-py3-none-any.whl", hash = "sha256:13f2ba330054f279d92e1ac92a46e19e4b49dfeef50a66cbac846fece14da02d" },
+    { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/17ec0a4d27c8b4048a21cbc5997043499e3e146e4584da0de9bfc773a57795d8/lantern-0.4.0-py3-none-any.whl", hash = "sha256:17ec0a4d27c8b4048a21cbc5997043499e3e146e4584da0de9bfc773a57795d8" },
 ]
 
 [[package]]
