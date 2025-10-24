@@ -2,6 +2,7 @@ from re import escape
 
 import pytest
 from arcgis.gis import ItemTypeEnum, SharingLevel
+from lantern.lib.metadata_library.models.record.elements.administration import Administration, Permission
 from lantern.lib.metadata_library.models.record.elements.common import Identifier, Identifiers
 from lantern.lib.metadata_library.models.record.elements.data_quality import DataQuality, Lineage
 from lantern.lib.metadata_library.models.record.elements.identification import (
@@ -15,8 +16,10 @@ from lantern.lib.metadata_library.models.record.enums import (
     ConstraintTypeCode,
 )
 from lantern.lib.metadata_library.models.record.record import Record
+from lantern.lib.metadata_library.models.record.utils.admin import set_admin
 from lantern.models.item.base.enums import AccessLevel
 
+from assets_tracking_service.config import Config
 from assets_tracking_service.lib.bas_esri_utils.models.item import ArcGisItemLicenceHrefUnsupportedError, Item
 
 
@@ -205,35 +208,39 @@ class TestItemArcGIS:
         assert result.metadata_editable is False
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
+        ("permissions", "expected"),
         [
-            (Constraint(type=ConstraintTypeCode.ACCESS), SharingLevel.PRIVATE),
-            (
-                Constraint(type=ConstraintTypeCode.ACCESS, restriction_code=ConstraintRestrictionCode.UNRESTRICTED),
-                SharingLevel.EVERYONE,
-            ),
-            (
-                Constraint(
-                    type=ConstraintTypeCode.ACCESS,
-                    restriction_code=ConstraintRestrictionCode.RESTRICTED,
-                    href='%5B{"scheme"%3A"ms_graph"%2C"schemeVersion"%3A"1"%2C"directoryId"%3A"b311db95-32ad-438f-a101-7ba061712a4e"%2C"objectId"%3A"6fa3b48c-393c-455f-b787-c006f839b51f"}%5D',
-                ),
-                SharingLevel.ORG,
-            ),
-            (None, SharingLevel.PRIVATE),
+            ([], SharingLevel.PRIVATE),
+            ([Permission(directory="~nerc", group="~bas-staff")], SharingLevel.ORG),
+            ([Permission(directory="*", group="~public")], SharingLevel.EVERYONE),
+            ([Permission(directory="x", group="x"), Permission(directory="y", group="y")], SharingLevel.PRIVATE),
         ],
     )
-    def test_sharing_level(self, fx_lib_record_minimal_item: Record, value: Constraint | None, expected: SharingLevel):
-        """Can get the ArcGIS sharing level."""
-        if value is not None:
-            fx_lib_record_minimal_item.identification.constraints = Constraints([value])
-        item = Item(fx_lib_record_minimal_item, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="...")
+    def test_sharing_level(
+        self,
+        fx_config: Config,
+        fx_lib_record_minimal_item: Record,
+        permissions: list[Permission],
+        expected: SharingLevel,
+    ):
+        """Can get the ArcGIS sharing level for access level."""
+        set_admin(
+            keys=fx_config.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS,
+            record=fx_lib_record_minimal_item,
+            admin_meta=Administration(id=fx_lib_record_minimal_item.file_identifier, access_permissions=permissions),
+        )
+        item = Item(
+            record=fx_lib_record_minimal_item,
+            admin_keys=fx_config.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS,
+            arcgis_item_type=ItemTypeEnum.GEOJSON,
+            arcgis_item_name="...",
+        )
 
         assert item.sharing_level == expected
 
     def test_sharing_level_override(self, fx_lib_record_minimal_item: Record):
         """Can override the ArcGIS sharing level."""
-        value = AccessLevel.BAS_ALL
+        value = AccessLevel.BAS_STAFF
         expected = SharingLevel.ORG
         item = Item(
             fx_lib_record_minimal_item, arcgis_item_type=ItemTypeEnum.GEOJSON, arcgis_item_name="...", access_type=value

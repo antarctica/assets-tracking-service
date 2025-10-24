@@ -3,6 +3,7 @@ import contextlib
 from arcgis.gis import ItemProperties, ItemTypeEnum, SharingLevel
 from jinja2 import Environment, PackageLoader, select_autoescape
 from lantern.lib.metadata_library.models.record.record import Record
+from lantern.lib.metadata_library.models.record.utils.admin import AdministrationKeys as AdminMetadataKeys
 from lantern.models.item.base.enums import AccessLevel
 from lantern.models.item.base.item import ItemBase
 from lxml.etree import Element, SubElement
@@ -48,10 +49,11 @@ class Item(ItemBase):
         record: Record,
         arcgis_item_type: ItemTypeEnum,
         arcgis_item_name: str,
+        admin_keys: AdminMetadataKeys | None = None,
         arcgis_item_id: str | None = None,
         access_type: AccessLevel | None = None,
     ) -> None:
-        super().__init__(record)
+        super().__init__(record=record, admin_keys=admin_keys)
         self._id = arcgis_item_id
         self._name = arcgis_item_name
         self._type = arcgis_item_type
@@ -251,11 +253,11 @@ class Item(ItemBase):
     @property
     def sharing_level(self) -> SharingLevel:
         """ArcGIS sharing level based on item access type."""
-        access_type = self._access_type if self._access_type is not None else super().access_level
+        access_type = self._access_type if self._access_type is not None else super().admin_access_level
 
         if access_type == AccessLevel.PUBLIC:
             return SharingLevel.EVERYONE
-        if access_type == AccessLevel.BAS_ALL:
+        if access_type == AccessLevel.BAS_STAFF:
             return SharingLevel.ORG
 
         # fail-safe
