@@ -3,6 +3,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import PropertyMock
 
+from lantern.models.item.base.enums import AccessLevel
+from lantern.models.item.base.item import ItemBase
 from pytest_mock import MockerFixture
 
 from assets_tracking_service.config import Config
@@ -28,6 +30,12 @@ class TestCollectionRecord:
         """Generates valid metadata record."""
         fx_exporter_collection_record.validate()
 
+    def test_open(self, fx_config: Config, fx_exporter_collection_record: CollectionRecord):
+        """Generates open access metadata record."""
+        # noinspection PyTypeChecker
+        result = ItemBase(record=fx_exporter_collection_record, admin_keys=fx_config.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS)
+        assert result.admin_access_level == AccessLevel.PUBLIC
+
 
 class TestLayerRecord:
     """Test LayerRecord class."""
@@ -49,6 +57,12 @@ class TestLayerRecord:
     def test_valid(self, fx_exporter_layer_record: LayerRecord):
         """Generates valid metadata record."""
         fx_exporter_layer_record.validate()
+
+    def test_open(self, fx_config: Config, fx_exporter_layer_record: LayerRecord):
+        """Generates open access metadata record."""
+        # noinspection PyTypeChecker
+        result = ItemBase(record=fx_exporter_layer_record, admin_keys=fx_config.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS)
+        assert result.admin_access_level == AccessLevel.PUBLIC
 
 
 class TestExporterDataCatalogue:

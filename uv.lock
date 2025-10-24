@@ -248,7 +248,7 @@ requires-dist = [
     { name = "geojson", specifier = ">=3.2.0" },
     { name = "importlib-resources", specifier = ">=6.5.2" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "lantern", specifier = ">=0.3.0", index = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/simple" },
+    { name = "lantern", specifier = "==0.3.0.post107", index = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/simple" },
     { name = "mygeotab", specifier = ">=0.9.3" },
     { name = "pint", specifier = ">=0.25.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.10" },
@@ -349,6 +349,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/85/2e/3e5079847e653b1f6dc647aa24549d68c6addb4c595cc0d902d1b19308ad/beautifulsoup4-4.13.5.tar.gz", hash = "sha256:5e70131382930e7c3de33450a2f54a63d5e4b19386eab43a5b34d594268f3695", size = 622954, upload-time = "2025-08-24T14:06:13.168Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/eb/f4151e0c7377a6e08a38108609ba5cede57986802757848688aeedd1b9e8/beautifulsoup4-4.13.5-py3-none-any.whl", hash = "sha256:642085eaa22233aceadff9c69651bc51e8bf3f874fb6d7104ece2beb24b47c4a", size = 105113, upload-time = "2025-08-24T14:06:14.884Z" },
+]
+
+[[package]]
+name = "binapy"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bb/12/64a6df32e9bf0eea5dd2a448d37bbfe49b4aae0acb20b46381bf76304a0a/binapy-0.8.0.tar.gz", hash = "sha256:570c5098d42f037ffb3d2e563998f3cff69ad25ca1f43f9c3815432dccd08233", size = 20315, upload-time = "2024-01-19T11:57:20.096Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/50/a2ca5609cffc918a339be4ec5070c6d1d9fab600e6d9164df18040137383/binapy-0.8.0-py3-none-any.whl", hash = "sha256:8af1e1e856900ef8b79ef32236e296127c9cf26414ec355982ff7ce5f173504d", size = 16993, upload-time = "2024-01-19T11:57:18.876Z" },
 ]
 
 [[package]]
@@ -1415,6 +1427,20 @@ wheels = [
 ]
 
 [[package]]
+name = "jwskate"
+version = "0.12.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "binapy" },
+    { name = "cryptography" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f5/45/85a545c824439ba37aa61bed6c10ddf89dc51915d28b937931de8cca2eef/jwskate-0.12.2.tar.gz", hash = "sha256:7c38b036b633d689b31c89b358823dbc8c439e4c74596cb1fceb0dfe4cf9efce", size = 128629, upload-time = "2025-04-02T10:06:46.539Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/21/4252ccb378deb49f9e38635731b30d43aee03c2238d2fe0100011242af62/jwskate-0.12.2-py3-none-any.whl", hash = "sha256:fd10271bd651db8da7df256f7b5bcface84bf165a203b991ae05fb728f3d3aef", size = 88775, upload-time = "2025-04-02T10:06:45.021Z" },
+]
+
+[[package]]
 name = "keyring"
 version = "25.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1524,7 +1550,7 @@ wheels = [
 
 [[package]]
 name = "lantern"
-version = "0.3.0"
+version = "0.3.0.post107"
 source = { registry = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/simple" }
 dependencies = [
     { name = "bas-metadata-library" },
@@ -1540,15 +1566,16 @@ dependencies = [
     { name = "jinja2" },
     { name = "joblib" },
     { name = "jsonschema" },
+    { name = "jwskate" },
     { name = "markdown" },
     { name = "markdown-gfm-admonition" },
     { name = "python-gitlab" },
     { name = "requests" },
     { name = "sentry-sdk" },
 ]
-sdist = { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/b04347a405f68506ae4a577e5a8535c352cb2240922ffbf82e9cf82bdc44ba90/lantern-0.3.0.tar.gz", hash = "sha256:b04347a405f68506ae4a577e5a8535c352cb2240922ffbf82e9cf82bdc44ba90" }
+sdist = { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/9660bf242ed1bb02c96aafd738b1bb12d2c9a20b82db4f169a1f238981f0bcbb/lantern-0.3.0.post107.tar.gz", hash = "sha256:9660bf242ed1bb02c96aafd738b1bb12d2c9a20b82db4f169a1f238981f0bcbb" }
 wheels = [
-    { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/c1e24cc7140520f5dd6119ae306db91fcd4946f1a971f68285e022218474627b/lantern-0.3.0-py3-none-any.whl", hash = "sha256:c1e24cc7140520f5dd6119ae306db91fcd4946f1a971f68285e022218474627b" },
+    { url = "https://gitlab.data.bas.ac.uk/api/v4/projects/1355/packages/pypi/files/13f2ba330054f279d92e1ac92a46e19e4b49dfeef50a66cbac846fece14da02d/lantern-0.3.0.post107-py3-none-any.whl", hash = "sha256:13f2ba330054f279d92e1ac92a46e19e4b49dfeef50a66cbac846fece14da02d" },
 ]
 
 [[package]]
