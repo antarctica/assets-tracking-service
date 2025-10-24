@@ -532,7 +532,4 @@ class Config:
     @property
     def EXPORTER_DATA_CATALOGUE_ADMIN_KEYS_SAFE(self) -> dict:
         """EXPORTER_DATA_CATALOGUE_ADMIN_KEYS with sensitive value redacted."""
-        keys = self.EXPORTER_DATA_CATALOGUE_ADMIN_KEYS
-        if keys.encryption_private is not None and keys.signing_private is not None:
-            return {"encryption_private": self._safe_value, "signing_private": self._safe_value}
-        return {"encryption_private": None, "signing_private": None}
+        return {"encryption_private": self._safe_value, "signing_private": self._safe_value}

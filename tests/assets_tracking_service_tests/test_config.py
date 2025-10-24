@@ -611,8 +611,8 @@ class TestConfig:
     def test_validate_invalid_admin_keys(self):
         """Needed to satisfy coverage that admin metadata keys are valid JSON Web Keys."""
         envs = {
-            "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_ENCRYPTION_KEY_PRIVATE": "x",
-            "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_SIGNING_KEY_PRIVATE": "x",
+            "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_ENCRYPTION_KEY_PRIVATE": "{}",
+            "ASSETS_TRACKING_SERVICE_EXPORTER_DATA_CATALOGUE_ADMIN_METADATA_SIGNING_KEY_PRIVATE": "{}",
         }
         envs_bck = self._set_envs(envs)
 
