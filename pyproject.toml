@@ -1,6 +1,6 @@
 [project]
 name = "assets-tracking-service"
-version = "0.8.0"
+version = "0.9.0"
 description = "A service to track the location of BAS assets, including ships, aircraft, and vehicles."
 readme = "README.md"
 license = "MIT"
@@ -16,7 +16,7 @@ dependencies = [
     "geojson>=3.2.0",
     "importlib-resources>=6.5.2",
     "jinja2>=3.1.6",
-    "lantern==0.3.0.post107",
+    "lantern>=0.4.0",
     "mygeotab>=0.9.3",
     "pint>=0.25.0",
     "psycopg[binary]>=3.2.10",

@@ -145,7 +145,7 @@ Records additionally conform to the
 [BAS MAGIC Discovery Profile (v1)](https://metadata-standards.data.bas.ac.uk/profiles/magic-discovery-v1).
 
 Records additionally conform to the
-[BAS MAGIC Administration (v1)](https://metadata-standards.data.bas.ac.uk/standards/magic-administration-v1).
+[BAS MAGIC Administration (v1)](https://metadata-standards.data.bas.ac.uk/profiles/magic-administration-v1).
 
 #### Data Catalogue metadata sources
 
