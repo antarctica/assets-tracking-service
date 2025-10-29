@@ -80,7 +80,7 @@ class ArcGisExporterLayer:
         record = LayerRecord(config=self._config, db=self._db, logger=self._logger, layer_slug=self._slug)
         return CatalogueItemArcGis(
             record=record,
-            arcgis_item_id=self._layer.agol_id_feature,
+            arcgis_item_id=self._layer.agol_id_feature_ogc,
             arcgis_item_name=self._slug,
             arcgis_item_type=ItemTypeEnum.OGCFEATURESERVER,
         )

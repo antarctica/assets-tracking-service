@@ -10,6 +10,13 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 <!-- pyml disable no-duplicate-heading,no-duplicate-header -->
 ## [Unreleased]
 
+## [0.9.1] - 2025-10-29
+
+### Fixed
+
+* Incorrect ID used when updating OGC feature layer in ArcGIS exporter
+  [#183](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/183)
+
 ## [0.9.0] - 2025-10-24
 
 ### Added
