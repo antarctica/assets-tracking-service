@@ -10,6 +10,13 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 <!-- pyml disable no-duplicate-heading,no-duplicate-header -->
 ## [Unreleased]
 
+## [0.9.2] - 2025-10-30
+
+### Fixed
+
+* Sharing level for AGOL items
+  [#186](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/186)
+
 ## [0.9.1] - 2025-10-29
 
 ### Fixed
