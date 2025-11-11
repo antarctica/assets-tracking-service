@@ -10,6 +10,11 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 <!-- pyml disable no-duplicate-heading,no-duplicate-header -->
 ## [Unreleased]
 
+### Changed
+
+* Dependencies upgraded
+  [#189](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/189)
+
 ### Removed
 
 * Old Terraform provisioning to allow access to catalogue S3 buckets
