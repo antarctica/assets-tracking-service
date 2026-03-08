@@ -81,7 +81,7 @@ cov_options = "--cov --cov-report=html"
 [tool.taskipy.tasks]
 # generic dev
 build = { cmd = "uv build", help = "Build app package" }
-format = { cmd = "ruff format {targets}", help = "Lint app", use_vars = true }
+format = { cmd = "ruff format {targets}", help = "Format app", use_vars = true }
 lint = { cmd = "ruff check {targets}", help = "Lint app", use_vars = true }
 types = { cmd = "ty check {types_targets}", help = "Type check app", use_vars = true }
 markdown = { cmd = "pymarkdown scan --recurse {docs_targets}", help = "Lint docs", use_vars = true }
@@ -91,13 +91,14 @@ test = { cmd = "pytest", help = "Run tests" }
 test-cov = { cmd = "pytest {cov_options}", help = "Run tests with coverage", use_vars = true }
 test-reset = { cmd = "pytest --cache-clear", help = "Reset pytest cache and run tests" }
 safety = { cmd = "safety scan --detailed-output", help = "Check for insecure dependencies" }
+outdated = { cmd = "uv tree --outdated --depth=1", help = "List outdated directed dependencies" }
 # CI
 ci-test = { cmd = "pytest {cov_options} -o junit_family=xunit2 --junitxml=test-results.xml --continue-on-collection-errors", help = "Called by CI", use_vars = true }
 ci-safety = { cmd = "safety --stage cicd scan --detailed-output", help = "Called by CI" }
 # app dev
+version = { cmd = "uv version", help = "Show app version" }
 release = { cmd = "python -m tasks.release", help = "Prepapre app release" }
 reset-db = { cmd = "python -m tasks.reset_db", help = "Reset local dev database" }
-version = { cmd = "python -m tasks.version", help = "Show package version" }
 migration = { cmd = "python -m tasks.migration", help = "Create new database migration" }
 config-init = { cmd = "op inject --in-file resources/env/.env.tpl --out-file .env", help = "Initialise config file" }
 pgsync-init = { cmd = "op inject --in-file resources/pgsync/.pgsync.yml.tpl --out-file .pgsync.yml", help = "Initialise pgsync config" }
@@ -164,10 +165,14 @@ allow-star-arg-any = true
 dialect = "postgres"
 templater = "raw"
 max_line_length = 120
-exclude_rules = "ST06, ST10"  # see docs/dev for more info
+exclude_rules = "ST06, ST10"  # see docs/dev.md for more info
+
+[tool.sqlfluff.rules.references.keywords]
+ignore_words = "label,summary,publication"
 
 [tool.pymarkdown]
 plugins.md013.line_length = 120
+plugins.md013.code_blocks = false
 plugins.md014.enabled = false
 extensions.markdown-extended-autolinks.enabled = true
 
@@ -231,5 +236,5 @@ source = ["src"]
 omit = []
 
 [build-system]
-requires = ["uv_build>=0.9.5,<0.10.0"]
+requires = ["uv_build>=0.9.18,<0.11.0"]
 build-backend = "uv_build"

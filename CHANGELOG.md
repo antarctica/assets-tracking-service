@@ -14,6 +14,8 @@ Wherever possible, a reference to an issue in the project issue tracker should b
 
 * Dependencies upgraded
   [#189](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/189)
+* Dev task and infrastructure changes
+  [#190](https://gitlab.data.bas.ac.uk/MAGIC/assets-tracking-service/-/issues/190)
 
 ### Removed
 
