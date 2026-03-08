@@ -245,7 +245,7 @@ Checks are run automatically in [Continuous Integration](#continuous-integration
 ### Updating dependencies
 
 - create an issue and switch to branch
-- run `uv tree --outdated --depth=1` to list outdated packages
+- run the `outdated` [Development Task](#development-tasks) to list outdated direct packages
 - follow https://docs.astral.sh/uv/concepts/projects/sync/#upgrading-locked-package-versions
 - note upgrades in the issue
 - review any major/breaking upgrades
@@ -278,6 +278,8 @@ in [`pyproject.toml`](/pyproject.toml). Linting checks are run automatically in
   - where select elements should be ordered by complexity rather than preference/opinion
 - [`ST10`](https://docs.sqlfluff.com/en/stable/reference/rules.html#rule-ST10)
   - where a condition such as `WHERE elem.label ->> 'scheme' = 'ats:last_fetched'` is incorrectly seen as a constant
+- [`RF04`](https://docs.sqlfluff.com/en/stable/reference/rules.html#rule-RF04)
+  - identifiers that overlap with non-reserved keywords ('label', 'summary', 'publication' explicitly)
 
 ### Static security analysis
 

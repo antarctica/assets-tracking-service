@@ -14,9 +14,9 @@ stages:
 variables:
   # Image
   UV_CACHE_DIR: ".uv-cache"
-  UV_VERSION: "0.8.19"
+  UV_VERSION: "0.10.9"
   PYTHON_VERSION: "3.11"
-  BASE_LAYER: "bookworm-slim"
+  BASE_LAYER: "trixie-slim"
 
   # Postgres Service
   POSTGRES_HOST: "postgres"
@@ -255,7 +255,7 @@ prerelease:
     - uv sync --frozen --group=dev --python $PYTHON_VERSION
     - $TASK_BIN release prerelease
     - TASK_CMD=($TASK_BIN)
-    - echo "DEPLOY_APP_VERSION=$("${TASK_CMD[@]}" version)" >> build.env
+    - echo "DEPLOY_APP_VERSION=$("${TASK_CMD[@]}" version --short)" >> build.env
   script:
     - $TASK_BIN build
     - uv publish --index=self --username=gitlab-ci-token --password=$CI_JOB_TOKEN
